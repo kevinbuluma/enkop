@@ -1,0 +1,30 @@
+import { createFileRoute, Link } from '@tanstack/react-router';
+import { useEffect, useState } from 'react';
+import { ArrowLeft, ArrowRight, ChevronLeft, ChevronRight, X, Maximize2 } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import { Site } from '@/components/enkop/Site';
+import { EnquiryForm } from '@/components/enkop/EnquiryForm';
+import { getProperties } from '@/lib/enkop.functions';
+import { formatPrice, imagery, type Property } from '@/lib/enkop';
+
+export const Route = createFileRoute('/properties/$slug')({
+  loader: () => getProperties(),
+  head: ({ params }) => ({ meta: [{ title: `${params.slug.replaceAll('-', ' ')} | ENKOP Real Estate` }, { name: 'description', content: `Explore ${params.slug.replaceAll('-', ' ')} with ENKOP, Nairobi's considered real estate partner.` }, { property: 'og:title', content: `${params.slug.replaceAll('-', ' ')} | ENKOP Real Estate` }, { property: 'og:description', content: 'Explore this residence with ENKOP Real Estate in Nairobi.' }, { property: 'og:type', content: 'website' }, { name: 'twitter:card', content: 'summary_large_image' }] }),
+  component: Detail,
+});
+function Detail() {
+  const { slug } = Route.useParams();
+  const properties = Route.useLoaderData() as Property[];
+  const property = properties.find(p => p.slug === slug);
+  const [viewer, setViewer] = useState<number | null>(null);
+  const photos = property ? [imagery[property.image_key] ?? imagery['residence-1'], ...Object.values(imagery).filter(src => src !== imagery[property.image_key])] : [];
+  useEffect(() => { if (viewer === null) return; const key = (e: KeyboardEvent) => { if (e.key === 'Escape') setViewer(null); if (e.key === 'ArrowRight') setViewer(n => n === null ? null : (n + 1) % photos.length); if (e.key === 'ArrowLeft') setViewer(n => n === null ? null : (n - 1 + photos.length) % photos.length); }; window.addEventListener('keydown',key); document.body.style.overflow = 'hidden'; return () => { window.removeEventListener('keydown',key); document.body.style.overflow = ''; }; }, [viewer, photos.length]);
+  if (!property) return <Site><section className="empty-results page-gutter"><p className="eyebrow">ENKOP / 404</p><h1>This property is<br/><em>no longer available.</em></h1><Button asChild variant="luxury"><Link to="/properties">Explore the collection <ArrowRight size={17}/></Link></Button></section></Site>;
+  return <Site><section className="detail-heading page-gutter"><Link className="back-link" to="/properties"><ArrowLeft size={17}/> Back to the collection</Link><div className="detail-heading-row"><div><p className="eyebrow">{property.neighborhood.toUpperCase()}, {property.city.toUpperCase()} / {property.property_type.toUpperCase()}</p><h1>{property.title}<em>.</em></h1></div><p>{formatPrice(property)}</p></div>{property.is_sample && <span className="sample-notice">Illustrative listing · Imagery and details are conceptual, not a live property offering.</span>}</section>
+    <section className="detail-gallery page-gutter"><Button variant="iconPlain" className="detail-main-image" onClick={() => setViewer(0)} aria-label="Open image gallery"><img src={photos[0]} alt={`${property.title} exterior or interior`} width="1400" height="1100"/><span>VIEW GALLERY <Maximize2 size={16}/></span></Button><div className="detail-side-images">{photos.slice(1,3).map((src,i) => <Button variant="iconPlain" onClick={() => setViewer(i+1)} key={src} aria-label={`Open gallery at image ${i+2}`}><img src={src} alt={`${property.title} gallery view ${i+2}`} width="1200" height="1000"/></Button>)}</div></section>
+    <section className="detail-content page-gutter"><div className="detail-overview"><p className="eyebrow">A CLOSER LOOK / 01</p><h2>A place to<br/><em>make your own.</em></h2><p>{property.description}</p><a className="inline-arrow" href="#enquire">Enquire about this residence <ArrowRight size={18}/></a></div><div className="detail-facts"><p className="eyebrow">PROPERTY DETAILS</p>{[['Location',`${property.neighborhood}, ${property.city}`],['Property type',property.property_type],['Listing',property.listing_type === 'Sale' ? 'For sale' : 'To let'],['Bedrooms',String(property.bedrooms)],['Bathrooms',String(property.bathrooms)],['Area',`${property.area_sqm} m²`],['Parking',`${property.parking} spaces`]].map(([label,value]) => <div key={label}><span>{label}</span><strong>{value}</strong></div>)}</div></section>
+    <section className="amenities-section page-gutter"><p className="eyebrow">THE DETAILS / 02</p><h2>Thoughtfully <em>appointed.</em></h2><div className="amenities-list">{property.amenities.map((amenity,i) => <span key={amenity}><small>0{i+1}</small>{amenity}</span>)}</div></section>
+    <section className="detail-enquire page-gutter" id="enquire"><div><p className="eyebrow">MAKE AN ENQUIRY / 03</p><h2>Could this be<br/><em>your place?</em></h2><p>Tell us a little about yourself and we'll take it from there.</p></div><EnquiryForm property={property}/></section>
+    {viewer !== null && <div className="gallery-viewer" role="dialog" aria-modal="true" aria-label="Property gallery"><div className="gallery-toolbar"><span>{String(viewer+1).padStart(2,'0')} / {String(photos.length).padStart(2,'0')}</span><Button variant="iconPlain" onClick={() => setViewer(null)} aria-label="Close gallery"><X size={25}/></Button></div><Button variant="iconPlain" className="gallery-prev" onClick={() => setViewer((viewer-1+photos.length)%photos.length)} aria-label="Previous image"><ChevronLeft/></Button><img src={photos[viewer]} alt={`${property.title}, image ${viewer+1}`}/><Button variant="iconPlain" className="gallery-next" onClick={() => setViewer((viewer+1)%photos.length)} aria-label="Next image"><ChevronRight/></Button><div className="gallery-thumbs">{photos.map((src,i) => <Button variant="iconPlain" key={src} aria-label={`View image ${i+1}`} aria-pressed={viewer===i} onClick={() => setViewer(i)}><img src={src} alt=""/></Button>)}</div></div>}
+  </Site>;
+}

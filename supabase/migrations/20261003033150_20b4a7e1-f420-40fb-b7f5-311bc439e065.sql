@@ -1,0 +1,12 @@
+CREATE SCHEMA IF NOT EXISTS private;
+ALTER FUNCTION public.has_role(uuid, public.app_role) SET SCHEMA private;
+GRANT USAGE ON SCHEMA private TO anon, authenticated;
+REVOKE ALL ON FUNCTION private.has_role(uuid, public.app_role) FROM PUBLIC;
+GRANT EXECUTE ON FUNCTION private.has_role(uuid, public.app_role) TO anon, authenticated;
+ALTER POLICY "published properties visible" ON public.properties USING (status = 'published' OR private.has_role(auth.uid(), 'admin'));
+ALTER POLICY "admins create properties" ON public.properties WITH CHECK (private.has_role(auth.uid(), 'admin'));
+ALTER POLICY "admins update properties" ON public.properties USING (private.has_role(auth.uid(), 'admin')) WITH CHECK (private.has_role(auth.uid(), 'admin'));
+ALTER POLICY "admins delete properties" ON public.properties USING (private.has_role(auth.uid(), 'admin'));
+ALTER POLICY "admins read enquiries" ON public.enquiries USING (private.has_role(auth.uid(), 'admin'));
+ALTER POLICY "admins update enquiries" ON public.enquiries USING (private.has_role(auth.uid(), 'admin')) WITH CHECK (private.has_role(auth.uid(), 'admin'));
+ALTER POLICY "admins delete enquiries" ON public.enquiries USING (private.has_role(auth.uid(), 'admin'));
