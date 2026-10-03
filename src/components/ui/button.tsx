@@ -16,6 +16,11 @@ const buttonVariants = cva(
         secondary: "bg-secondary text-secondary-foreground shadow-sm hover:bg-secondary/80",
         ghost: "hover:bg-accent hover:text-accent-foreground",
         link: "text-primary underline-offset-4 hover:underline",
+        luxury: "rounded-none bg-primary text-primary-foreground hover:bg-primary/85 uppercase text-[11px] tracking-widest px-7 h-13 shadow-none",
+        luxuryLight: "rounded-none bg-primary-foreground text-primary hover:bg-primary-foreground/85 uppercase text-[11px] tracking-widest px-7 h-13 shadow-none",
+        textArrow: "rounded-none bg-transparent text-inherit hover:opacity-65 shadow-none uppercase text-[11px] tracking-widest p-0 h-auto",
+        iconPlain: "rounded-none bg-transparent text-inherit hover:opacity-65 shadow-none p-0 h-10 w-10",
+        circleLight: "rounded-full border border-primary-foreground/60 bg-transparent text-primary-foreground hover:bg-primary-foreground hover:text-primary h-18 w-18 shadow-none",
       },
       size: {
         default: "h-9 px-4 py-2",
