@@ -373,3 +373,26 @@ a { text-decoration: none; }
 }
 @media (max-width: 480px) { .wordmark { font-size: 22px; }.hero-content h1 { font-size: clamp(62px,14vw,80px); }.hero-bottom-line p { font-size: 13px; }.property-information { flex-direction: column; gap: 8px; }.property-price { text-align: left; }.collection-note { gap: 15px; line-height: 1.5; }.collection-note span:last-child { text-align: right; }.filters { gap: 7px; }.filters select { font-size: 10px; padding: 0 5px; }.form-row { grid-template-columns: 1fr; gap: 30px; }.amenities-list { grid-template-columns: 1fr; }.footer-top { align-items: flex-start; gap: 35px; flex-direction: column; }.footer-bottom > span { margin-left: 0; }.interior-hero-bottom span { display: none; }.gallery-prev { left: 4px; }.gallery-next { right: 4px; } }
 @media (prefers-reduced-motion: reduce) { html { scroll-behavior: auto; } *,*::before,*::after { animation-duration: .01ms!important; transition-duration: .01ms!important; } .hero-media video { display: none; } }
+
+/* Tour studio (admin) */
+.studio-hero { padding-bottom: 40px; }
+.studio { padding-bottom: 120px; }
+.studio-grid { display: grid; grid-template-columns: minmax(0, 5fr) minmax(0, 7fr); gap: clamp(40px, 6vw, 96px); align-items: start; }
+.studio-signin { max-width: 440px; }
+.studio-head { display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px; }
+.studio-label { display: block; font-size: 10px; text-transform: uppercase; letter-spacing: .12em; font-weight: 600; margin-bottom: 12px; }
+.studio-muted { font-size: 13px; color: var(--muted-foreground); }
+.studio-error { font-size: 13px; color: var(--destructive); }
+.studio-photos { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; }
+.studio-photo { position: relative; aspect-ratio: 4/3; overflow: hidden; background: var(--muted); }
+.studio-photo img { width: 100%; height: 100%; object-fit: cover; }
+.studio-photo button { position: absolute; top: 6px; right: 6px; width: 26px; height: 26px; display: grid; place-items: center; background: var(--background); color: var(--foreground); border: 0; cursor: pointer; }
+.enquiry-form label.studio-add { aspect-ratio: 4/3; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 8px; border: 1px dashed var(--border); cursor: pointer; color: var(--muted-foreground); }
+.studio-add input { position: absolute; width: 1px; height: 1px; opacity: 0; }
+.studio-tours { display: flex; flex-direction: column; gap: 28px; }
+.studio-tour { display: grid; grid-template-columns: minmax(0, 3fr) minmax(0, 2fr); gap: 20px; padding-bottom: 28px; border-bottom: 1px solid var(--border); }
+.studio-tour video, .studio-tour-placeholder { width: 100%; aspect-ratio: 16/9; background: var(--muted); object-fit: cover; }
+.studio-tour-placeholder { display: grid; place-items: center; font-size: 11px; letter-spacing: .12em; text-transform: uppercase; color: var(--muted-foreground); }
+.studio-tour > div:last-child { display: flex; flex-direction: column; gap: 8px; }
+.studio-tour span { font-size: 12px; color: var(--muted-foreground); }
+@media (max-width: 1020px) { .studio-grid, .studio-tour { grid-template-columns: 1fr; } }
