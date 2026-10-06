@@ -139,6 +139,59 @@ export type Database = {
         }
         Relationships: []
       }
+      property_tours: {
+        Row: {
+          created_at: string
+          created_by: string
+          direction: string
+          error: string | null
+          id: string
+          job_id: string | null
+          photo_paths: string[]
+          progress: number
+          property_id: string
+          status: string
+          updated_at: string
+          video_path: string | null
+        }
+        Insert: {
+          created_at?: string
+          created_by: string
+          direction?: string
+          error?: string | null
+          id?: string
+          job_id?: string | null
+          photo_paths?: string[]
+          progress?: number
+          property_id: string
+          status?: string
+          updated_at?: string
+          video_path?: string | null
+        }
+        Update: {
+          created_at?: string
+          created_by?: string
+          direction?: string
+          error?: string | null
+          id?: string
+          job_id?: string | null
+          photo_paths?: string[]
+          progress?: number
+          property_id?: string
+          status?: string
+          updated_at?: string
+          video_path?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "property_tours_property_id_fkey"
+            columns: ["property_id"]
+            isOneToOne: false
+            referencedRelation: "properties"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       user_roles: {
         Row: {
           id: string
