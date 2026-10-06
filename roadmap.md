@@ -5,4 +5,5 @@
 - [x] Add About, Services, Perspective, and Contact pages.
 - [ ] Replace illustrative properties and imagery with ENKOP's verified listings (awaiting real inventory).
 - [ ] Add verified ENKOP contact details and WhatsApp destination (awaiting official details).
-- [ ] Assign an ENKOP administrator for listing management (awaiting nominated account).
+- [x] Tour studio at /admin: upload photos, generate cinematic tours.
+- [ ] Assign an ENKOP administrator account (awaiting nominated account).
