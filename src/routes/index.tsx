@@ -6,8 +6,6 @@ import { Site, SectionTop } from '@/components/enkop/Site';
 import { PropertyCard } from '@/components/enkop/PropertyCard';
 import { getProperties } from '@/lib/enkop.functions';
 import { hero, imagery, type Property } from '@/lib/enkop';
-import heroMotion from '@/assets/enkop-hero-motion.mp4.asset.json';
-import heroTour from '@/assets/enkop-tour-1.mp4.asset.json';
 import { HeroReel } from '@/components/enkop/HeroReel';
 import { getHomepageSlides } from '@/lib/slides.functions';
 
@@ -20,7 +18,7 @@ export const Route = createFileRoute("/")({
 function Index() {
   const { properties: loaded, slides: managed } = Route.useLoaderData();
   const properties = loaded as Property[];
-  const slides = managed.length ? managed : [{ id: 'built-in-tour', label: '', video_url: heroTour.url, image_url: null }, { id: 'built-in-reel', label: '', video_url: heroMotion.url, image_url: null }];
+  const slides = managed.length ? managed : [{ id: 'built-in-tour', label: '', video_url: '/videos/enkop-tour-1.mp4', image_url: null }, { id: 'built-in-reel', label: '', video_url: '/videos/enkop-hero-motion.mp4', image_url: null }];
   return <Site darkHeader>
     <section className="home-hero"><HeroReel slides={slides} poster={hero} /><div className="hero-shade"/><div className="hero-content"><p className="eyebrow">ENKOP REAL ESTATE  /  NAIROBI, KENYA</p><h1>Exceptional<br/><em>spaces.</em></h1><div className="hero-bottom-line"><p>Places with presence.<br/>Property with perspective.</p><Button asChild variant="luxuryLight"><Link to="/properties">Explore the collection <ArrowUpRight size={16}/></Link></Button></div></div><a href="#introduction" className="hero-scroll">SCROLL TO EXPLORE <ArrowDown size={17}/></a><span className="hero-side-note">01 — 04 / A DIFFERENT PERSPECTIVE</span></section>
     <section className="intro-section page-gutter" id="introduction"><p className="eyebrow"><span>01 /</span> OUR PERSPECTIVE</p><div className="intro-layout"><h2>Real estate,<br/><em>reconsidered.</em></h2><div><p>ENKOP connects people with exceptional spaces through a more considered approach to property.</p><Link className="inline-arrow" to="/about">Discover ENKOP <ArrowRight size={18}/></Link></div></div></section>
