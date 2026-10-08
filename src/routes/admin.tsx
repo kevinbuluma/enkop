@@ -88,7 +88,7 @@ function CreateTour({ properties, busy, onCreated }: { properties: Studio['prope
     try {
       setState('uploading');
       const paths = await Promise.all(files.map(async (file, i) => {
-        const ext = file.type.split('/')[1].replace('jpeg', 'jpg');
+        const ext = (file.type.split('/')[1] ?? 'jpg').replace('jpeg', 'jpg');
         const path = `${propertyId}/photos/${Date.now()}-${i}.${ext}`;
         const { error } = await supabase.storage.from('property-media').upload(path, file, { contentType: file.type });
         if (error) throw new Error('A photo could not be uploaded. Please try again.');
