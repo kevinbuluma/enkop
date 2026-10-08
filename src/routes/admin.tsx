@@ -6,6 +6,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { Button } from '@/components/ui/button';
 import { Site } from '@/components/enkop/Site';
 import { getStudio, pollTour, startTour } from '@/lib/tours.functions';
+import { HomepageManager } from '@/components/enkop/HomepageManager';
 
 export const Route = createFileRoute('/admin')({
   ssr: false,
@@ -56,14 +57,16 @@ function SignIn() {
 function StudioPanel() {
   const [studio, setStudio] = useState<Studio | null>(null);
   const [loadError, setLoadError] = useState('');
+  const [tab, setTab] = useState<'tours' | 'homepage'>('tours');
   const load = useCallback(() => getStudio().then(setStudio).catch((e) => setLoadError(e.message)), []);
   useEffect(() => { load(); }, [load]);
   const signOut = <Button variant="textArrow" onClick={() => supabase.auth.signOut()}>Sign out <LogOut size={15} /></Button>;
   if (loadError) return <div><p className="studio-error">{loadError}</p>{signOut}</div>;
   if (!studio) return <p className="studio-muted">Loading the studio…</p>;
   if (!studio.isAdmin) return <div><p className="studio-muted">This account does not have administrator access.</p>{signOut}</div>;
-  return <div className="studio-grid"><CreateTour properties={studio.properties} busy={studio.tours.some(t => t.status === 'queued' || t.status === 'in_progress')} onCreated={load} />
-    <div><div className="studio-head"><p className="eyebrow">RECENT TOURS</p>{signOut}</div><TourList tours={studio.tours} properties={studio.properties} onChange={load} /></div></div>;
+  return <><div className="studio-tabs" role="tablist">{([['tours', 'Property tours'], ['homepage', 'Homepage scenes']] as const).map(([k, l]) => <button key={k} role="tab" aria-selected={tab === k} onClick={() => setTab(k)}>{l}</button>)}</div>
+  {tab === 'homepage' ? <HomepageManager /> : <div className="studio-grid"><CreateTour properties={studio.properties} busy={studio.tours.some(t => t.status === 'queued' || t.status === 'in_progress')} onCreated={load} />
+    <div><div className="studio-head"><p className="eyebrow">RECENT TOURS</p>{signOut}</div><TourList tours={studio.tours} properties={studio.properties} onChange={load} /></div></div>}</>;
 }
 
 function CreateTour({ properties, busy, onCreated }: { properties: Studio['properties']; busy: boolean; onCreated: () => void }) {

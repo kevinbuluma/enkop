@@ -67,6 +67,39 @@ export type Database = {
           },
         ]
       }
+      homepage_slides: {
+        Row: {
+          active: boolean
+          created_at: string
+          id: string
+          image_path: string | null
+          label: string
+          position: number
+          updated_at: string
+          video_path: string | null
+        }
+        Insert: {
+          active?: boolean
+          created_at?: string
+          id?: string
+          image_path?: string | null
+          label?: string
+          position?: number
+          updated_at?: string
+          video_path?: string | null
+        }
+        Update: {
+          active?: boolean
+          created_at?: string
+          id?: string
+          image_path?: string | null
+          label?: string
+          position?: number
+          updated_at?: string
+          video_path?: string | null
+        }
+        Relationships: []
+      }
       properties: {
         Row: {
           amenities: string[]
