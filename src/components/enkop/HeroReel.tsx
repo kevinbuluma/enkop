@@ -26,9 +26,9 @@ export function HeroReel({ slides, poster }: { slides: PublicSlide[]; poster: st
     const next = () => setIndex(i => (i + 1) % count);
     videos.current.forEach((v, i) => { if (v && i !== index) v.pause(); });
     if (slide?.video_url && video && !reduced) {
+      if (count < 2) { video.loop = true; video.play().catch(() => {}); return; }
       video.currentTime = 0;
       video.play().catch(() => {});
-      if (count < 2) { video.loop = true; return; }
       video.loop = false;
       video.addEventListener('ended', next);
       const cap = window.setTimeout(next, MAX_VIDEO_MS);
@@ -43,7 +43,7 @@ export function HeroReel({ slides, poster }: { slides: PublicSlide[]; poster: st
     <img src={slides[0]?.image_url ?? poster} alt="" width="1920" height="1080" fetchPriority="high" />
     {slides.map((s, i) => <div key={s.id} className={`hero-layer ${i === index ? 'hero-layer--on' : ''}`}>
       <img src={s.image_url ?? poster} alt="" width="1920" height="1080" loading={i === 0 ? 'eager' : 'lazy'} />
-      {s.video_url && !reduced && <video ref={el => { videos.current[i] = el; }} src={s.video_url} poster={s.image_url ?? poster} muted playsInline preload={i === index || i === (index + 1) % count ? 'auto' : 'none'} />}
+      {s.video_url && !reduced && <video ref={el => { videos.current[i] = el; }} src={s.video_url} poster={s.image_url ?? poster} muted playsInline autoPlay={count < 2} loop={count < 2} preload={i === index || i === (index + 1) % count ? 'auto' : 'none'} />}
     </div>)}
   </div>;
 }
