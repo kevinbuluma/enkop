@@ -15,7 +15,7 @@ async function assertAdmin({ supabase, userId }: Ctx) {
 }
 
 function apiKey() {
-  const key = process.env.LOVABLE_API_KEY;
+  const key = process.env['LOVABLE_API_KEY'];
   if (!key) throw new Error('Video generation is not configured.');
   return key;
 }
