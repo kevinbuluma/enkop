@@ -6,4 +6,5 @@
 - [ ] Replace illustrative properties and imagery with ENKOP's verified listings (awaiting real inventory).
 - [ ] Add verified ENKOP contact details and WhatsApp destination (awaiting official details).
 - [x] Tour studio at /admin: upload photos, generate cinematic tours.
+- [x] Homepage scenes manager in /admin (select, reorder, replace hero videos and fallback images).
 - [ ] Assign an ENKOP administrator account (awaiting nominated account).

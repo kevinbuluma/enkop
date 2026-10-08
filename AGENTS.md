@@ -13,3 +13,4 @@
 - Property imagery is mapped from local editorial assets by image key; illustrative listings are explicitly labelled until genuine inventory is supplied.
 - The homepage hero uses a silent CDN-hosted motion reel with a local editorial still as its poster and reduced-motion fallback, keeping video weight out of the repository.
 - Property tour videos are generated server-side via AI Gateway /v1/videos, polled by the admin client, and copied into the private property-media bucket on completion because gateway downloads expire.
+- Homepage hero scenes come from the homepage_slides table; the public loader signs only active slide paths server-side, and the bundled reel is the fallback when no scenes are active.
