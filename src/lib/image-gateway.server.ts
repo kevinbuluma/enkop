@@ -5,6 +5,12 @@ export type ImageConfig = {
   format: "openai" | "gemini-chat" | "generate-content" | "cloudflare-input";
 };
 
+export const imageSettings: Omit<ImageConfig, 'apiKey'> = {
+  baseURL: 'https://ai.gateway.lovable.dev',
+  model: 'openai/gpt-image-2.5-sunburst',
+  format: 'openai',
+};
+
 export function generateImage(config: ImageConfig, prompt: string, stream = true, signal?: AbortSignal) {
   let input: Record<string, unknown>;
   switch (config.format) {
@@ -50,7 +56,7 @@ export async function editImage(config: ImageConfig, form: FormData, signal?: Ab
     }
     return fetch(`${config.baseURL}/v1/images/edits`, {
       method: "POST",
-      headers: { Authorization: `Bearer ${config.apiKey}` },
+      headers: { Authorization: `Bearer ${config.apiKey}`, 'X-Lovable-AIG-SDK': 'fetch' },
       body: form,
       signal: signal ?? null,
     });
