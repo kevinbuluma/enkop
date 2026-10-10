@@ -416,3 +416,6 @@ label.studio-file input { position: absolute; width: 1px; height: 1px; opacity: 
 .hero-layer { position: absolute; inset: 0; opacity: 0; transition: opacity 1.4s ease; }
 .hero-layer--on { opacity: 1; }
 .hero-media .hero-layer video { opacity: 1; animation: none; }
+.studio-fallback { border-top: 1px solid var(--border); padding-top: 12px; margin-top: 8px; }
+.studio-fallback-editor { margin-top: 18px; gap: 18px; }
+.studio-fallback-preview { display: block; width: 100%; aspect-ratio: 16/9; object-fit: cover; background: var(--muted); transition: filter .4s; }

@@ -3,6 +3,7 @@ import { ArrowDown, ArrowUp, Film, ImagePlus, Plus, Trash2 } from 'lucide-react'
 import { supabase } from '@/integrations/supabase/client';
 import { Button } from '@/components/ui/button';
 import { deleteSlide, getSlideAdmin, reorderSlides, saveSlide } from '@/lib/slides.functions';
+import { FallbackImageGenerator } from './FallbackImageGenerator';
 
 type Data = Awaited<ReturnType<typeof getSlideAdmin>>;
 type Slide = Data['slides'][number];
@@ -39,8 +40,13 @@ export function HomepageManager() {
     const ids = data.slides.map(s => s.id);
     const j = index + dir;
     if (j < 0 || j >= ids.length) return;
-    [ids[index], ids[j]] = [ids[j]!, ids[index]!];
-    setData({ ...data, slides: ids.map(id => data.slides.find(s => s.id === id)!) });
+    const slides = [...data.slides];
+    const source = slides[index];
+    const target = slides[j];
+    if (!source || !target) return;
+    [slides[index], slides[j]] = [target, source];
+    [ids[index], ids[j]] = [target.id, source.id];
+    setData({ ...data, slides });
     run('order', () => reorderSlides({ data: { ids } }));
   }
 
@@ -88,6 +94,7 @@ export function HomepageManager() {
             <Button variant="iconPlain" aria-label="Remove scene" disabled={!!busy} onClick={() => { if (window.confirm('Remove this scene from the homepage?')) run(s.id, () => deleteSlide({ data: { id: s.id } })); }}><Trash2 size={16} /></Button>
           </div>
           {busy === s.id && <span>Saving…</span>}
+          <FallbackImageGenerator key={`${s.id}-${s.video_path}`} scene={s} disabled={!!busy} onSaved={async () => { await load(); }} />
         </div>
       </article>)}</div>
     </div>
