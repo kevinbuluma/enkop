@@ -8,3 +8,4 @@
 - [x] Tour studio at /admin: upload photos, generate cinematic tours.
 - [x] Homepage scenes manager in /admin (select, reorder, replace hero videos and fallback images).
 - [ ] Assign an ENKOP administrator account (awaiting nominated account).
+- [ ] Generate matching homepage fallback images from tour videos and optional style notes.
