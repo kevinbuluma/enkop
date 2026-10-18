@@ -1,11 +1,7 @@
-# ENKOP launch tasks
-- [x] Establish editorial brand system and image-led homepage.
-- [x] Build browsable property collection, details, gallery, and shared filters.
-- [x] Connect enquiries and published property records to Lovable Cloud.
-- [x] Add About, Services, Perspective, and Contact pages.
-- [ ] Replace illustrative properties and imagery with ENKOP's verified listings (awaiting real inventory).
-- [ ] Add verified ENKOP contact details and WhatsApp destination (awaiting official details).
-- [x] Tour studio at /admin: upload photos, generate cinematic tours.
-- [x] Homepage scenes manager in /admin (select, reorder, replace hero videos and fallback images).
-- [ ] Assign an ENKOP administrator account (awaiting nominated account).
-- [x] Generate matching homepage fallback images from tour videos and optional style notes (AI streaming verified; signed-in saving awaits an administrator account).
+# ENKOP roadmap
+
+- [x] Admin account (kevinbuluma9@gmail.com) + admin role + signed-in preview
+- [ ] Homepage enquiry form storing leads + owner notification (email + WhatsApp)
+- [ ] Admin listings dashboard: add/edit/delete properties with photos
+- [ ] Public property pages show completed tours from /admin
+- [ ] Real Nairobi villa videos replace AI hero (needs user's footage — Homepage scenes manager already accepts uploads; matching fallback images via existing generator)
