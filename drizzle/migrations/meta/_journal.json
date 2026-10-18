@@ -1,0 +1,13 @@
+{
+  "version": "7",
+  "dialect": "postgresql",
+  "entries": [
+    {
+      "idx": 0,
+      "version": "7",
+      "when": 1792357919372,
+      "tag": "0000_properties_image_paths",
+      "breakpoints": true
+    }
+  ]
+}

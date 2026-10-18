@@ -113,6 +113,7 @@ export type Database = {
           featured: boolean
           id: string
           image_key: string
+          image_paths: string[]
           is_sample: boolean
           listing_type: string
           neighborhood: string
@@ -136,6 +137,7 @@ export type Database = {
           featured?: boolean
           id?: string
           image_key?: string
+          image_paths?: string[]
           is_sample?: boolean
           listing_type?: string
           neighborhood: string
@@ -159,6 +161,7 @@ export type Database = {
           featured?: boolean
           id?: string
           image_key?: string
+          image_paths?: string[]
           is_sample?: boolean
           listing_type?: string
           neighborhood?: string
