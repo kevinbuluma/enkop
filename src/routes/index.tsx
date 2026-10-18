@@ -4,6 +4,7 @@ import { ArrowDown, ArrowRight, ArrowUpRight } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Site, SectionTop } from '@/components/enkop/Site';
 import { PropertyCard } from '@/components/enkop/PropertyCard';
+import { EnquiryForm } from '@/components/enkop/EnquiryForm';
 import { Reveal } from '@/components/enkop/Reveal';
 import { Parallax } from '@/components/enkop/Parallax';
 import { getProperties } from '@/lib/enkop.functions';
@@ -107,6 +108,15 @@ function Index() {
       <Parallax className="perspective-parallax" strength={0.2}>
         <img src={imagery['residence-2']} alt="Contemporary living room overlooking Nairobi" loading="lazy" width="1200" height="1000"/>
       </Parallax>
+    </Reveal>
+
+    <Reveal as="section" className="home-enquire page-gutter" id="enquire">
+      <div className="home-enquire-copy">
+        <p className="eyebrow"><span>06 /</span> BEGIN THE CONVERSATION</p>
+        <h2>Tell us what<br/><em>moves you.</em></h2>
+        <p>Share a few details and an ENKOP representative will reach out personally — by email or phone, whichever you prefer.</p>
+      </div>
+      <EnquiryForm />
     </Reveal>
   </Site>;
 }
