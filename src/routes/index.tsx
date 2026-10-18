@@ -10,6 +10,7 @@ import { getProperties } from '@/lib/enkop.functions';
 import { hero, imagery, type Property } from '@/lib/enkop';
 import { HeroReel } from '@/components/enkop/HeroReel';
 import { getHomepageSlides } from '@/lib/slides.functions';
+import { useCinematicFx } from '@/lib/cinematic';
 
 export const Route = createFileRoute("/")({
   head: () => ({ meta: [{ title: 'ENKOP — Exceptional Spaces in Nairobi' }, { name: 'description', content: 'A considered approach to Nairobi real estate. Discover exceptional residences and a new perspective on property with ENKOP.' }, { property: 'og:title', content: 'ENKOP — Exceptional Spaces in Nairobi' }, { property: 'og:description', content: 'Discover exceptional residences and a new perspective on property with ENKOP.' }, { property: 'og:type', content: 'website' }, { name: 'twitter:card', content: 'summary_large_image' }] }),
@@ -18,6 +19,7 @@ export const Route = createFileRoute("/")({
 });
 
 function Index() {
+  useCinematicFx();
   const { properties: loaded, slides: managed } = Route.useLoaderData();
   const properties = loaded as Property[];
   const slides = managed.length ? managed : [{ id: 'built-in-loop', label: '', video_url: '/videos/enkop-hero-loop.mp4', image_url: '/videos/enkop-hero-loop.jpg' }];

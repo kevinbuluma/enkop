@@ -33,7 +33,7 @@ export function useCinematicFx() {
         for (const el of parallaxEls) {
           const r = el.getBoundingClientRect();
           if (r.bottom < 0 || r.top > vh) continue;
-          const speed = parseFloat(el.dataset.parallax || '0.1');
+          const speed = parseFloat(el.dataset['parallax'] || '0.1');
           const offset = (r.top + r.height / 2 - vh / 2) * speed;
           el.style.transform = `translate3d(0, ${offset.toFixed(1)}px, 0)`;
         }
