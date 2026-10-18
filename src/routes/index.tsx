@@ -110,7 +110,7 @@ function Index() {
       </Parallax>
     </Reveal>
 
-    <Reveal as="section" className="home-enquire page-gutter" id="enquire">
+    <Reveal as="section" className="home-enquire page-gutter">
       <div className="home-enquire-copy">
         <p className="eyebrow"><span>06 /</span> BEGIN THE CONVERSATION</p>
         <h2>Tell us what<br/><em>moves you.</em></h2>
