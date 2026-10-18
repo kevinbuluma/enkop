@@ -66,8 +66,8 @@ function StudioPanel() {
   if (loadError) return <div><p className="studio-error">{loadError}</p>{signOut}</div>;
   if (!studio) return <p className="studio-muted">Loading the studio…</p>;
   if (!studio.isAdmin) return <div><p className="studio-muted">This account does not have administrator access.</p>{signOut}</div>;
-  return <><div className="studio-tabs" role="tablist">{([['listings', 'Listings'], ['tours', 'Property tours'], ['homepage', 'Homepage scenes']] as const).map(([k, l]) => <button key={k} role="tab" aria-selected={tab === k} onClick={() => setTab(k)}>{l}</button>)}</div>
-  {tab === 'listings' ? <ListingsManager /> : tab === 'homepage' ? <HomepageManager /> : <div className="studio-grid"><CreateTour properties={studio.properties} busy={studio.tours.some(t => t.status === 'queued' || t.status === 'in_progress')} onCreated={load} />
+  return <><div className="studio-tabs" role="tablist">{([['listings', 'Listings'], ['enquiries', 'Enquiries'], ['tours', 'Property tours'], ['homepage', 'Homepage scenes']] as const).map(([k, l]) => <button key={k} role="tab" aria-selected={tab === k} onClick={() => setTab(k)}>{l}</button>)}</div>
+  {tab === 'listings' ? <ListingsManager /> : tab === 'enquiries' ? <EnquiriesManager /> : tab === 'homepage' ? <HomepageManager /> : <div className="studio-grid"><CreateTour properties={studio.properties} busy={studio.tours.some(t => t.status === 'queued' || t.status === 'in_progress')} onCreated={load} />
     <div><div className="studio-head"><p className="eyebrow">RECENT TOURS</p>{signOut}</div><TourList tours={studio.tours} properties={studio.properties} onChange={load} /></div></div>}</>;
 }
 
