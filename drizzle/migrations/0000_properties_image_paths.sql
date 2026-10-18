@@ -1,0 +1,1 @@
+alter table public.properties add column image_paths text[] not null default '{}';
