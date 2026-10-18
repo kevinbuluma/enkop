@@ -8,6 +8,7 @@ import { Site } from '@/components/enkop/Site';
 import { getStudio, pollTour, startTour } from '@/lib/tours.functions';
 import { HomepageManager } from '@/components/enkop/HomepageManager';
 import { ListingsManager } from '@/components/enkop/ListingsManager';
+import { EnquiriesManager } from '@/components/enkop/EnquiriesManager';
 
 export const Route = createFileRoute('/admin')({
   ssr: false,
@@ -58,7 +59,7 @@ function SignIn() {
 function StudioPanel() {
   const [studio, setStudio] = useState<Studio | null>(null);
   const [loadError, setLoadError] = useState('');
-  const [tab, setTab] = useState<'listings' | 'tours' | 'homepage'>('listings');
+  const [tab, setTab] = useState<'listings' | 'enquiries' | 'tours' | 'homepage'>('listings');
   const load = useCallback(() => getStudio().then(setStudio).catch((e) => setLoadError(e.message)), []);
   useEffect(() => { load(); }, [load]);
   const signOut = <Button variant="textArrow" onClick={() => supabase.auth.signOut()}>Sign out <LogOut size={15} /></Button>;
