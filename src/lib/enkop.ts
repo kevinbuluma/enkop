@@ -27,6 +27,9 @@ export type Property = {
   description: string;
   amenities: string[];
   image_key: string;
+  image_paths: string[];
+  photo_urls?: string[];
+  tour_url?: string | null;
   is_sample: boolean;
   featured: boolean;
 };
