@@ -419,3 +419,19 @@ label.studio-file input { position: absolute; width: 1px; height: 1px; opacity: 
 .studio-fallback { border-top: 1px solid var(--border); padding-top: 12px; margin-top: 8px; }
 .studio-fallback-editor { margin-top: 18px; gap: 18px; }
 .studio-fallback-preview { display: block; width: 100%; aspect-ratio: 16/9; object-fit: cover; background: var(--muted); transition: filter .4s; }
+
+/* ===== Cinematic motion layer ===== */
+.reveal { opacity: 0; transform: translateY(34px); transition: opacity 1s cubic-bezier(.22,.61,.21,1), transform 1s cubic-bezier(.22,.61,.21,1); will-change: opacity, transform; }
+.reveal--in { opacity: 1; transform: none; }
+.parallax { will-change: transform; }
+.hero-parallax { position: absolute; inset: -8% 0; }
+.perspective-parallax { position: absolute; inset: -12% 0; }
+.perspective-parallax img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; opacity: .44; }
+.property-card { perspective: 1100px; }
+.property-card .property-visual { transition: transform .5s cubic-bezier(.22,.61,.21,1), box-shadow .5s ease; transform-style: preserve-3d; }
+.property-card:hover .property-visual { box-shadow: 0 30px 60px -30px oklch(.12 0 0 / .45); }
+@media (prefers-reduced-motion: reduce) {
+  .reveal { opacity: 1; transform: none; transition: none; }
+  .parallax { transform: none !important; }
+  .property-card .property-visual { transition: none; }
+}
