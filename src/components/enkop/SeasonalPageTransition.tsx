@@ -1,6 +1,8 @@
 import { useEffect, useRef } from 'react';
 import { useRouter } from '@tanstack/react-router';
 import { transitionMood } from '@/lib/page-transition';
+import leafAtlasUrl from '@/assets/autumn-leaf-atlas.png';
+import { LEAF_ENTRY_MS, LEAF_EXIT_MS, leafArrival, leafExitPosition } from '@/lib/leaf-motion';
 
 /** Persistent navigation curtain; never delays data loading or intercepts links. */
 export function SeasonalPageTransition() {
@@ -14,10 +16,22 @@ export function SeasonalPageTransition() {
     const ctx = canvas.getContext('2d');
     if (!ctx) return;
     const reduce = matchMedia('(prefers-reduced-motion: reduce)');
+    const atlas = new Image();
+    const sprites: HTMLCanvasElement[] = [];
+    atlas.onload = () => {
+      for (let i = 0; i < 4; i++) {
+        const sprite = document.createElement('canvas');
+        sprite.width = 512; sprite.height = 512;
+        sprite.getContext('2d')?.drawImage(atlas, (i % 2) * atlas.naturalWidth / 2, Math.floor(i / 2) * atlas.naturalHeight / 2, atlas.naturalWidth / 2, atlas.naturalHeight / 2, 0, 0, 512, 512);
+        sprites.push(sprite);
+      }
+    };
+    atlas.src = leafAtlasUrl;
     let raf = 0, start = 0, release = 0, ready = false, timeout = 0;
     let width = 0, height = 0;
     let palette: string[] = [];
     let mood = transitionMood(null);
+    let leaves: { x: number; y: number; size: number; angle: number; depth: number }[] = [];
     const particles = Array.from({ length: 100 }, (_, i) => ({
       x: ((i * 0.6180339) % 1), y: ((i * 0.4142135) % 1),
       size: 0.65 + (i % 7) / 9, angle: i * 2.4, depth: (i % 5) / 5,
@@ -29,12 +43,36 @@ export function SeasonalPageTransition() {
       ctx.clearRect(0, 0, width, height);
     };
     const draw = (now: number) => {
-      const entry = Math.min(1, (now - start) / 420);
+      const textured = mood === 'leaves' && sprites.length === 4;
+      const entry = Math.min(1, (now - start) / (textured ? LEAF_ENTRY_MS : 420));
       if (ready && !release && entry === 1) { release = now; el.dataset['phase'] = 'revealing'; }
-      const exit = release ? Math.min(1, (now - release) / 760) : 0;
-      el.style.setProperty('--curtain-opacity', String(Math.sin(entry * Math.PI / 2) * (1 - exit)));
+      const exit = release ? Math.min(1, (now - release) / (textured ? LEAF_EXIT_MS : 760)) : 0;
+      el.style.setProperty('--curtain-opacity', String(textured ? Math.pow(entry, 3) * .78 * Math.pow(1 - exit, 2) : Math.sin(entry * Math.PI / 2) * (1 - exit)));
       ctx.clearRect(0, 0, width, height);
-      if (mood !== 'flip') {
+      if (textured) {
+        for (const [i, p] of leaves.entries()) {
+          const arrival = leafArrival(entry, i, leaves.length);
+          if (arrival === 0) continue;
+          const eased = 1 - Math.pow(1 - arrival, 3);
+          const wind = Math.sin(arrival * Math.PI) * Math.sin(arrival * 6 + p.angle);
+          let x = p.x - (1 - eased) * (width + p.size * 2);
+          let y = p.y + wind * height * .16;
+          let turn = p.angle + (1 - arrival) * 5 + Math.sin(now / 280 + i) * .09;
+          let scale = 1;
+          if (release) {
+            const position = leafExitPosition(p.x, p.y, exit, i, width, height);
+            x = position.x; y = position.y; turn += position.turn; scale = position.scale;
+          }
+          const flutter = 1 - Math.sin(arrival * Math.PI) * .55;
+          const sprite = sprites[i % 4];
+          if (!sprite) continue;
+          ctx.save(); ctx.translate(x, y); ctx.rotate(turn);
+          ctx.scale(scale, scale * (release ? .72 + Math.abs(Math.cos(exit * 9 + p.angle)) * .28 : flutter));
+          ctx.globalAlpha = Math.min(1, arrival * 5);
+          ctx.drawImage(sprite, -p.size / 2, -p.size / 2, p.size, p.size);
+          ctx.restore();
+        }
+      } else if (mood !== 'flip') {
         const sweep = 1 - Math.pow(1 - entry, 3);
         for (const [i, p] of particles.entries()) {
           const size = (mood === 'snow' ? 16 : mood === 'rain' ? 35 : 90) * p.size * Math.min(1.4, width / 900 + .45);
@@ -82,16 +120,24 @@ export function SeasonalPageTransition() {
       const styles = getComputedStyle(el);
       palette = [1, 2, 3, 4].map(n => styles.getPropertyValue(`--wind-color-${n}`).trim());
       width = innerWidth; height = innerHeight;
-      const dpr = Math.min(devicePixelRatio || 1, 1.5);
+      const spacing = Math.max(72, Math.min(125, width / 10));
+      const cols = Math.ceil(width / spacing) + 2, rows = Math.ceil(height / spacing) + 2;
+      leaves = Array.from({ length: cols * rows }, (_, i) => {
+        const col = i % cols, row = Math.floor(i / cols);
+        return { x: (col - .5) * spacing + Math.sin(i * 17.3) * spacing * .23, y: (row - .5) * spacing + Math.cos(i * 9.1) * spacing * .23, size: spacing * (2.05 + (i % 5) * .16), angle: i * 2.399, depth: i % 4 };
+      });
+      // Interleave rows so successive gusts accumulate across the whole screen.
+      leaves.sort((a, b) => (a.x / width + a.y / height * .28) - (b.x / width + b.y / height * .28));
+      const dpr = Math.min(devicePixelRatio || 1, 2, 3840 / width);
       canvas.width = width * dpr; canvas.height = height * dpr;
       ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
       start = performance.now(); release = 0; ready = false;
       raf = requestAnimationFrame(draw);
-      timeout = window.setTimeout(stop, 4500);
+      timeout = window.setTimeout(stop, 6500);
     });
     const resolved = router.subscribe('onResolved', () => { ready = true; });
     reduce.addEventListener('change', stop);
-    return () => { before(); resolved(); stop(); reduce.removeEventListener('change', stop); };
+    return () => { before(); resolved(); stop(); atlas.onload = null; reduce.removeEventListener('change', stop); };
   }, [router]);
 
   return <div ref={ref} className="seasonal-page-transition" data-phase="idle" aria-hidden="true">
