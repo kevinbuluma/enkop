@@ -15,6 +15,16 @@ export function optimizedHeroMedia(path: string | null) {
   return path ? optimized[path] ?? null : null;
 }
 
+/** Enhanced exports are upscaled from existing footage, not native 4K captures. */
+export function enhancedHeroMedia(url: string | null) {
+  const match = url?.match(/^\/videos\/scenes\/enkop-scene-([0-2])\.mp4$/);
+  if (!match) return null;
+  return {
+    hd: `/videos/scenes/enkop-scene-${match[1]}-hd.mp4`,
+    ultra: `/videos/scenes/enkop-scene-${match[1]}-4k.mp4`,
+  };
+}
+
 /** The built-in scenes, used when the managed homepage slides can't be loaded. */
 export const builtInHeroSlides = [0, 1, 2].map(n => {
   const s = scene(n);
