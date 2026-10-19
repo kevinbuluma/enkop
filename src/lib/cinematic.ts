@@ -46,7 +46,8 @@ export function useCinematicFx() {
     }
 
     // 3. 3D tilt — property cards lean subtly toward the pointer.
-    const tiltEls = Array.from(document.querySelectorAll<HTMLElement>('[data-tilt]'));
+    const tiltEls = window.matchMedia('(hover: hover) and (pointer: fine)').matches
+      ? Array.from(document.querySelectorAll<HTMLElement>('[data-tilt]')) : [];
     for (const el of tiltEls) {
       const inner = (el.querySelector('.property-visual') as HTMLElement | null) ?? el;
       const move = (ev: PointerEvent) => {
