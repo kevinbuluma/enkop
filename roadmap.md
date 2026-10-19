@@ -1,5 +1,7 @@
 # ENKOP roadmap
 
+- [ ] Verify mobile public pages, search, gallery, navigation, enquiries and seasonal effects; correct confirmed layout issues
+
 - [x] Tune book-flip corner lift, natural acceleration and paper-following shadows; verified three screen sizes, cleanup, reduced motion and 13 targeted tests
 
 - [x] Refine page flip with outgoing-page imagery, flexible paper curvature and moving shadows; verified navigation, cleanup and reduced motion at desktop, compact and phone sizes (11 targeted tests passed)
