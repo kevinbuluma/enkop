@@ -17,8 +17,8 @@ export type EnquiryRow = {
 };
 
 async function requireAdmin(supabase: any, userId: string) {
-  const { data: isAdmin } = await supabase.rpc('has_role', { _user_id: userId, _role: 'admin' });
-  if (!isAdmin) throw new Error('Administrator access required.');
+  const { data: role, error } = await supabase.from('user_roles').select('role').eq('user_id', userId).eq('role', 'admin').maybeSingle();
+  if (error || !role) throw new Error('Administrator access required.');
 }
 
 export const getEnquiries = createServerFn({ method: 'GET' })

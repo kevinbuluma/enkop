@@ -26,7 +26,8 @@ export const Route = createFileRoute('/api/homepage-fallback')({
     const denialPath = 'homepage/image-provider-denial.json';
     const { data: denial } = await db.storage.from('property-media').download(denialPath);
     if (denial) {
-      const blocked = JSON.parse(await denial.text()) as { message?: string };
+      let blocked: { message?: string } = {};
+      try { blocked = JSON.parse(await denial.text()); } catch { /* Keep generation paused if the denial record is unreadable. */ }
       return Response.json({ message: blocked.message ?? 'Image provider access must be restored before generating images.' }, { status: 403 });
     }
     let form: FormData;

@@ -51,7 +51,7 @@ function Index() {
       </div>
       <div className="hero-massing" aria-hidden="true"><div className="massing-cube"><i/><i/><i/><i/><i/><i/></div>
       </div>
-      <a href="#introduction" className="hero-scroll">SCROLL TO EXPLORE <ArrowDown size={17}/></a>
+      <a href="#approach" className="hero-scroll">SCROLL TO EXPLORE <ArrowDown size={17}/></a>
       <span className="hero-side-note">01 — 04 / A DIFFERENT PERSPECTIVE</span>
     </section>
 
