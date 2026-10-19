@@ -1,5 +1,7 @@
 # ENKOP roadmap
 
+- [ ] Improve homepage clarity by preserving source texture, avoiding softened exports and reducing the dark veil; verify playback and phone display
+
 - [x] Enhance existing homepage footage with restrained clarity treatment and adaptive upscaled 4K/HD playback; all three scenes verified at 360/390px and desktop, with six targeted tests passing
 
 - [x] Verify mobile public pages at 360/390/430px, landscape and desktop; improve controls and overlays; search, gallery, menu, signed-in admin tabs, enquiry readback, video playback and four themes passed (24 targeted tests)
