@@ -24,13 +24,13 @@ export function SeasonalPageTransition() {
     }));
     const stop = () => {
       cancelAnimationFrame(raf); clearTimeout(timeout);
-      el.dataset.phase = 'idle';
+      el.dataset['phase'] = 'idle';
       document.documentElement.removeAttribute('data-page-transition');
       ctx.clearRect(0, 0, width, height);
     };
     const draw = (now: number) => {
       const entry = Math.min(1, (now - start) / 420);
-      if (ready && !release && entry === 1) { release = now; el.dataset.phase = 'revealing'; }
+      if (ready && !release && entry === 1) { release = now; el.dataset['phase'] = 'revealing'; }
       const exit = release ? Math.min(1, (now - release) / 760) : 0;
       el.style.setProperty('--curtain-opacity', String(Math.sin(entry * Math.PI / 2) * (1 - exit)));
       ctx.clearRect(0, 0, width, height);
@@ -77,7 +77,7 @@ export function SeasonalPageTransition() {
       if (reduce.matches || event.fromLocation?.pathname === event.toLocation.pathname || event.toLocation.pathname.startsWith('/admin')) return;
       stop();
       mood = transitionMood(document.documentElement.getAttribute('data-season'));
-      el.dataset.mood = mood; el.dataset.phase = 'covering';
+      el.dataset['mood'] = mood; el.dataset['phase'] = 'covering';
       document.documentElement.setAttribute('data-page-transition', mood);
       const styles = getComputedStyle(el);
       palette = [1, 2, 3, 4].map(n => styles.getPropertyValue(`--wind-color-${n}`).trim());
