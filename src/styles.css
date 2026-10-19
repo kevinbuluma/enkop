@@ -150,6 +150,7 @@
   --color-surface: var(--surface);
   --color-inverse: var(--inverse);
   --color-inverse-foreground: var(--inverse-foreground);
+  --color-gold: var(--gold);
 }
 :root {
   --radius: 0.125rem;
@@ -597,3 +598,5 @@ html[data-season="autumn"] { --background: oklch(0.958 0.016 60); --accent: oklc
 .why-grid span { color: var(--gold); }
 .gallery-toolbar, .gallery-thumbs { backdrop-filter: blur(14px); }
 :where(a,button,select,input,textarea):focus-visible { outline-color: var(--gold); }
+.detail-gallery button { border-radius: var(--round); }
+@media (max-width: 960px) { .hero-search button { border-radius: 0 0 23px 23px; } }
