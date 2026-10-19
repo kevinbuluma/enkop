@@ -15,6 +15,7 @@ import { Route as AdminRouteImport } from './routes/admin'
 import { Route as ContactRouteImport } from './routes/contact'
 import { Route as InsightsRouteImport } from './routes/insights'
 import { Route as ServicesRouteImport } from './routes/services'
+import { Route as SitemapDotxmlRouteImport } from './routes/sitemap[.]xml'
 import { Route as ApiHomepageFallbackRouteImport } from './routes/api/homepage-fallback'
 import { Route as PropertiesIndexRouteImport } from './routes/properties.index'
 import { Route as PropertiesSlugRouteImport } from './routes/properties.$slug'
@@ -49,6 +50,11 @@ const ServicesRoute = ServicesRouteImport.update({
   path: '/services',
   getParentRoute: () => rootRouteImport,
 } as any)
+const SitemapDotxmlRoute = SitemapDotxmlRouteImport.update({
+  id: '/sitemap.xml',
+  path: '/sitemap.xml',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ApiHomepageFallbackRoute = ApiHomepageFallbackRouteImport.update({
   id: '/api/homepage-fallback',
   path: '/api/homepage-fallback',
@@ -72,6 +78,7 @@ export interface FileRoutesByFullPath {
   '/contact': typeof ContactRoute
   '/insights': typeof InsightsRoute
   '/services': typeof ServicesRoute
+  '/sitemap.xml': typeof SitemapDotxmlRoute
   '/api/homepage-fallback': typeof ApiHomepageFallbackRoute
   '/properties/$slug': typeof PropertiesSlugRoute
   '/properties/': typeof PropertiesIndexRoute
@@ -83,6 +90,7 @@ export interface FileRoutesByTo {
   '/contact': typeof ContactRoute
   '/insights': typeof InsightsRoute
   '/services': typeof ServicesRoute
+  '/sitemap.xml': typeof SitemapDotxmlRoute
   '/api/homepage-fallback': typeof ApiHomepageFallbackRoute
   '/properties/$slug': typeof PropertiesSlugRoute
   '/properties': typeof PropertiesIndexRoute
@@ -95,6 +103,7 @@ export interface FileRoutesById {
   '/contact': typeof ContactRoute
   '/insights': typeof InsightsRoute
   '/services': typeof ServicesRoute
+  '/sitemap.xml': typeof SitemapDotxmlRoute
   '/api/homepage-fallback': typeof ApiHomepageFallbackRoute
   '/properties/$slug': typeof PropertiesSlugRoute
   '/properties/': typeof PropertiesIndexRoute
@@ -108,6 +117,7 @@ export interface FileRouteTypes {
     | '/contact'
     | '/insights'
     | '/services'
+    | '/sitemap.xml'
     | '/api/homepage-fallback'
     | '/properties/$slug'
     | '/properties/'
@@ -119,6 +129,7 @@ export interface FileRouteTypes {
     | '/contact'
     | '/insights'
     | '/services'
+    | '/sitemap.xml'
     | '/api/homepage-fallback'
     | '/properties/$slug'
     | '/properties'
@@ -130,6 +141,7 @@ export interface FileRouteTypes {
     | '/contact'
     | '/insights'
     | '/services'
+    | '/sitemap.xml'
     | '/api/homepage-fallback'
     | '/properties/$slug'
     | '/properties/'
@@ -142,6 +154,7 @@ export interface RootRouteChildren {
   ContactRoute: typeof ContactRoute
   InsightsRoute: typeof InsightsRoute
   ServicesRoute: typeof ServicesRoute
+  SitemapDotxmlRoute: typeof SitemapDotxmlRoute
   ApiHomepageFallbackRoute: typeof ApiHomepageFallbackRoute
   PropertiesSlugRoute: typeof PropertiesSlugRoute
   PropertiesIndexRoute: typeof PropertiesIndexRoute
@@ -191,6 +204,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ServicesRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/sitemap.xml': {
+      id: '/sitemap.xml'
+      path: '/sitemap.xml'
+      fullPath: '/sitemap.xml'
+      preLoaderRoute: typeof SitemapDotxmlRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/api/homepage-fallback': {
       id: '/api/homepage-fallback'
       path: '/api/homepage-fallback'
@@ -222,6 +242,7 @@ const rootRouteChildren: RootRouteChildren = {
   ContactRoute: ContactRoute,
   InsightsRoute: InsightsRoute,
   ServicesRoute: ServicesRoute,
+  SitemapDotxmlRoute: SitemapDotxmlRoute,
   ApiHomepageFallbackRoute: ApiHomepageFallbackRoute,
   PropertiesSlugRoute: PropertiesSlugRoute,
   PropertiesIndexRoute: PropertiesIndexRoute,

@@ -31,6 +31,8 @@ export type Property = {
   photo_urls?: string[];
   tour_url?: string | null;
   is_sample: boolean;
+  external_links?: Record<string, string> | null;
+  map_query?: string | null;
   featured: boolean;
 };
 

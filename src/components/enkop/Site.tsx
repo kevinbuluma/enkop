@@ -4,6 +4,7 @@ import { ArrowRight, Menu, X } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { navigation, contact } from '@/lib/enkop';
 import { SeasonalToggle } from './Seasonal';
+import { SeasonParticles } from './SeasonParticles';
 
 export function Site({ children, darkHeader = false }: { children: ReactNode; darkHeader?: boolean }) {
   const [menuOpen, setMenuOpen] = useState(false);
@@ -20,6 +21,7 @@ export function Site({ children, darkHeader = false }: { children: ReactNode; da
 
   return <div className="site-shell">
     <a href="#main" className="skip-link">Skip to content</a>
+    <SeasonParticles />
     <header className={`site-header ${darkHeader && !scrolled && !menuOpen ? 'site-header--inverse' : ''} ${scrolled || menuOpen ? 'site-header--solid' : ''}`}>
       <Link to="/" className="wordmark" aria-label="ENKOP home">ENKOP<span className="wordmark-dot">.</span></Link>
       <nav className="desktop-nav" aria-label="Main navigation">{navigation.map(item => <Link key={item.to} to={item.to} activeProps={{ className: 'nav-active' }}>{item.label}</Link>)}</nav>

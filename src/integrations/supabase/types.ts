@@ -110,12 +110,14 @@ export type Database = {
           created_at: string
           currency: string
           description: string
+          external_links: Json
           featured: boolean
           id: string
           image_key: string
           image_paths: string[]
           is_sample: boolean
           listing_type: string
+          map_query: string | null
           neighborhood: string
           parking: number
           price: number
@@ -134,12 +136,14 @@ export type Database = {
           created_at?: string
           currency?: string
           description?: string
+          external_links?: Json
           featured?: boolean
           id?: string
           image_key?: string
           image_paths?: string[]
           is_sample?: boolean
           listing_type?: string
+          map_query?: string | null
           neighborhood: string
           parking?: number
           price: number
@@ -158,12 +162,14 @@ export type Database = {
           created_at?: string
           currency?: string
           description?: string
+          external_links?: Json
           featured?: boolean
           id?: string
           image_key?: string
           image_paths?: string[]
           is_sample?: boolean
           listing_type?: string
+          map_query?: string | null
           neighborhood?: string
           parking?: number
           price?: number

@@ -8,6 +8,13 @@
       "when": 1792357919372,
       "tag": "0000_properties_image_paths",
       "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "7",
+      "when": 1792402825975,
+      "tag": "0001_property_links_location",
+      "breakpoints": true
     }
   ]
 }
