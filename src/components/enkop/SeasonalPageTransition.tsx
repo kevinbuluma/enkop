@@ -17,6 +17,7 @@ export function SeasonalPageTransition() {
     if (!ctx) return;
     const reduce = matchMedia('(prefers-reduced-motion: reduce)');
     const atlas = new Image();
+    atlas.decoding = 'async';
     const sprites: HTMLCanvasElement[] = [];
     const softSprites: HTMLCanvasElement[] = [];
     atlas.onload = () => {
@@ -84,7 +85,7 @@ export function SeasonalPageTransition() {
           ctx.drawImage(sprite, -p.size / 2, -p.size / 2, p.size, p.size);
           ctx.restore();
         }
-      } else if (mood !== 'flip') {
+      } else if (mood !== 'flip' && mood !== 'leaves') {
         const sweep = 1 - Math.pow(1 - entry, 3);
         for (const [i, p] of particles.entries()) {
           const size = (mood === 'snow' ? 16 : mood === 'rain' ? 35 : 90) * p.size * Math.min(1.4, width / 900 + .45);
@@ -111,11 +112,6 @@ export function SeasonalPageTransition() {
             ctx.bezierCurveTo(-size * .4, -size * .85, size * .6, -size * .7, size, 0);
             ctx.bezierCurveTo(size * .4, size * .85, -size * .6, size * .7, -size, 0);
             ctx.fill();
-            if (mood === 'leaves') {
-              ctx.beginPath(); ctx.moveTo(-size, 0); ctx.lineTo(size * 1.15, 0);
-              for (let v = -.5; v < .7; v += .3) { ctx.moveTo(size * v, 0); ctx.lineTo(size * (v + .2), -size * .4); }
-              ctx.stroke();
-            }
           }
           ctx.restore();
         }
@@ -127,6 +123,9 @@ export function SeasonalPageTransition() {
       if (reduce.matches || event.fromLocation?.pathname === event.toLocation.pathname || event.toLocation.pathname.startsWith('/admin')) return;
       stop();
       mood = transitionMood(document.documentElement.getAttribute('data-season'));
+      // Never substitute illustrated leaves while the photographic atlas loads.
+      // Navigation remains immediate on slow connections or an asset failure.
+      if (mood === 'leaves' && sprites.length !== 4) return;
       el.dataset['mood'] = mood; el.dataset['phase'] = 'covering';
       document.documentElement.setAttribute('data-page-transition', mood);
       const styles = getComputedStyle(el);
