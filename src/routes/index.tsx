@@ -10,6 +10,9 @@ import { Parallax } from '@/components/enkop/Parallax';
 import { getProperties } from '@/lib/enkop.functions';
 import { hero, imagery, type Property } from '@/lib/enkop';
 import { HeroReel } from '@/components/enkop/HeroReel';
+import { Entrance } from '@/components/enkop/Entrance';
+import { SectionNavigator } from '@/components/enkop/SectionNavigator';
+import { IntentPicker } from '@/components/enkop/IntentPicker';
 import { HeroSearch } from '@/components/enkop/HeroSearch';
 import { getHomepageSlides } from '@/lib/slides.functions';
 import { useCinematicFx } from '@/lib/cinematic';
@@ -20,13 +23,17 @@ export const Route = createFileRoute("/")({
   component: Index,
 });
 
+const NAV = [{ id: 'top', label: 'Welcome' }, { id: 'approach', label: 'Our approach' }, { id: 'collection', label: 'Collection' }, { id: 'locations', label: 'Locations' }, { id: 'services', label: 'Services' }, { id: 'why', label: 'Why ENKOP' }, { id: 'contact', label: 'Contact' }];
+
 function Index() {
   useCinematicFx();
   const { properties: loaded, slides: managed } = Route.useLoaderData();
   const properties = loaded as Property[];
   const slides = managed.length ? managed : [{ id: 'built-in-loop', label: '', video_url: '/videos/enkop-hero-loop.mp4', image_url: '/videos/enkop-hero-loop.jpg' }];
   return <Site darkHeader>
-    <section className="home-hero">
+    <Entrance />
+    <SectionNavigator sections={NAV} />
+    <section className="home-hero" id="top">
       <Parallax className="hero-parallax" strength={0.14}>
         <HeroReel slides={slides} poster={hero} />
       </Parallax>
@@ -46,7 +53,8 @@ function Index() {
       <span className="hero-side-note">01 — 04 / A DIFFERENT PERSPECTIVE</span>
     </section>
 
-    <Reveal as="section" className="intro-section page-gutter" delay={0}>
+    <Reveal as="section" id="approach" className="intro-section page-gutter" delay={0}>
+      <IntentPicker />
       <p className="eyebrow"><span>01 /</span> OUR PERSPECTIVE</p>
       <div className="intro-layout">
         <h2>Real estate,<br/><em>reconsidered.</em></h2>
@@ -57,7 +65,7 @@ function Index() {
       </div>
     </Reveal>
 
-    <Reveal as="section" className="collection-section page-gutter">
+    <Reveal as="section" id="collection" className="collection-section page-gutter">
       <SectionTop index="02" label="THE COLLECTION" title={<>Spaces worth <em>discovering.</em></>} action={{ label: 'View all properties', to: '/properties' }}/>
       <div className="featured-grid">
         {properties.slice(0,2).map((property, index) => (
@@ -81,7 +89,7 @@ function Index() {
       </div>
     </Reveal>
 
-    <Reveal as="section" className="neighborhood-section page-gutter">
+    <Reveal as="section" id="locations" className="neighborhood-section page-gutter">
       <SectionTop index="04" label="EXPLORE NAIROBI" title={<>A city of <em>possibilities.</em></>}/>
       <div className="neighborhood-links">
         {['Karen','Westlands','Runda','Kilimani'].map((area, index) => (
@@ -92,7 +100,7 @@ function Index() {
       </div>
     </Reveal>
 
-    <Reveal as="section" className="services-preview page-gutter">
+    <Reveal as="section" id="services" className="services-preview page-gutter">
       <div>
         <p className="eyebrow"><span>05 /</span> WHAT WE DO</p>
         <h2>Property, with<br/><em>purpose.</em></h2>
@@ -114,14 +122,14 @@ function Index() {
       </Parallax>
     </Reveal>
 
-    <Reveal as="section" className="why-section page-gutter">
+    <Reveal as="section" id="why" className="why-section page-gutter">
       <p className="eyebrow"><span>06 /</span> WHY ENKOP</p>
       <div className="why-grid">
         {[['Curated, not crowded','A considered selection of residences, each one personally reviewed.'],['Represented in person','One ENKOP representative from first viewing to final handover.'],['Discreet by default','Private viewings and quiet negotiation, on your terms.']].map(([t,d], i) => <div key={t}><span>0{i+1}</span><h3>{t}</h3><p>{d}</p></div>)}
       </div>
     </Reveal>
 
-    <Reveal as="section" className="home-enquire page-gutter">
+    <Reveal as="section" id="contact" className="home-enquire page-gutter">
       <div className="home-enquire-copy">
         <p className="eyebrow"><span>07 /</span> BEGIN THE CONVERSATION</p>
         <h2>Tell us what exceptional<br/><em>looks like to you.</em></h2>
