@@ -16,4 +16,4 @@
 - Homepage hero scenes come from the homepage_slides table; the public loader signs only active slide paths server-side, and the bundled reel is the fallback when no scenes are active.
 - Matching homepage fallback images use a browser-captured video frame and an admin-verified streaming AI Gateway image-edit route; only an explicitly approved final image is stored and assigned to the scene.
 - Page transitions use a persistent root-level seasonal curtain driven by router lifecycle events, with native snapshot transitions disabled to avoid competing animations; reduced motion and admin navigation bypass the curtain.
-- Autumn navigation uses a preloaded local botanical sprite atlas and deterministic canvas wind paths, keeping textured accumulation and vortex exits independent of page data loading.
+- Autumn navigation uses a preloaded local botanical sprite atlas, cached soft-focus variants and deterministic canvas wind paths, keeping textured accumulation and vortex exits independent of page data loading without per-frame image filters.

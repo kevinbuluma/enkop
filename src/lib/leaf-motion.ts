@@ -1,5 +1,5 @@
-export const LEAF_ENTRY_MS = 1450;
-export const LEAF_EXIT_MS = 1650;
+export const LEAF_ENTRY_MS = 1650;
+export const LEAF_EXIT_MS = 1850;
 const clamp = (value: number) => Math.max(0, Math.min(1, value));
 export function leafArrival(progress: number, index: number, count: number) {
   return clamp((progress - (index / count) * .54) / .46);
