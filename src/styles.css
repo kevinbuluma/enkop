@@ -653,3 +653,5 @@ html[data-season="autumn"] { --background: oklch(0.958 0.016 60); --accent: oklc
 .testimonial-card figcaption span { color: var(--muted-foreground); }
 .team-initial { width: 56px; height: 56px; border-radius: 50%; display: inline-flex; align-items: center; justify-content: center; background: var(--surface); font-family: var(--font-display); font-size: 24px; }
 @media (max-width: 960px) { .team-grid { grid-template-columns: 1fr; } }
+.footer-admin{opacity:.55;font-size:.75rem;text-decoration:underline;text-underline-offset:3px}
+.footer-admin:hover{opacity:1;color:var(--gold)}

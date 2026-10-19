@@ -62,7 +62,7 @@ export const sendEnquiry = createServerFn({ method: 'POST' })
 async function notifyOwner(data: z.infer<typeof enquirySchema>) {
   const lovableKey = process.env['LOVABLE_API_KEY'];
   const whatsappKey = process.env['WHATSAPP_API_KEY'];
-  const to = (process.env['ENKOP_NOTIFY_WHATSAPP'] ?? '').replace(/\D/g, '');
+  const to = (process.env['ENKOP_NOTIFY_WHATSAPP'] || '254707465190').replace(/\D/g, '');
   if (!lovableKey || !whatsappKey || !to) return;
   const lines = [
     'New ENKOP enquiry',
