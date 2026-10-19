@@ -11,7 +11,9 @@ export function SeasonalToggle() {
   const [settings, setSettings] = useState<SeasonSettings | null | undefined>(undefined);
   useEffect(() => { setOn(localStorage.getItem('enkop:season') !== 'off'); loadSettings().then(setSettings); }, []);
   const enabled = settings ? settings.enabled : true;
-  const season = computeSeason(new Date(), settings ? toConfig(settings) : seasonConfig);
+  const [forced, setForced] = useState<string | null>(null);
+  useEffect(() => { const q = new URLSearchParams(location.search).get('season'); if (q && q in seasonLabels) { sessionStorage.setItem('enkop:season-preview', q); } setForced(sessionStorage.getItem('enkop:season-preview')); }, []);
+  const season = forced ?? computeSeason(new Date(), settings ? toConfig(settings) : seasonConfig);
   useEffect(() => {
     if (settings === undefined) return;
     const root = document.documentElement;
