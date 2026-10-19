@@ -15,6 +15,13 @@
       "when": 1792402825975,
       "tag": "0001_property_links_location",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1792403409588,
+      "tag": "0002_team_testimonials_settings",
+      "breakpoints": true
     }
   ]
 }
