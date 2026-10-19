@@ -1,6 +1,6 @@
 import { useEffect, useRef } from 'react';
 import { useRouter } from '@tanstack/react-router';
-import { transitionMood } from '@/lib/page-transition';
+import { alternatingTransitionMood, transitionMood } from '@/lib/page-transition';
 import leafAtlasUrl from '@/assets/autumn-leaf-cinematic.png';
 import { LEAF_ENTRY_MS, LEAF_EXIT_MS, leafArrival, leafExitPosition } from '@/lib/leaf-motion';
 
@@ -39,6 +39,7 @@ export function SeasonalPageTransition() {
     };
     atlas.src = leafAtlasUrl;
     let raf = 0, start = 0, release = 0, ready = false, timeout = 0;
+    let navigationIndex = 0;
     let width = 0, height = 0;
     let palette: string[] = [];
     let mood = transitionMood(null);
@@ -57,8 +58,8 @@ export function SeasonalPageTransition() {
       const textured = mood === 'leaves' && sprites.length === 4;
       const entry = Math.min(1, (now - start) / (textured ? LEAF_ENTRY_MS : 420));
       if (ready && !release && entry === 1 && (!textured || now - start >= LEAF_ENTRY_MS + 140)) { release = now; el.dataset['phase'] = 'revealing'; }
-      const exit = release ? Math.min(1, (now - release) / (textured ? LEAF_EXIT_MS : 760)) : 0;
-      el.style.setProperty('--curtain-opacity', String(textured ? Math.pow(entry, 3) * .78 * Math.pow(1 - exit, 2) : Math.sin(entry * Math.PI / 2) * (1 - exit)));
+      const exit = release ? Math.min(1, (now - release) / (textured ? LEAF_EXIT_MS : mood === 'flip' ? 1100 : 760)) : 0;
+      el.style.setProperty('--curtain-opacity', String(textured ? Math.pow(entry, 3) * .78 * Math.pow(1 - exit, 2) : mood === 'flip' ? Math.sin(entry * Math.PI / 2) : Math.sin(entry * Math.PI / 2) * (1 - exit)));
       ctx.clearRect(0, 0, width, height);
       if (textured) {
         for (const [i, p] of leaves.entries()) {
@@ -120,9 +121,10 @@ export function SeasonalPageTransition() {
       raf = requestAnimationFrame(draw);
     };
     const before = router.subscribe('onBeforeNavigate', event => {
-      if (reduce.matches || event.fromLocation?.pathname === event.toLocation.pathname || event.toLocation.pathname.startsWith('/admin')) return;
+      if (reduce.matches || event.fromLocation?.pathname === event.toLocation.pathname || event.toLocation.pathname.startsWith('/admin') || event.fromLocation?.pathname.startsWith('/admin')) return;
       stop();
-      mood = transitionMood(document.documentElement.getAttribute('data-season'));
+      mood = alternatingTransitionMood(document.documentElement.getAttribute('data-season'), navigationIndex);
+      navigationIndex += 1;
       // Never substitute illustrated leaves while the photographic atlas loads.
       // Navigation remains immediate on slow connections or an asset failure.
       if (mood === 'leaves' && sprites.length !== 4) return;

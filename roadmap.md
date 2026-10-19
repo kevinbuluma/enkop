@@ -1,5 +1,7 @@
 # ENKOP roadmap
 
+- [ ] Alternate seasonal navigation with a cinematic page flip
+
 - [x] Remove cartoon leaf fallback and verify photographic leaves during navigation
 
 - [x] Realistic textured leaves: staggered wind arrival, full-screen accumulation, tornado sweep and sliding exits
