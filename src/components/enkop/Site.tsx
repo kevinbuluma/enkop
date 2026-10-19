@@ -18,6 +18,7 @@ export function Site({ children, darkHeader = false }: { children: ReactNode; da
     return () => window.removeEventListener('scroll', onScroll);
   }, [location.pathname]);
   useEffect(() => { document.body.style.overflow = menuOpen ? 'hidden' : ''; return () => { document.body.style.overflow = ''; }; }, [menuOpen]);
+  useEffect(() => { const r = document.documentElement; r.classList.remove('is-navigating'); void r.offsetWidth; r.classList.add('is-navigating'); const t = setTimeout(() => r.classList.remove('is-navigating'), 1000); return () => clearTimeout(t); }, [location.pathname]);
 
   return <div className="site-shell">
     <a href="#main" className="skip-link">Skip to content</a>
