@@ -3,6 +3,7 @@
 - [ ] Deep functionality scan: public pages, hero scenes, search, galleries, seasonal themes and transitions
 - [ ] Verify signed-in admin tools and enquiry readback; fix confirmed defects and rerun tests
 - [ ] Review dependency and backend security scan results
+- [ ] Fix video playback failures and reduce stalling during homepage scene changes
 
 - [x] Alternate seasonal navigation with a cinematic page flip
 
