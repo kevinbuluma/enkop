@@ -1,7 +1,7 @@
 import { useEffect, useRef } from 'react';
 import { useRouter } from '@tanstack/react-router';
 import { transitionMood } from '@/lib/page-transition';
-import leafAtlasUrl from '@/assets/autumn-leaf-atlas.png';
+import leafAtlasUrl from '@/assets/autumn-leaf-cinematic.png';
 import { LEAF_ENTRY_MS, LEAF_EXIT_MS, leafArrival, leafExitPosition } from '@/lib/leaf-motion';
 
 /** Persistent navigation curtain; never delays data loading or intercepts links. */
@@ -18,12 +18,22 @@ export function SeasonalPageTransition() {
     const reduce = matchMedia('(prefers-reduced-motion: reduce)');
     const atlas = new Image();
     const sprites: HTMLCanvasElement[] = [];
+    const softSprites: HTMLCanvasElement[] = [];
     atlas.onload = () => {
       for (let i = 0; i < 4; i++) {
         const sprite = document.createElement('canvas');
         sprite.width = 512; sprite.height = 512;
-        sprite.getContext('2d')?.drawImage(atlas, (i % 2) * atlas.naturalWidth / 2, Math.floor(i / 2) * atlas.naturalHeight / 2, atlas.naturalWidth / 2, atlas.naturalHeight / 2, 0, 0, 512, 512);
+        const spriteCtx = sprite.getContext('2d');
+        if (!spriteCtx) continue;
+        spriteCtx.shadowColor = getComputedStyle(el).getPropertyValue('--leaf-shadow').trim();
+        spriteCtx.shadowBlur = 9; spriteCtx.shadowOffsetY = 5;
+        spriteCtx.drawImage(atlas, (i % 2) * atlas.naturalWidth / 2, Math.floor(i / 2) * atlas.naturalHeight / 2, atlas.naturalWidth / 2, atlas.naturalHeight / 2, 12, 12, 488, 488);
         sprites.push(sprite);
+        const soft = document.createElement('canvas');
+        soft.width = 512; soft.height = 512;
+        const softCtx = soft.getContext('2d');
+        if (softCtx) { softCtx.filter = 'blur(4px)'; softCtx.drawImage(sprite, 0, 0); }
+        softSprites.push(soft);
       }
     };
     atlas.src = leafAtlasUrl;
@@ -45,7 +55,7 @@ export function SeasonalPageTransition() {
     const draw = (now: number) => {
       const textured = mood === 'leaves' && sprites.length === 4;
       const entry = Math.min(1, (now - start) / (textured ? LEAF_ENTRY_MS : 420));
-      if (ready && !release && entry === 1) { release = now; el.dataset['phase'] = 'revealing'; }
+      if (ready && !release && entry === 1 && (!textured || now - start >= LEAF_ENTRY_MS + 140)) { release = now; el.dataset['phase'] = 'revealing'; }
       const exit = release ? Math.min(1, (now - release) / (textured ? LEAF_EXIT_MS : 760)) : 0;
       el.style.setProperty('--curtain-opacity', String(textured ? Math.pow(entry, 3) * .78 * Math.pow(1 - exit, 2) : Math.sin(entry * Math.PI / 2) * (1 - exit)));
       ctx.clearRect(0, 0, width, height);
@@ -53,21 +63,23 @@ export function SeasonalPageTransition() {
         for (const [i, p] of leaves.entries()) {
           const arrival = leafArrival(entry, i, leaves.length);
           if (arrival === 0) continue;
-          const eased = 1 - Math.pow(1 - arrival, 3);
+          const eased = arrival * arrival * (3 - 2 * arrival);
           const wind = Math.sin(arrival * Math.PI) * Math.sin(arrival * 6 + p.angle);
           let x = p.x - (1 - eased) * (width + p.size * 2);
           let y = p.y + wind * height * .16;
-          let turn = p.angle + (1 - arrival) * 5 + Math.sin(now / 280 + i) * .09;
+          let turn = p.angle + (1 - arrival) * (2.2 + p.depth * .65) + Math.sin(now / 420 + i) * .07;
           let scale = 1;
           if (release) {
             const position = leafExitPosition(p.x, p.y, exit, i, width, height);
             x = position.x; y = position.y; turn += position.turn; scale = position.scale;
           }
-          const flutter = 1 - Math.sin(arrival * Math.PI) * .55;
-          const sprite = sprites[i % 4];
+          const moving = release ? Math.sin(exit * Math.PI) : Math.sin(arrival * Math.PI);
+          const roll = Math.sin((now - start) / (240 + p.depth * 60) + p.angle) * moving;
+          const flutter = 1 - Math.abs(roll) * .74;
+          const sprite = p.depth === 3 ? softSprites[i % 4] : sprites[i % 4];
           if (!sprite) continue;
           ctx.save(); ctx.translate(x, y); ctx.rotate(turn);
-          ctx.scale(scale, scale * (release ? .72 + Math.abs(Math.cos(exit * 9 + p.angle)) * .28 : flutter));
+          ctx.transform(scale, roll * .13, roll * .21, scale * flutter, 0, 0);
           ctx.globalAlpha = Math.min(1, arrival * 5);
           ctx.drawImage(sprite, -p.size / 2, -p.size / 2, p.size, p.size);
           ctx.restore();
@@ -124,7 +136,8 @@ export function SeasonalPageTransition() {
       const cols = Math.ceil(width / spacing) + 2, rows = Math.ceil(height / spacing) + 2;
       leaves = Array.from({ length: cols * rows }, (_, i) => {
         const col = i % cols, row = Math.floor(i / cols);
-        return { x: (col - .5) * spacing + Math.sin(i * 17.3) * spacing * .23, y: (row - .5) * spacing + Math.cos(i * 9.1) * spacing * .23, size: spacing * (2.05 + (i % 5) * .16), angle: i * 2.399, depth: i % 4 };
+        const depth = i % 4;
+        return { x: (col - .5) * spacing + Math.sin(i * 17.3) * spacing * .36, y: (row - .5) * spacing + Math.cos(i * 9.1) * spacing * .36, size: spacing * (1.65 + depth * .38 + (i % 7) * .06), angle: i * 2.399, depth };
       });
       // Interleave rows so successive gusts accumulate across the whole screen.
       leaves.sort((a, b) => (a.x / width + a.y / height * .28) - (b.x / width + b.y / height * .28));
