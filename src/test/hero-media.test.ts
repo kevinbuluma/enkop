@@ -27,6 +27,8 @@ describe('optimized homepage scene media', () => {
       expect(enhancedHeroMedia(`/videos/scenes/enkop-scene-${n}.mp4`)).toEqual({
         hd: `/videos/scenes/enkop-scene-${n}-hd.mp4`,
         ultra: `/videos/scenes/enkop-scene-${n}-4k.mp4`,
+        hdWebm: `/videos/scenes/enkop-scene-${n}-hd.webm`,
+        ultraWebm: `/videos/scenes/enkop-scene-${n}-4k.webm`,
       });
     }
     expect(enhancedHeroMedia('https://example.com/new-upload.mp4')).toBeNull();

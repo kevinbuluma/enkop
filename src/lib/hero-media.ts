@@ -22,6 +22,8 @@ export function enhancedHeroMedia(url: string | null) {
   return {
     hd: `/videos/scenes/enkop-scene-${match[1]}-hd.mp4`,
     ultra: `/videos/scenes/enkop-scene-${match[1]}-4k.mp4`,
+    hdWebm: `/videos/scenes/enkop-scene-${match[1]}-hd.webm`,
+    ultraWebm: `/videos/scenes/enkop-scene-${match[1]}-4k.webm`,
   };
 }
 
