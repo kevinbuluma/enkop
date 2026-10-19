@@ -8,7 +8,7 @@ export function SeasonalToggle() {
   useEffect(() => { setOn(localStorage.getItem('enkop:season') !== 'off'); }, []);
   useEffect(() => {
     const root = document.documentElement;
-    if (on) root.dataset.season = season; else delete root.dataset.season;
+    if (on) root.setAttribute('data-season', season); else root.removeAttribute('data-season');
   }, [on, season]);
   return <button type="button" className="season-toggle" aria-pressed={on} onClick={() => { const next = !on; setOn(next); localStorage.setItem('enkop:season', next ? 'on' : 'off'); }}>
     Seasonal atmosphere: {on ? `${seasonLabels[season]} · On` : 'Off'}

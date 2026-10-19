@@ -37,7 +37,7 @@ export function computeSeason(date: Date, config: SeasonConfig = seasonConfig): 
   if (config.seasonalProfile === 'temperate-four-season') {
     const north = m === 12 || m <= 2 ? 'winter' : m <= 5 ? 'spring' : m <= 8 ? 'summer' : 'autumn';
     const flip: Record<string, string> = { winter: 'summer', summer: 'winter', spring: 'autumn', autumn: 'spring' };
-    return config.hemisphere === 'north' ? north : flip[north];
+    return config.hemisphere === 'north' ? north : (flip[north] ?? north);
   }
   if (m <= 2) return 'dry-warm';
   if (m <= 5) return 'long-rains';
