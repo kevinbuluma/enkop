@@ -655,3 +655,56 @@ html[data-season="autumn"] { --background: oklch(0.958 0.016 60); --accent: oklc
 @media (max-width: 960px) { .team-grid { grid-template-columns: 1fr; } }
 .footer-admin{opacity:.55;font-size:.75rem;text-decoration:underline;text-underline-offset:3px}
 .footer-admin:hover{opacity:1;color:var(--gold)}
+
+/* ===== Seasonal frames & transitions ===== */
+.season-particles { z-index: 40; }
+.team-card, .testimonial-card, .why-grid > div, .detail-facts, .home-enquire form, .detail-enquire form, .property-information { position: relative; }
+html[data-season] :is(.team-card, .testimonial-card, .why-grid > div, .detail-facts, .home-enquire form, .detail-enquire form, .hero-search, .property-information)::before {
+  content: ""; position: absolute; pointer-events: none; z-index: 3; transition: opacity 1.2s ease;
+}
+/* Winter: soft snow settled along the top edge of frames */
+html[data-season="winter"] :is(.team-card, .testimonial-card, .why-grid > div, .detail-facts, .home-enquire form, .detail-enquire form, .hero-search, .property-information)::before {
+  left: 6px; right: 6px; top: -7px; height: 14px; border-radius: 14px 14px 6px 6px;
+  background:
+    radial-gradient(12px 8px at 12% 70%, oklch(0.995 0.003 240) 98%, transparent),
+    radial-gradient(18px 9px at 34% 60%, oklch(0.99 0.004 240) 98%, transparent),
+    radial-gradient(14px 8px at 58% 72%, oklch(0.995 0.003 240) 98%, transparent),
+    radial-gradient(20px 9px at 82% 62%, oklch(0.99 0.004 240) 98%, transparent),
+    linear-gradient(oklch(0.99 0.004 240), oklch(0.95 0.01 240));
+  background-size: 100% 100%, 100% 100%, 100% 100%, 100% 100%, 100% 55%;
+  background-repeat: no-repeat; background-position: 0 0, 0 0, 0 0, 0 0, 0 100%;
+  filter: drop-shadow(0 2px 3px oklch(0.6 0.03 240 / .25));
+}
+html[data-season="winter"] .site-header--solid { box-shadow: inset 0 -2px 0 oklch(0.98 0.005 240 / .8); }
+html[data-season="winter"] body { background-image: radial-gradient(120% 60% at 50% -10%, oklch(0.93 0.02 240 / .7), transparent 60%); }
+/* Spring: a blossom resting on the frame corner */
+html[data-season="spring"] :is(.team-card, .testimonial-card, .why-grid > div, .home-enquire form, .detail-enquire form, .hero-search)::before {
+  top: -10px; right: 18px; width: 22px; height: 22px;
+  background: radial-gradient(circle, oklch(0.88 0.08 90) 18%, transparent 20%), conic-gradient(from 0deg, oklch(0.86 0.07 0) 0 20%, transparent 0 25%, oklch(0.88 0.06 350) 0 45%, transparent 0 50%, oklch(0.86 0.07 0) 0 70%, transparent 0 75%, oklch(0.88 0.06 350) 0 95%, transparent 0);
+  border-radius: 50%;
+}
+html[data-season="spring"] body { background-image: radial-gradient(90% 50% at 85% 0%, oklch(0.94 0.04 350 / .45), transparent 60%); }
+/* Summer: warm sun glint sweeping the top edge */
+html[data-season="summer"] :is(.team-card, .testimonial-card, .why-grid > div, .detail-facts, .home-enquire form, .detail-enquire form, .hero-search, .property-information)::before {
+  left: 0; right: 0; top: 0; height: 1px; background: linear-gradient(90deg, transparent, oklch(0.85 0.12 80), transparent); background-size: 50% 100%; background-repeat: no-repeat; animation: sun-glint 6s ease-in-out infinite;
+}
+@keyframes sun-glint { from { background-position: -60% 0; } to { background-position: 160% 0; } }
+html[data-season="summer"] body { background-image: radial-gradient(80% 50% at 90% -5%, oklch(0.93 0.08 85 / .55), transparent 60%); }
+/* Autumn: a single leaf caught on the frame */
+html[data-season="autumn"] :is(.team-card, .testimonial-card, .why-grid > div, .home-enquire form, .detail-enquire form, .hero-search)::before {
+  top: -9px; left: 22px; width: 18px; height: 18px; border-radius: 0 100% 0 100%; transform: rotate(-20deg);
+  background: linear-gradient(135deg, oklch(0.68 0.15 55), oklch(0.55 0.14 40));
+  box-shadow: 0 2px 4px oklch(0.4 0.08 40 / .3);
+}
+html[data-season="autumn"] body { background-image: radial-gradient(90% 50% at 10% 0%, oklch(0.9 0.06 60 / .5), transparent 60%); }
+
+/* Season-matched reveal transitions */
+html[data-season="winter"] .reveal:not(.reveal--in) { filter: blur(8px) brightness(1.08); transform: translateY(20px) scale(.985); }
+html[data-season="spring"] .reveal:not(.reveal--in) { transform: translateY(26px) scale(.96); }
+html[data-season="summer"] .reveal:not(.reveal--in) { filter: brightness(1.15) saturate(1.2); transform: translateY(30px); }
+html[data-season="autumn"] .reveal:not(.reveal--in) { transform: translateY(30px) rotate(-1.2deg); transform-origin: left top; }
+html[data-season] .reveal { transition: opacity 1.1s cubic-bezier(.22,.61,.21,1), transform 1.1s cubic-bezier(.22,.61,.21,1), filter 1.1s ease; }
+@media (prefers-reduced-motion: reduce) {
+  html[data-season] .reveal:not(.reveal--in) { filter: none; transform: none; }
+  html[data-season="summer"] :is(.team-card, .testimonial-card)::before { animation: none; }
+}

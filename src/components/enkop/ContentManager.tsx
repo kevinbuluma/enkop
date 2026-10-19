@@ -50,6 +50,7 @@ export function SeasonManager() {
       </div>)}
       {s.customRanges.length < 12 && <Button type="button" variant="textArrow" onClick={() => set({ customRanges: [...s.customRanges, { from: 1, to: 2, season: 'dry-warm' }] })}><Plus size={14} /> Add range</Button>}
     </fieldset>}
+    <p className="studio-muted">Preview a season on the homepage (only for you, just this visit): {['winter', 'spring', 'summer', 'autumn', 'long-rains'].map(k => <a key={k} href={`/?season=${k}`} target="_blank" rel="noopener noreferrer" style={{ marginRight: 12, textDecoration: 'underline' }}>{seasonLabels[k]}</a>)}</p>
     {msg && <p className="studio-muted" role="status">{msg}</p>}
     <Button type="submit" variant="luxury">Save seasonal settings <ArrowRight size={16} /></Button>
   </form>;
