@@ -51,7 +51,7 @@ export function SeasonalPageTransition() {
       const source = document.querySelector('.site-shell');
       if (!source) return;
       const snapshot = source.cloneNode(true) as HTMLElement;
-      snapshot.querySelectorAll('script, canvas, iframe, .skip-link, .seasonal-toggle').forEach(node => node.remove());
+      snapshot.querySelectorAll('script, canvas, iframe, .skip-link, .seasonal-toggle, .mobile-menu, .section-navigator').forEach(node => node.remove());
       snapshot.querySelectorAll('[id]').forEach(node => node.removeAttribute('id'));
       snapshot.querySelectorAll('video').forEach(video => {
         const image = document.createElement('img');
