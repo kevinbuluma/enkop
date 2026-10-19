@@ -15,6 +15,7 @@ type Draft = {
   bedrooms: string; bathrooms: string; area_sqm: string; parking: string;
   description: string; amenities: string;
   image_paths: string[]; status: 'draft' | 'published'; featured: boolean;
+  links: Record<string, string>; map_query: string;
 };
 
 const emptyDraft: Draft = {
@@ -22,7 +23,10 @@ const emptyDraft: Draft = {
   property_type: 'Villa', listing_type: 'Sale', price: '', currency: 'KES',
   bedrooms: '4', bathrooms: '3', area_sqm: '', parking: '2',
   description: '', amenities: '', image_paths: [], status: 'draft', featured: false,
+  links: {}, map_query: '',
 };
+
+export const LINK_KEYS = [['instagram', 'Instagram'], ['tiktok', 'TikTok'], ['facebook', 'Facebook'], ['youtube', 'YouTube'], ['listing', 'External listing page'], ['tour', 'Virtual tour / walkthrough']] as const;
 
 const slugify = (s: string) => s.toLowerCase().trim().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '');
 
@@ -64,6 +68,7 @@ export function ListingsManager() {
           area_sqm: String(l.area_sqm), parking: String(l.parking), description: l.description,
           amenities: l.amenities.join(', '), image_paths: l.image_paths ?? [],
           status: l.status === 'published' ? 'published' : 'draft', featured: l.featured,
+          links: (l.external_links ?? {}) as Record<string, string>, map_query: l.map_query ?? '',
         })}><Pencil size={14} /> Edit</Button>
         {confirmId === l.id
           ? <Button variant="textArrow" onClick={() => remove(l.id)}>Confirm delete <Trash2 size={14} /></Button>
@@ -148,6 +153,10 @@ function ListingEditor({ draft: initial, onDone }: { draft: Draft; onDone: (save
     </div>
     <label>Description<textarea rows={4} maxLength={4000} value={draft.description} onChange={(e) => set({ description: e.target.value })} placeholder="A short, evocative description of the residence." /></label>
     <label>Amenities (comma separated)<input value={draft.amenities} maxLength={1000} onChange={(e) => set({ amenities: e.target.value })} placeholder="Heated pool, Staff quarters, Garden" /></label>
+    <label>Location for map (area or landmark — avoid exact house numbers)<input value={draft.map_query} maxLength={200} onChange={(e) => set({ map_query: e.target.value })} placeholder="Karen, Nairobi" /></label>
+    <fieldset className="listing-links"><legend className="studio-label">Explore this property elsewhere · paste real links only</legend>
+      {LINK_KEYS.map(([k, label]) => <label key={k}>{label}<input type="url" value={draft.links[k] ?? ''} maxLength={500} placeholder="https://" onChange={(e) => set({ links: { ...draft.links, [k]: e.target.value } })} /></label>)}
+    </fieldset>
     <div>
       <span className="studio-label">Photos · up to 12 · the first is the cover</span>
       <div className="studio-photos">
@@ -176,5 +185,7 @@ function toPayload(d: Draft, id: string | null) {
     description: d.description,
     amenities: d.amenities.split(',').map((a) => a.trim()).filter(Boolean).slice(0, 30),
     image_paths: d.image_paths, status: d.status, featured: d.featured,
+    external_links: Object.fromEntries(Object.entries(d.links).map(([k, v]) => [k, v.trim()]).filter(([, v]) => v)),
+    map_query: d.map_query.trim() || null,
   };
 }

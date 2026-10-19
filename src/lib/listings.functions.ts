@@ -46,6 +46,8 @@ const listingInput = z.object({
   image_paths: z.array(z.string().max(300)).max(20),
   status: z.enum(['draft', 'published']),
   featured: z.boolean(),
+  external_links: z.record(z.enum(['instagram', 'tiktok', 'facebook', 'youtube', 'listing', 'tour']), z.string().url().max(500).refine(u => u.startsWith('https://'), 'Links must start with https://')).default({}),
+  map_query: z.string().trim().max(200).nullable().default(null),
 });
 
 export const saveListing = createServerFn({ method: 'POST' })
