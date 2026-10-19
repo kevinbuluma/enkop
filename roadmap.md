@@ -1,6 +1,6 @@
 # ENKOP roadmap
 
-- [ ] Improve homepage clarity by preserving source texture, avoiding softened exports and reducing the dark veil; verify playback and phone display
+- [x] Improve homepage clarity by preserving source texture, avoiding softened exports and reducing the dark veil; all scenes played at 889px, phone and desktop with six tests passing
 
 - [x] Enhance existing homepage footage with restrained clarity treatment and adaptive upscaled 4K/HD playback; all three scenes verified at 360/390px and desktop, with six targeted tests passing
 
