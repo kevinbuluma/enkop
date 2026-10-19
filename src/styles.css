@@ -564,3 +564,36 @@ html[data-season="autumn"] { --background: oklch(0.958 0.016 60); --accent: oklc
   .why-grid { grid-template-columns: 1fr; }
 }
 @media (prefers-reduced-motion: reduce) { .massing-cube, .card-skeleton div, .card-skeleton span { animation: none; } html, body { transition: none; } }
+
+/* Glass & gold refinement */
+:root { --gold: oklch(0.76 0.09 78); --gold-soft: oklch(0.84 0.07 82); --glass: color-mix(in oklab, var(--background) 55%, transparent); --glass-border: color-mix(in oklab, var(--gold) 35%, transparent); --glass-shadow: 0 18px 50px -24px color-mix(in oklab, var(--foreground) 35%, transparent); --round: 18px; }
+.wordmark-dot, .detail-heading-row h1 em, .eyebrow span { color: var(--gold); }
+.hero-search { background: color-mix(in oklab, var(--background) 22%, transparent); backdrop-filter: blur(22px) saturate(150%); border: 1px solid color-mix(in oklab, var(--gold-soft) 45%, transparent); border-radius: 24px; overflow: hidden; box-shadow: var(--glass-shadow); color: var(--inverse-foreground); }
+.hero-search label { border-right-color: color-mix(in oklab, var(--inverse-foreground) 18%, transparent); }
+.hero-search label span { color: var(--gold-soft); }
+.hero-search select { color: var(--inverse-foreground); }
+.hero-search select option { color: var(--foreground); }
+.hero-search button { background: linear-gradient(135deg, var(--gold), color-mix(in oklab, var(--gold) 70%, var(--inverse))); color: var(--inverse); border-radius: 0 23px 23px 0; font-weight: 600; }
+.site-header--solid { background: var(--glass); backdrop-filter: blur(20px) saturate(160%); border-bottom: 1px solid var(--glass-border); }
+.mobile-menu { background: color-mix(in oklab, var(--background) 80%, transparent); backdrop-filter: blur(24px); }
+.property-visual, .detail-main-image, .detail-side-images button, .detail-filmstrip button, .tour-frame, .place-image, .card-skeleton div { border-radius: var(--round); overflow: hidden; }
+.property-tag, .detail-main-image span { background: var(--glass) !important; backdrop-filter: blur(14px); border: 1px solid var(--glass-border); border-radius: 999px; }
+.save-button, .detail-action, .chip, .season-toggle, .result-tools select, .filters select, .filter-search { border-radius: 999px; backdrop-filter: blur(12px); }
+.save-button { background: var(--glass); border-color: var(--glass-border); }
+.save-button--on { color: var(--gold); }
+.detail-action, .chip { background: var(--glass); border-color: var(--glass-border); }
+.detail-action--primary, .chip--on { background: var(--inverse); color: var(--inverse-foreground); border-color: var(--gold); }
+.section-nav { background: var(--glass); backdrop-filter: blur(18px); border-bottom-color: var(--glass-border); }
+.section-nav a:hover, .breadcrumbs a:hover { color: var(--gold); }
+.detail-facts, .why-grid > div, .home-enquire form, .detail-enquire form, .amenities-list span, .listing-row, .studio-panel { background: var(--glass); backdrop-filter: blur(16px); border: 1px solid var(--glass-border); border-radius: var(--round); box-shadow: var(--glass-shadow); }
+.detail-facts, .why-grid > div, .home-enquire form, .detail-enquire form { padding: clamp(22px, 3vw, 40px); }
+.amenities-list span { padding: 14px 18px; }
+.home-enquire input, .home-enquire textarea, .home-enquire select, .detail-enquire input, .detail-enquire textarea, .detail-enquire select { border-radius: 12px; }
+.inline-arrow { border-bottom-color: var(--gold) !important; }
+.inline-arrow:hover { color: var(--gold); }
+[data-slot="button"] { border-radius: 999px; }
+.perspective-band, .footer { background-image: radial-gradient(60% 80% at 85% 10%, color-mix(in oklab, var(--gold) 16%, transparent), transparent 70%); }
+.footer-mark, .footer em { color: var(--gold-soft); }
+.why-grid span { color: var(--gold); }
+.gallery-toolbar, .gallery-thumbs { backdrop-filter: blur(14px); }
+:where(a,button,select,input,textarea):focus-visible { outline-color: var(--gold); }
