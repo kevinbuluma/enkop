@@ -13,13 +13,15 @@ import { HeroReel } from '@/components/enkop/HeroReel';
 import { Entrance } from '@/components/enkop/Entrance';
 import { SectionNavigator } from '@/components/enkop/SectionNavigator';
 import { IntentPicker } from '@/components/enkop/IntentPicker';
+import { getTestimonials } from '@/lib/content.functions';
+import { TestimonialsSection } from '@/components/enkop/PeopleSections';
 import { HeroSearch } from '@/components/enkop/HeroSearch';
 import { getHomepageSlides } from '@/lib/slides.functions';
 import { useCinematicFx } from '@/lib/cinematic';
 
 export const Route = createFileRoute("/")({
   head: () => ({ meta: [{ title: 'ENKOP — Exceptional Spaces in Nairobi' }, { name: 'description', content: 'A considered approach to Nairobi real estate. Discover exceptional residences and a new perspective on property with ENKOP.' }, { property: 'og:title', content: 'ENKOP — Exceptional Spaces in Nairobi' }, { property: 'og:description', content: 'Discover exceptional residences and a new perspective on property with ENKOP.' }, { property: 'og:type', content: 'website' }, { name: 'twitter:card', content: 'summary_large_image' }] }),
-  loader: async () => { const [properties, slides] = await Promise.all([getProperties(), getHomepageSlides().catch(() => [])]); return { properties, slides }; },
+  loader: async () => { const [properties, slides, quotes] = await Promise.all([getProperties(), getHomepageSlides().catch(() => []), getTestimonials().catch(() => [])]); return { properties, slides, quotes }; },
   component: Index,
 });
 
@@ -27,7 +29,7 @@ const NAV = [{ id: 'top', label: 'Welcome' }, { id: 'approach', label: 'Our appr
 
 function Index() {
   useCinematicFx();
-  const { properties: loaded, slides: managed } = Route.useLoaderData();
+  const { properties: loaded, slides: managed, quotes } = Route.useLoaderData();
   const properties = loaded as Property[];
   const slides = managed.length ? managed : [{ id: 'built-in-loop', label: '', video_url: '/videos/enkop-hero-loop.mp4', image_url: '/videos/enkop-hero-loop.jpg' }];
   return <Site darkHeader>
@@ -128,6 +130,8 @@ function Index() {
         {[['Curated, not crowded','A considered selection of residences, each one personally reviewed.'],['Represented in person','One ENKOP representative from first viewing to final handover.'],['Discreet by default','Private viewings and quiet negotiation, on your terms.']].map(([t,d], i) => <div key={t}><span>0{i+1}</span><h3>{t}</h3><p>{d}</p></div>)}
       </div>
     </Reveal>
+
+    <TestimonialsSection quotes={quotes} index="07" />
 
     <Reveal as="section" id="contact" className="home-enquire page-gutter">
       <div className="home-enquire-copy">

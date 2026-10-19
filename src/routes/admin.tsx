@@ -8,6 +8,7 @@ import { Site } from '@/components/enkop/Site';
 import { getStudio, pollTour, startTour } from '@/lib/tours.functions';
 import { HomepageManager } from '@/components/enkop/HomepageManager';
 import { ListingsManager } from '@/components/enkop/ListingsManager';
+import { SeasonManager, TeamManager, TestimonialsManager } from '@/components/enkop/ContentManager';
 import { EnquiriesManager } from '@/components/enkop/EnquiriesManager';
 
 export const Route = createFileRoute('/admin')({
@@ -59,15 +60,15 @@ function SignIn() {
 function StudioPanel() {
   const [studio, setStudio] = useState<Studio | null>(null);
   const [loadError, setLoadError] = useState('');
-  const [tab, setTab] = useState<'listings' | 'enquiries' | 'tours' | 'homepage'>('listings');
+  const [tab, setTab] = useState<'listings' | 'enquiries' | 'tours' | 'homepage' | 'team' | 'testimonials' | 'season'>('listings');
   const load = useCallback(() => getStudio().then(setStudio).catch((e) => setLoadError(e.message)), []);
   useEffect(() => { load(); }, [load]);
   const signOut = <Button variant="textArrow" onClick={() => supabase.auth.signOut()}>Sign out <LogOut size={15} /></Button>;
   if (loadError) return <div><p className="studio-error">{loadError}</p>{signOut}</div>;
   if (!studio) return <p className="studio-muted">Loading the studio…</p>;
   if (!studio.isAdmin) return <div><p className="studio-muted">This account does not have administrator access.</p>{signOut}</div>;
-  return <><div className="studio-tabs" role="tablist">{([['listings', 'Listings'], ['enquiries', 'Enquiries'], ['tours', 'Property tours'], ['homepage', 'Homepage scenes']] as const).map(([k, l]) => <button key={k} role="tab" aria-selected={tab === k} onClick={() => setTab(k)}>{l}</button>)}</div>
-  {tab === 'listings' ? <ListingsManager /> : tab === 'enquiries' ? <EnquiriesManager /> : tab === 'homepage' ? <HomepageManager /> : <div className="studio-grid"><CreateTour properties={studio.properties} busy={studio.tours.some(t => t.status === 'queued' || t.status === 'in_progress')} onCreated={load} />
+  return <><div className="studio-tabs" role="tablist">{([['listings', 'Listings'], ['enquiries', 'Enquiries'], ['tours', 'Property tours'], ['homepage', 'Homepage scenes'], ['team', 'Team'], ['testimonials', 'Testimonials'], ['season', 'Seasonal']] as const).map(([k, l]) => <button key={k} role="tab" aria-selected={tab === k} onClick={() => setTab(k)}>{l}</button>)}</div>
+  {tab === 'team' ? <TeamManager /> : tab === 'testimonials' ? <TestimonialsManager /> : tab === 'season' ? <SeasonManager /> : tab === 'listings' ? <ListingsManager /> : tab === 'enquiries' ? <EnquiriesManager /> : tab === 'homepage' ? <HomepageManager /> : <div className="studio-grid"><CreateTour properties={studio.properties} busy={studio.tours.some(t => t.status === 'queued' || t.status === 'in_progress')} onCreated={load} />
     <div><div className="studio-head"><p className="eyebrow">RECENT TOURS</p>{signOut}</div><TourList tours={studio.tours} properties={studio.properties} onChange={load} /></div></div>}</>;
 }
 
