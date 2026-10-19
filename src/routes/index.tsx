@@ -17,6 +17,7 @@ import { getTestimonials } from '@/lib/content.functions';
 import { TestimonialsSection } from '@/components/enkop/PeopleSections';
 import { HeroSearch } from '@/components/enkop/HeroSearch';
 import { getHomepageSlides } from '@/lib/slides.functions';
+import { builtInHeroSlides } from '@/lib/hero-media';
 import { useCinematicFx } from '@/lib/cinematic';
 
 export const Route = createFileRoute("/")({
@@ -31,7 +32,7 @@ function Index() {
   useCinematicFx();
   const { properties: loaded, slides: managed, quotes } = Route.useLoaderData();
   const properties = loaded as Property[];
-  const slides = managed.length ? managed : [{ id: 'built-in-loop', label: '', video_url: '/videos/enkop-hero-loop.mp4', image_url: '/videos/enkop-hero-loop.jpg' }];
+  const slides = managed.length ? managed : builtInHeroSlides;
   return <Site darkHeader>
     <Entrance />
     <SectionNavigator sections={NAV} />
