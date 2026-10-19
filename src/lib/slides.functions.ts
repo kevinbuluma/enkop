@@ -3,6 +3,7 @@ import { createClient } from '@supabase/supabase-js';
 import { z } from 'zod';
 import { requireSupabaseAuth } from '@/integrations/supabase/auth-middleware';
 import type { Database } from '@/integrations/supabase/types';
+import { optimizedHeroMedia } from '@/lib/hero-media';
 
 const BUCKET = 'property-media';
 const pathOk = (p: string | null) => p === null || /^homepage\/[\w.-]+$/.test(p) || /^[0-9a-f-]{36}\/tours\/[0-9a-f-]{36}\.mp4$/.test(p);
@@ -19,7 +20,7 @@ async function sign(storage: any, paths: (string | null)[]) {
   return Object.fromEntries((data ?? []).filter((d: any) => d.signedUrl).map((d: any) => [d.path, d.signedUrl])) as Record<string, string>;
 }
 
-export type PublicSlide = { id: string; label: string; video_url: string | null; image_url: string | null };
+export type PublicSlide = { id: string; label: string; video_url: string | null; image_url: string | null; webm_url?: string | null };
 
 export const getHomepageSlides = createServerFn({ method: 'GET' }).handler(async (): Promise<PublicSlide[]> => {
   const key = process.env['SUPABASE_PUBLISHABLE_KEY']!;
@@ -32,7 +33,7 @@ export const getHomepageSlides = createServerFn({ method: 'GET' }).handler(async
   // Only paths an administrator placed on an active homepage slide are signed.
   const { supabaseAdmin } = await import('@/integrations/supabase/client.server');
   const urls = await sign(supabaseAdmin.storage, data.flatMap((s: any) => [s.video_path, s.image_path]));
-  return data.map((s: any) => ({ id: s.id, label: s.label, video_url: s.video_path ? urls[s.video_path] ?? null : null, image_url: s.image_path ? urls[s.image_path] ?? null : null }))
+  return data.map((s: any) => ({ id: s.id, label: s.label, video_url: optimizedHeroMedia(s.video_path)?.mp4 ?? (s.video_path ? urls[s.video_path] ?? null : null), webm_url: optimizedHeroMedia(s.video_path)?.webm ?? null, image_url: s.image_path ? urls[s.image_path] ?? null : null }))
     .filter((s: PublicSlide) => s.video_url || s.image_url);
 });
 

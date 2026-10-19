@@ -8,6 +8,7 @@ const MAX_VIDEO_MS = 20000;
 export function HeroReel({ slides, poster }: { slides: PublicSlide[]; poster: string }) {
   const [index, setIndex] = useState(0);
   const [reduced, setReduced] = useState(false);
+  const [playing, setPlaying] = useState<string | null>(null);
   const videos = useRef<(HTMLVideoElement | null)[]>([]);
   const count = slides.length;
 
@@ -21,18 +22,42 @@ export function HeroReel({ slides, poster }: { slides: PublicSlide[]; poster: st
 
   useEffect(() => {
     if (count < 2 && !slides[0]?.video_url) return;
-    const slide = slides[index];
-    const video = videos.current[index];
-    const next = () => setIndex(i => (i + 1) % count);
+    const activeIndex = index % Math.max(1, count);
+    const slide = slides[activeIndex];
+    const video = videos.current[activeIndex];
+    let disposed = false;
+    let timer = 0;
+    let stallTimer = 0;
+    const next = () => { if (!disposed) { setPlaying(null); setIndex(i => (i + 1) % count); } };
+    const fallback = () => {
+      window.clearTimeout(timer); window.clearTimeout(stallTimer);
+      setPlaying(null); video?.pause();
+      if (count > 1) timer = window.setTimeout(next, IMAGE_HOLD_MS);
+    };
+    setPlaying(null);
     videos.current.forEach((v, i) => { if (v && i !== index) v.pause(); });
     if (slide?.video_url && video && !reduced) {
-      if (count < 2) { video.loop = true; video.play().catch(() => {}); return; }
       video.currentTime = 0;
-      video.play().catch(() => {});
-      video.loop = false;
+      video.loop = count < 2;
+      const onPlaying = () => {
+        window.clearTimeout(stallTimer);
+        if (disposed) return;
+        setPlaying(slide.id);
+        window.clearTimeout(timer);
+        if (count > 1) timer = window.setTimeout(next, MAX_VIDEO_MS);
+      };
+      const onWaiting = () => { window.clearTimeout(stallTimer); stallTimer = window.setTimeout(fallback, 4000); };
+      video.addEventListener('playing', onPlaying);
+      video.addEventListener('waiting', onWaiting);
+      video.addEventListener('error', fallback);
       video.addEventListener('ended', next);
-      const cap = window.setTimeout(next, MAX_VIDEO_MS);
-      return () => { video.removeEventListener('ended', next); window.clearTimeout(cap); };
+      timer = window.setTimeout(fallback, 8000);
+      video.play().catch(() => { if (!disposed) fallback(); });
+      return () => {
+        disposed = true; window.clearTimeout(timer); window.clearTimeout(stallTimer);
+        video.removeEventListener('playing', onPlaying); video.removeEventListener('waiting', onWaiting);
+        video.removeEventListener('error', fallback); video.removeEventListener('ended', next); video.pause();
+      };
     }
     if (count < 2) return;
     const t = window.setTimeout(next, IMAGE_HOLD_MS);
@@ -43,7 +68,10 @@ export function HeroReel({ slides, poster }: { slides: PublicSlide[]; poster: st
     <img src={slides[0]?.image_url ?? poster} alt="" width="1920" height="1080" fetchPriority="high" />
     {slides.map((s, i) => <div key={s.id} className={`hero-layer ${i === index ? 'hero-layer--on' : ''}`}>
       <img src={s.image_url ?? poster} alt="" width="1920" height="1080" loading={i === 0 ? 'eager' : 'lazy'} />
-      {s.video_url && !reduced && <video ref={el => { videos.current[i] = el; }} src={s.video_url} poster={s.image_url ?? poster} muted playsInline autoPlay={count < 2} loop={count < 2} preload={i === index || i === (index + 1) % count ? 'auto' : 'none'} />}
+      {s.video_url && !reduced && <video className={playing === s.id ? 'hero-video--playing' : undefined} ref={el => { videos.current[i] = el; }} poster={s.image_url ?? poster} muted playsInline loop={count < 2} preload={i === index || i === (index + 1) % count ? 'auto' : 'none'}>
+        {s.webm_url && <source src={s.webm_url} type="video/webm" />}
+        <source src={s.video_url} type={s.video_url.split('?')[0]?.endsWith('.webm') ? 'video/webm' : 'video/mp4'} />
+      </video>}
     </div>)}
   </div>;
 }
