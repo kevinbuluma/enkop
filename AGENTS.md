@@ -19,4 +19,5 @@
 - Page flips capture an inert, transient outgoing-page DOM image across curved CSS-3D strips; remove snapshots on completion and keep all snapshot work browser-only to preserve navigation and SSR safety.
 - Autumn navigation uses a preloaded photographic botanical sprite atlas, cached soft-focus variants and deterministic canvas wind paths; skip the effect if textures are unavailable rather than rendering illustrated substitutes, keeping navigation immediate and per-frame rendering filter-free.
 - Homepage playback uses path-keyed MP4/WebM variants from public/videos/scenes for existing footage, preloads only the current and next scenes, and reveals videos only after playback starts; changed upload paths keep their own footage.
+- Built-in footage offers restrained denoise/sharpened upscaled exports: wide screens select 4K and phones select HD via media-qualified sources, retaining original codec fallbacks and never substituting enhanced built-ins for new uploads.
 - Phone layouts use bounded grid tracks, readable form fields and safe-area-aware scrollable overlays; pointer-driven tilt is reserved for fine hover-capable pointers to keep touch scrolling stable.

@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 import type { PublicSlide } from '@/lib/slides.functions';
+import { enhancedHeroMedia } from '@/lib/hero-media';
 
 const IMAGE_HOLD_MS = 7000;
 const MAX_VIDEO_MS = 20000;
@@ -66,12 +67,18 @@ export function HeroReel({ slides, poster }: { slides: PublicSlide[]; poster: st
 
   return <div className="hero-media" aria-hidden="true">
     <img src={slides[0]?.image_url ?? poster} alt="" width="1920" height="1080" fetchPriority="high" />
-    {slides.map((s, i) => <div key={s.id} className={`hero-layer ${i === index ? 'hero-layer--on' : ''}`}>
+    {slides.map((s, i) => {
+      const enhanced = enhancedHeroMedia(s.video_url);
+      return <div key={s.id} className={`hero-layer ${i === index ? 'hero-layer--on' : ''}`}>
       <img src={s.image_url ?? poster} alt="" width="1920" height="1080" loading={i === 0 ? 'eager' : 'lazy'} />
       {s.video_url && !reduced && <video className={playing === s.id ? 'hero-video--playing' : undefined} ref={el => { videos.current[i] = el; }} poster={s.image_url ?? poster} muted playsInline loop={count < 2} preload={i === index || i === (index + 1) % count ? 'auto' : 'none'}>
+        {enhanced && <source src={enhanced.ultra} type="video/mp4" media="(min-width: 1024px)" />}
+        {enhanced && <source src={enhanced.ultraWebm} type="video/webm" media="(min-width: 1024px)" />}
+        {enhanced && <source src={enhanced.hd} type="video/mp4" />}
+        {enhanced && <source src={enhanced.hdWebm} type="video/webm" />}
         {s.webm_url && <source src={s.webm_url} type="video/webm" />}
         <source src={s.video_url} type={s.video_url.split('?')[0]?.endsWith('.webm') ? 'video/webm' : 'video/mp4'} />
       </video>}
-    </div>)}
+    </div>; })}
   </div>;
 }
