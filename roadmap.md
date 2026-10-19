@@ -1,5 +1,7 @@
 # ENKOP roadmap
 
+- [ ] Refine page flip with outgoing-page imagery, flexible paper curvature and moving shadows; verify navigation and reduced motion
+
 - [x] Deep functionality scan: public pages, hero scenes, search, galleries, seasonal themes and transitions
 - [x] Verify signed-in admin tools and enquiry readback; fix confirmed defects and rerun tests (25 passing tests)
 - [x] Review dependency and backend security scan results: dependencies clean; public seasonal-settings read noted; external deep scanner unavailable

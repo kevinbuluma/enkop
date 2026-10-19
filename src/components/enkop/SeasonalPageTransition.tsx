@@ -3,16 +3,18 @@ import { useRouter } from '@tanstack/react-router';
 import { alternatingTransitionMood, transitionMood } from '@/lib/page-transition';
 import leafAtlasUrl from '@/assets/autumn-leaf-cinematic.png';
 import { LEAF_ENTRY_MS, LEAF_EXIT_MS, leafArrival, leafExitPosition } from '@/lib/leaf-motion';
+import { PAPER_STRIPS, PAPER_TURN_MS, paperStripPose } from '@/lib/paper-turn';
 
 /** Persistent navigation curtain; never delays data loading or intercepts links. */
 export function SeasonalPageTransition() {
   const router = useRouter();
   const ref = useRef<HTMLDivElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
+  const paperRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    const el = ref.current, canvas = canvasRef.current;
-    if (!el || !canvas) return;
+    const el = ref.current, canvas = canvasRef.current, paper = paperRef.current;
+    if (!el || !canvas || !paper) return;
     const ctx = canvas.getContext('2d');
     if (!ctx) return;
     const reduce = matchMedia('(prefers-reduced-motion: reduce)');
@@ -44,6 +46,37 @@ export function SeasonalPageTransition() {
     let palette: string[] = [];
     let mood = transitionMood(null);
     let leaves: { x: number; y: number; size: number; angle: number; depth: number }[] = [];
+    let strips: HTMLDivElement[] = [];
+    const capturePaper = () => {
+      const source = document.querySelector('.site-shell');
+      if (!source) return;
+      const snapshot = source.cloneNode(true) as HTMLElement;
+      snapshot.querySelectorAll('script, canvas, iframe, .skip-link, .seasonal-toggle').forEach(node => node.remove());
+      snapshot.querySelectorAll('[id]').forEach(node => node.removeAttribute('id'));
+      snapshot.querySelectorAll('video').forEach(video => {
+        const image = document.createElement('img');
+        image.src = video.poster; image.className = video.className;
+        video.replaceWith(image);
+      });
+      snapshot.classList.add('paper-page-snapshot');
+      snapshot.style.top = `${-scrollY}px`;
+      snapshot.style.width = `${innerWidth}px`;
+      const header = snapshot.querySelector<HTMLElement>('.site-header');
+      if (header) { header.style.position = 'absolute'; header.style.top = `${scrollY}px`; }
+      const fragment = document.createDocumentFragment();
+      strips = Array.from({ length: PAPER_STRIPS }, (_, i) => {
+        const strip = document.createElement('div');
+        strip.className = 'paper-strip';
+        strip.style.width = `${innerWidth / PAPER_STRIPS + .7}px`;
+        const face = document.createElement('div');
+        face.className = 'paper-strip-front';
+        const copy = snapshot.cloneNode(true) as HTMLElement;
+        copy.style.left = `${-i * innerWidth / PAPER_STRIPS}px`;
+        face.append(copy); strip.append(face); fragment.append(strip);
+        return strip;
+      });
+      paper.replaceChildren(fragment);
+    };
     const particles = Array.from({ length: 100 }, (_, i) => ({
       x: ((i * 0.6180339) % 1), y: ((i * 0.4142135) % 1),
       size: 0.65 + (i % 7) / 9, angle: i * 2.4, depth: (i % 5) / 5,
@@ -53,14 +86,24 @@ export function SeasonalPageTransition() {
       el.dataset['phase'] = 'idle';
       document.documentElement.removeAttribute('data-page-transition');
       ctx.clearRect(0, 0, width, height);
+      paper.replaceChildren(); strips = [];
     };
     const draw = (now: number) => {
       const textured = mood === 'leaves' && sprites.length === 4;
       const entry = Math.min(1, (now - start) / (textured ? LEAF_ENTRY_MS : 420));
       if (ready && !release && entry === 1 && (!textured || now - start >= LEAF_ENTRY_MS + 140)) { release = now; el.dataset['phase'] = 'revealing'; }
-      const exit = release ? Math.min(1, (now - release) / (textured ? LEAF_EXIT_MS : mood === 'flip' ? 1100 : 760)) : 0;
+      const exit = release ? Math.min(1, (now - release) / (textured ? LEAF_EXIT_MS : mood === 'flip' ? PAPER_TURN_MS : 760)) : 0;
       el.style.setProperty('--curtain-opacity', String(textured ? Math.pow(entry, 3) * .78 * Math.pow(1 - exit, 2) : mood === 'flip' ? Math.sin(entry * Math.PI / 2) : Math.sin(entry * Math.PI / 2) * (1 - exit)));
       ctx.clearRect(0, 0, width, height);
+      if (mood === 'flip') {
+        for (const [i, strip] of strips.entries()) {
+          const pose = paperStripPose(exit, i, width);
+          strip.style.transform = `translate3d(${pose.x}px,0,${pose.z}px) rotateY(${-pose.angle}rad)`;
+          strip.style.setProperty('--paper-shade', String(pose.shade));
+        }
+        el.style.setProperty('--paper-shadow-opacity', String(Math.sin(Math.PI * exit) * .32));
+        el.style.setProperty('--paper-shadow-x', `${(1 - exit) * 100}%`);
+      }
       if (textured) {
         for (const [i, p] of leaves.entries()) {
           const arrival = leafArrival(entry, i, leaves.length);
@@ -133,6 +176,7 @@ export function SeasonalPageTransition() {
       const styles = getComputedStyle(el);
       palette = [1, 2, 3, 4].map(n => styles.getPropertyValue(`--wind-color-${n}`).trim());
       width = innerWidth; height = innerHeight;
+      if (mood === 'flip') capturePaper();
       const spacing = Math.max(72, Math.min(125, width / 10));
       const cols = Math.ceil(width / spacing) + 2, rows = Math.ceil(height / spacing) + 2;
       leaves = Array.from({ length: cols * rows }, (_, i) => {
@@ -156,5 +200,6 @@ export function SeasonalPageTransition() {
 
   return <div ref={ref} className="seasonal-page-transition" data-phase="idle" aria-hidden="true">
     <div className="seasonal-page-curtain" /><canvas ref={canvasRef} />
+    <div className="paper-cast-shadow" /><div ref={paperRef} className="paper-turn-sheet" inert />
   </div>;
 }
