@@ -397,7 +397,7 @@ a { text-decoration: none; }
 .studio-tour > div:last-child { display: flex; flex-direction: column; gap: 8px; }
 .studio-tour span { font-size: 12px; color: var(--muted-foreground); }
 @media (max-width: 1020px) { .studio-grid, .studio-tour { grid-template-columns: 1fr; } }
-.studio-tabs { display: flex; gap: 32px; border-bottom: 1px solid var(--border); margin-bottom: 48px; }
+.studio-tabs { display: flex; gap: 32px; overflow-x: auto; border-bottom: 1px solid var(--border); margin-bottom: 48px; }
 .studio-tabs button { background: none; border: 0; padding: 0 0 14px; margin-bottom: -1px; font-size: 11px; letter-spacing: .14em; text-transform: uppercase; color: var(--muted-foreground); border-bottom: 1px solid transparent; cursor: pointer; }
 .studio-tabs button[aria-selected=true] { color: var(--foreground); border-color: var(--foreground); }
 .studio-picks { display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; }
@@ -416,7 +416,8 @@ label.studio-file input { position: absolute; width: 1px; height: 1px; opacity: 
 .studio-tour--off .studio-slide-media { opacity: .4; }
 .hero-layer { position: absolute; inset: 0; opacity: 0; transition: opacity 1.4s ease; }
 .hero-layer--on { opacity: 1; }
-.hero-media .hero-layer video { opacity: 1; animation: none; }
+.hero-media .hero-layer video { opacity: 0; animation: none; transition: opacity .6s ease; }
+.hero-media .hero-layer video.hero-video--playing { opacity: 1; }
 .studio-fallback { border-top: 1px solid var(--border); padding-top: 12px; margin-top: 8px; }
 .studio-fallback-editor { margin-top: 18px; gap: 18px; }
 .studio-fallback-preview { display: block; width: 100%; aspect-ratio: 16/9; object-fit: cover; background: var(--muted); transition: filter .4s; }
@@ -558,6 +559,8 @@ html[data-season="spring"] { --background: oklch(0.966 0.014 130); --accent: okl
 html[data-season="summer"] { --background: oklch(0.968 0.018 85); --accent: oklch(0.74 0.08 70); }
 html[data-season="autumn"] { --background: oklch(0.958 0.016 60); --accent: oklch(0.6 0.08 50); }
 @media (max-width: 960px) {
+  .home-hero { height: auto; min-height: 0; max-height: none; padding-top: 130px; padding-bottom: 70px; }
+  .hero-content { position: relative; left: auto; right: auto; top: auto; transform: none; margin-inline: 24px; }
   .hero-search { grid-template-columns: repeat(2, 1fr); }
   .hero-search label:nth-child(5) { grid-column: span 2; }
   .hero-search button { grid-column: span 2; justify-content: center; }

@@ -1,5 +1,11 @@
 # ENKOP roadmap
 
+- [x] Deep functionality scan: public pages, hero scenes, search, galleries, seasonal themes and transitions
+- [x] Verify signed-in admin tools and enquiry readback; fix confirmed defects and rerun tests (25 passing tests)
+- [x] Review dependency and backend security scan results: dependencies clean; public seasonal-settings read noted; external deep scanner unavailable
+- [x] Fix video playback failures and reduce stalling during homepage scene changes; verify all three play and blocked-media fallback advances
+- [ ] Verify new AI tour generation and completed-tour playback using owner-supplied property photos (no genuine tour available; generation not exercised)
+
 - [x] Alternate seasonal navigation with a cinematic page flip
 
 - [x] Remove cartoon leaf fallback and verify photographic leaves during navigation

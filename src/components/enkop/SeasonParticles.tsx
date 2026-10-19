@@ -23,7 +23,7 @@ export function SeasonParticles() {
     const canvas = ref.current; if (!canvas) return;
     const reduce = window.matchMedia('(prefers-reduced-motion: reduce)');
     const nav = navigator as Navigator & { connection?: { saveData?: boolean } };
-    if (reduce.matches || nav.connection?.saveData) return;
+    if (nav.connection?.saveData) return;
     const ctx = canvas.getContext('2d'); if (!ctx) return;
     const mobile = innerWidth < 760;
     const dpr = Math.min(devicePixelRatio || 1, 1.5);
@@ -81,8 +81,14 @@ export function SeasonParticles() {
       ctx.restore(); ctx.globalAlpha = 1;
       raf = requestAnimationFrame(tick);
     };
-    resize(); addEventListener('resize', resize); addEventListener('pointermove', onMove, { passive: true }); raf = requestAnimationFrame(tick);
-    return () => { cancelAnimationFrame(raf); removeEventListener('resize', resize); removeEventListener('pointermove', onMove); };
+    const syncMotion = () => {
+      cancelAnimationFrame(raf);
+      ctx.clearRect(0, 0, innerWidth, innerHeight);
+      if (!reduce.matches) raf = requestAnimationFrame(tick);
+    };
+    resize(); addEventListener('resize', resize); addEventListener('pointermove', onMove, { passive: true });
+    reduce.addEventListener('change', syncMotion); syncMotion();
+    return () => { cancelAnimationFrame(raf); reduce.removeEventListener('change', syncMotion); removeEventListener('resize', resize); removeEventListener('pointermove', onMove); };
   }, []);
   return <canvas ref={ref} className="season-particles" aria-hidden="true" />;
 }
