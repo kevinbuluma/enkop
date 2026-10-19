@@ -90,7 +90,7 @@ export function SeasonalPageTransition() {
     };
     const draw = (now: number) => {
       const textured = mood === 'leaves' && sprites.length === 4;
-      const entry = Math.min(1, (now - start) / (textured ? LEAF_ENTRY_MS : 420));
+      const entry = Math.min(1, (now - start) / (textured ? LEAF_ENTRY_MS : mood === 'flip' ? 160 : 420));
       if (ready && !release && entry === 1 && (!textured || now - start >= LEAF_ENTRY_MS + 140)) { release = now; el.dataset['phase'] = 'revealing'; }
       const exit = release ? Math.min(1, (now - release) / (textured ? LEAF_EXIT_MS : mood === 'flip' ? PAPER_TURN_MS : 760)) : 0;
       el.style.setProperty('--curtain-opacity', String(textured ? Math.pow(entry, 3) * .78 * Math.pow(1 - exit, 2) : mood === 'flip' ? Math.sin(entry * Math.PI / 2) : Math.sin(entry * Math.PI / 2) * (1 - exit)));
@@ -98,11 +98,16 @@ export function SeasonalPageTransition() {
       if (mood === 'flip') {
         for (const [i, strip] of strips.entries()) {
           const pose = paperStripPose(exit, i, width);
-          strip.style.transform = `translate3d(${pose.x}px,0,${pose.z}px) rotateY(${-pose.angle}rad)`;
+          strip.style.transform = `translate3d(${pose.x}px,${pose.y}px,${pose.z}px) rotateY(${-pose.angle}rad) skewY(${Math.atan(pose.slope)}rad)`;
           strip.style.setProperty('--paper-shade', String(pose.shade));
+          strip.style.setProperty('--paper-highlight', String(pose.highlight));
         }
-        el.style.setProperty('--paper-shadow-opacity', String(Math.sin(Math.PI * exit) * .32));
-        el.style.setProperty('--paper-shadow-x', `${(1 - exit) * 100}%`);
+        const edge = paperStripPose(exit, PAPER_STRIPS - 1, width);
+        const projectedEdge = (edge.x + width / PAPER_STRIPS / 2) * 2600 / Math.max(1200, 2600 - edge.z);
+        el.style.setProperty('--paper-shadow-opacity', String(Math.sin(Math.PI * exit) * .38));
+        el.style.setProperty('--paper-shadow-x', `${Math.max(-width * .3, projectedEdge)}px`);
+        el.style.setProperty('--paper-shadow-width', `${35 + Math.abs(edge.z) * .14}px`);
+        el.style.setProperty('--paper-shadow-blur', `${8 + Math.abs(edge.z) * .035}px`);
       }
       if (textured) {
         for (const [i, p] of leaves.entries()) {
