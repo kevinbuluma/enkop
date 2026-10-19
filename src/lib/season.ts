@@ -1,3 +1,4 @@
+import { z } from 'zod';
 /** Central, deterministic seasonal atmosphere configuration. Visual mood only — never a weather claim. */
 export type SeasonProfile = 'tropical' | 'temperate-four-season' | 'custom';
 export type SeasonConfig = {
@@ -43,4 +44,20 @@ export function computeSeason(date: Date, config: SeasonConfig = seasonConfig): 
   if (m <= 5) return 'long-rains';
   if (m <= 9) return 'cool-dry';
   return 'short-rains';
+}
+
+/** Admin-editable seasonal settings stored in the database. */
+export const seasonSettingsSchema = z.object({
+  enabled: z.boolean(),
+  seasonalProfile: z.enum(['tropical', 'temperate-four-season', 'custom']),
+  hemisphere: z.enum(['north', 'south']),
+  timeZone: z.string().min(3).max(60),
+  location: z.string().max(80),
+  intensity: z.number().min(0).max(1),
+  customRanges: z.array(z.object({ from: z.number().int().min(1).max(12), to: z.number().int().min(1).max(12), season: z.enum(['dry-warm', 'long-rains', 'cool-dry', 'short-rains', 'winter', 'spring', 'summer', 'autumn']) })).max(12),
+});
+export type SeasonSettings = z.infer<typeof seasonSettingsSchema>;
+
+export function toConfig(s: SeasonSettings): SeasonConfig {
+  return { seasonMode: 'tropical', location: s.location, timeZone: s.timeZone, hemisphere: s.hemisphere, seasonalProfile: s.seasonalProfile, customRanges: s.customRanges };
 }
