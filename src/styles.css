@@ -717,9 +717,8 @@ html[data-season] .reveal { transition: opacity 1.1s cubic-bezier(.22,.61,.21,1)
 .site-header { view-transition-name: site-header; }
 ::view-transition-group(site-header) { animation: none; }
 /* Gold sweep line across the top on every page change */
-::view-transition-new(root)::before { content: none; }
 html::after { content: ""; position: fixed; top: 0; left: 0; height: 2px; width: 100%; z-index: 100; pointer-events: none; background: linear-gradient(90deg, transparent, var(--gold), var(--gold-soft), transparent); transform: scaleX(0); transform-origin: left; opacity: 0; }
-html:active-view-transition::after { animation: gold-sweep .9s cubic-bezier(.65,0,.35,1); }
+html.is-navigating::after { animation: gold-sweep .9s cubic-bezier(.65,0,.35,1); }
 @keyframes gold-sweep { 0% { transform: scaleX(0); opacity: 1; } 70% { transform: scaleX(1); opacity: 1; } 100% { transform: scaleX(1); opacity: 0; } }
 
 /* ===== Lively section transitions ===== */
@@ -752,6 +751,6 @@ html { scrollbar-color: color-mix(in oklab, var(--gold) 60%, transparent) transp
 
 @media (prefers-reduced-motion: reduce) {
   ::view-transition-old(root), ::view-transition-new(root) { animation: none; }
-  html:active-view-transition::after { animation: none; }
+  html.is-navigating::after { animation: none; }
   .reveal:not(.reveal--in) > *, .reveal:not(.reveal--in) h2 { opacity: 1; transform: none; letter-spacing: normal; }
 }
