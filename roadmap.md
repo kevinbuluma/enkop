@@ -1,6 +1,6 @@
 # ENKOP roadmap
 
-- [ ] Refine page flip with outgoing-page imagery, flexible paper curvature and moving shadows; verify navigation and reduced motion
+- [x] Refine page flip with outgoing-page imagery, flexible paper curvature and moving shadows; verified navigation, cleanup and reduced motion at desktop, compact and phone sizes (11 targeted tests passed)
 
 - [x] Deep functionality scan: public pages, hero scenes, search, galleries, seasonal themes and transitions
 - [x] Verify signed-in admin tools and enquiry readback; fix confirmed defects and rerun tests (25 passing tests)
