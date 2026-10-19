@@ -38,6 +38,8 @@ export function formatPrice(property: Property) {
   return `${property.currency} ${new Intl.NumberFormat('en-KE', { notation: 'compact', maximumFractionDigits: 1 }).format(property.price)}${property.listing_type === 'Rent' ? ' / month' : ''}`;
 }
 
+export const contact = { phone: '+254 707 465 190', whatsappDigits: '254707465190' } as const;
+
 export const navigation = [
   { label: 'Properties', to: '/properties' },
   { label: 'About', to: '/about' },

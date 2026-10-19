@@ -10,6 +10,7 @@ import { Parallax } from '@/components/enkop/Parallax';
 import { getProperties } from '@/lib/enkop.functions';
 import { hero, imagery, type Property } from '@/lib/enkop';
 import { HeroReel } from '@/components/enkop/HeroReel';
+import { HeroSearch } from '@/components/enkop/HeroSearch';
 import { getHomepageSlides } from '@/lib/slides.functions';
 import { useCinematicFx } from '@/lib/cinematic';
 
@@ -37,6 +38,9 @@ function Index() {
           <p>Places with presence.<br/>Property with perspective.</p>
           <Button asChild variant="luxuryLight"><Link to="/properties">Explore the collection <ArrowUpRight size={16}/></Link></Button>
         </div>
+        <HeroSearch properties={properties} />
+      </div>
+      <div className="hero-massing" aria-hidden="true"><div className="massing-cube"><i/><i/><i/><i/><i/><i/></div>
       </div>
       <a href="#introduction" className="hero-scroll">SCROLL TO EXPLORE <ArrowDown size={17}/></a>
       <span className="hero-side-note">01 — 04 / A DIFFERENT PERSPECTIVE</span>
@@ -110,10 +114,17 @@ function Index() {
       </Parallax>
     </Reveal>
 
+    <Reveal as="section" className="why-section page-gutter">
+      <p className="eyebrow"><span>06 /</span> WHY ENKOP</p>
+      <div className="why-grid">
+        {[['Curated, not crowded','A considered selection of residences, each one personally reviewed.'],['Represented in person','One ENKOP representative from first viewing to final handover.'],['Discreet by default','Private viewings and quiet negotiation, on your terms.']].map(([t,d], i) => <div key={t}><span>0{i+1}</span><h3>{t}</h3><p>{d}</p></div>)}
+      </div>
+    </Reveal>
+
     <Reveal as="section" className="home-enquire page-gutter">
       <div className="home-enquire-copy">
-        <p className="eyebrow"><span>06 /</span> BEGIN THE CONVERSATION</p>
-        <h2>Tell us what<br/><em>moves you.</em></h2>
+        <p className="eyebrow"><span>07 /</span> BEGIN THE CONVERSATION</p>
+        <h2>Tell us what exceptional<br/><em>looks like to you.</em></h2>
         <p>Share a few details and an ENKOP representative will reach out personally — by email or phone, whichever you prefer.</p>
       </div>
       <EnquiryForm />
