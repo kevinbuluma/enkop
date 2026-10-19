@@ -29,7 +29,8 @@ export function SeasonParticles() {
       const k = kinds[s];
       ctx.clearRect(0, 0, canvas.width, canvas.height);
       if (!k || document.hidden) { raf = requestAnimationFrame(tick); return; }
-      if (s !== season) { season = s; parts = Array.from({ length: k.count }, () => spawn(k)); }
+      const key = s + (document.documentElement.getAttribute('data-season-intensity') ?? '1');
+      if (key !== season) { season = key; const n = Math.round(k.count * Math.min(1, Math.max(0, Number(document.documentElement.getAttribute('data-season-intensity') ?? 1)))); parts = Array.from({ length: n }, () => spawn(k)); }
       for (const p of parts) {
         p.y += p.v; p.x += p.d; p.r += 0.02;
         if (p.y > innerHeight + 20) Object.assign(p, spawn(k, true));
