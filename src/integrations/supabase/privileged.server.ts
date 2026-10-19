@@ -35,7 +35,7 @@ export async function signStoragePaths(paths: string[], expiresIn: number): Prom
   if (mode === 'direct') {
     const { supabaseAdmin } = await import('@/integrations/supabase/client.server');
     const { data } = await supabaseAdmin.storage.from(BUCKET).createSignedUrls(list, expiresIn);
-    return Object.fromEntries((data ?? []).filter(d => d.signedUrl && d.path).map(d => [d.path!, d.signedUrl]));
+    return Object.fromEntries((data ?? []).filter(d => d.signedUrl && d.path).map(d => [d.path!, d.signedUrl as string]));
   }
   const urls: Record<string, string> = {};
   for (let i = 0; i < list.length; i += 200) {

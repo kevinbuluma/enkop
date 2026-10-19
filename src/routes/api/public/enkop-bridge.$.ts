@@ -28,7 +28,8 @@ async function handle({ request, params }: { request: Request; params: { _splat?
     if (ct) headers.set('Content-Type', ct);
     for (const [k, v] of request.headers) if (k.toLowerCase().startsWith('x-lovable-aig-')) headers.set(k, v);
     const body = ['GET', 'HEAD'].includes(request.method) ? undefined : await request.arrayBuffer();
-    const up = await aiGatewayFetch(`/${route.slice(3)}${q}`, { method: request.method, headers, body });
+    const init: RequestInit = { method: request.method, headers, ...(body ? { body } : {}) };
+    const up = await aiGatewayFetch(`/${route.slice(3)}${q}`, init);
     const out = new Headers({ 'Content-Type': up.headers.get('Content-Type') ?? 'application/json', 'Cache-Control': 'no-cache, no-transform' });
     up.headers.forEach((v, k) => { if (k.toLowerCase().startsWith('x-lovable-aig-')) out.set(k, v); });
     return new Response(up.body, { status: up.status, headers: out });
