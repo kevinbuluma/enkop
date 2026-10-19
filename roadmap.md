@@ -1,6 +1,6 @@
 # ENKOP roadmap
 
-- [ ] Alternate seasonal navigation with a cinematic page flip
+- [x] Alternate seasonal navigation with a cinematic page flip
 
 - [x] Remove cartoon leaf fallback and verify photographic leaves during navigation
 
