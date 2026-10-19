@@ -33,7 +33,7 @@ export function SeasonParticles() {
       const z = 0.35 + Math.random() * 0.65;
       return { x: Math.random() * innerWidth, y: edge ? (k.speed < 0 ? innerHeight + 20 : -20) : Math.random() * innerHeight, z,
         s: (k.size[0] + Math.random() * (k.size[1] - k.size[0])) * z, v: k.speed * (0.5 + Math.random() * 0.7) * z, d: (Math.random() - 0.5) * k.drift,
-        r: Math.random() * 6, spin: (Math.random() - 0.5) * 0.04, phase: Math.random() * 6, c: k.colors[Math.floor(Math.random() * k.colors.length)] };
+        r: Math.random() * 6, spin: (Math.random() - 0.5) * 0.04, phase: Math.random() * 6, c: k.colors[Math.floor(Math.random() * k.colors.length)] ?? "255,255,255" };
     };
     const onMove = (e: PointerEvent) => { windTarget = ((e.clientX / innerWidth) - 0.5) * 1.6; };
     const refreshHoles = () => {
