@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState, type CSSProperties, type ReactNode } from 'react';
 
 /** Rises and settles into place when scrolled into view. Disabled for reduced-motion visitors. */
-export function Reveal({ children, className = '', delay = 0, as: Tag = 'div' }: { children: ReactNode; className?: string; delay?: number; as?: 'div' | 'section' | 'article' }) {
+export function Reveal({ children, className = '', delay = 0, id, as: Tag = 'div' }: { children: ReactNode; className?: string; delay?: number; id?: string; as?: 'div' | 'section' | 'article' }) {
   const ref = useRef<HTMLElement | null>(null);
   const [inView, setInView] = useState(false);
 
@@ -17,5 +17,5 @@ export function Reveal({ children, className = '', delay = 0, as: Tag = 'div' }:
   }, []);
 
   const style: CSSProperties = delay ? { transitionDelay: `${delay}ms` } : {};
-  return <Tag ref={ref as never} style={style} className={`reveal ${inView ? 'reveal--in' : ''} ${className}`}>{children}</Tag>;
+  return <Tag ref={ref as never} id={id} style={style} className={`reveal ${inView ? 'reveal--in' : ''} ${className}`}>{children}</Tag>;
 }
