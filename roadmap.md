@@ -1,5 +1,7 @@
 # ENKOP roadmap
 
+- [ ] Enhance existing homepage footage with restrained clarity treatment and adaptive upscaled 4K/HD playback; verify phone display and scene cycling
+
 - [x] Verify mobile public pages at 360/390/430px, landscape and desktop; improve controls and overlays; search, gallery, menu, signed-in admin tabs, enquiry readback, video playback and four themes passed (24 targeted tests)
 
 - [x] Tune book-flip corner lift, natural acceleration and paper-following shadows; verified three screen sizes, cleanup, reduced motion and 13 targeted tests
