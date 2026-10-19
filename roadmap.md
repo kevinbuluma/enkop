@@ -1,6 +1,6 @@
 # ENKOP roadmap
 
-- [ ] Remove cartoon leaf fallback and verify photographic leaves during navigation
+- [x] Remove cartoon leaf fallback and verify photographic leaves during navigation
 
 - [x] Realistic textured leaves: staggered wind arrival, full-screen accumulation, tornado sweep and sliding exits
 - [x] Refine leaf realism with curled botanical textures, depth of field and cinematic tumbling
