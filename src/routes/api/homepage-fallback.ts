@@ -2,6 +2,7 @@ import { createFileRoute } from '@tanstack/react-router';
 import { createClient } from '@supabase/supabase-js';
 import { fallbackInput, fallbackPrompt } from '@/lib/fallback-image';
 import { editImage, imageSettings } from '@/lib/image-gateway.server';
+import { aiAvailable } from '@/integrations/supabase/privileged.server';
 
 export const Route = createFileRoute('/api/homepage-fallback')({
   server: { handlers: { POST: async ({ request }) => {
@@ -9,8 +10,7 @@ export const Route = createFileRoute('/api/homepage-fallback')({
     if (!token || token.split('.').length !== 3) return Response.json({ message: 'Please sign in.' }, { status: 401 });
     const url = process.env['SUPABASE_URL'];
     const key = process.env['SUPABASE_PUBLISHABLE_KEY'];
-    const apiKey = process.env['LOVABLE_API_KEY'];
-    if (!url || !key || !apiKey) return Response.json({ message: 'Image generation is not configured.' }, { status: 500 });
+    if (!url || !key || !aiAvailable()) return Response.json({ message: 'Image generation is not configured.' }, { status: 500 });
     const db = createClient(url, key, {
       auth: { persistSession: false, autoRefreshToken: false },
       global: { headers: { Authorization: `Bearer ${token}` }, fetch: (input, init) => {
@@ -45,7 +45,7 @@ export const Route = createFileRoute('/api/homepage-fallback')({
     upstreamForm.set('size', '1536x864');
     upstreamForm.set('quality', 'medium');
     upstreamForm.set('stream', form.get('stream') === 'false' ? 'false' : 'true');
-    const upstream = await editImage({ ...imageSettings, apiKey }, upstreamForm);
+    const upstream = await editImage(imageSettings, upstreamForm);
     if (upstream.status === 403) {
       const body = await upstream.clone().json().catch(() => null) as { type?: string; message?: string; error?: { type?: string; message?: string } } | null;
       const type = body?.type ?? body?.error?.type;

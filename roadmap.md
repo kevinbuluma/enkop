@@ -30,3 +30,7 @@
 - [x] Public property pages show completed tours from /admin + uploaded photos
 - [ ] Owner notifications: WhatsApp needs the WhatsApp connection linked (card shown); email needs a verified sender domain (setup dialog shown)
 - [ ] Real Nairobi villa videos replace AI hero (needs user's footage — upload via Homepage scenes tab; matching fallback images via the existing generator)
+
+- [x] Secure server-to-server bridge so enquiries, signed media, WhatsApp alerts and AI tools work on non-Lovable hosts (Cloudflare)
+- [ ] Sharper homepage videos: needs higher-resolution footage (regenerate at 1080p or owner 4K upload) — awaiting user choice
+- [ ] Bridge activation: owner adds ENKOP_BRIDGE_SECRET in Project Settings → Secrets (both hosts) and republishes

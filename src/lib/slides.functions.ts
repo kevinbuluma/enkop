@@ -31,8 +31,8 @@ export const getHomepageSlides = createServerFn({ method: 'GET' }).handler(async
   const { data, error } = await (pub as any).from('homepage_slides').select('id,label,video_path,image_path').eq('active', true).order('position');
   if (error || !data?.length) return [];
   // Only paths an administrator placed on an active homepage slide are signed.
-  const { supabaseAdmin } = await import('@/integrations/supabase/client.server');
-  const urls = await sign(supabaseAdmin.storage, data.flatMap((s: any) => [s.video_path, s.image_path]));
+  const { signStoragePaths } = await import('@/integrations/supabase/privileged.server');
+  const urls = await signStoragePaths(data.flatMap((s: any) => [s.video_path, s.image_path]).filter(Boolean), 60 * 60 * 24);
   return data.map((s: any) => ({ id: s.id, label: s.label, video_url: optimizedHeroMedia(s.video_path)?.mp4 ?? (s.video_path ? urls[s.video_path] ?? null : null), webm_url: optimizedHeroMedia(s.video_path)?.webm ?? null, image_url: s.image_path ? urls[s.image_path] ?? null : null }))
     .filter((s: PublicSlide) => s.video_url || s.image_url);
 });
