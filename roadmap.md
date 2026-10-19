@@ -1,5 +1,7 @@
 # ENKOP roadmap
 
+- [x] Verify mobile public pages at 360/390/430px, landscape and desktop; improve controls and overlays; search, gallery, menu, signed-in admin tabs, enquiry readback, video playback and four themes passed (24 targeted tests)
+
 - [x] Tune book-flip corner lift, natural acceleration and paper-following shadows; verified three screen sizes, cleanup, reduced motion and 13 targeted tests
 
 - [x] Refine page flip with outgoing-page imagery, flexible paper curvature and moving shadows; verified navigation, cleanup and reduced motion at desktop, compact and phone sizes (11 targeted tests passed)
