@@ -15,16 +15,23 @@ export function optimizedHeroMedia(path: string | null) {
   return path ? optimized[path] ?? null : null;
 }
 
-/** Enhanced exports are upscaled from existing footage, not native 4K captures. */
+/**
+ * Streaming encodes of the sharpened 1080p master: ~3.7 Mbps 1080p for wide screens and ~1.9 Mbps 720p
+ * for phones and slow connections. The source footage is 720p, so larger exports add weight, not detail.
+ */
 export function enhancedHeroMedia(url: string | null) {
   const match = url?.match(/^\/videos\/scenes\/enkop-scene-([0-2])\.mp4$/);
   if (!match) return null;
   return {
-    hd: `/videos/scenes/enkop-scene-${match[1]}-hd.mp4`,
-    ultra: `/videos/scenes/enkop-scene-${match[1]}-4k.mp4`,
-    hdWebm: `/videos/scenes/enkop-scene-${match[1]}-hd.webm`,
-    ultraWebm: `/videos/scenes/enkop-scene-${match[1]}-4k.webm`,
+    desktop: `/videos/scenes/enkop-scene-${match[1]}-1080.mp4`,
+    mobile: `/videos/scenes/enkop-scene-${match[1]}-720.mp4`,
   };
+}
+
+/** True when the connection is unlikely to sustain the 1080p stream (Chromium's estimate; unknown elsewhere). */
+export function prefersLiteHeroMedia(conn: { saveData?: boolean; downlink?: number } | undefined) {
+  if (!conn) return false;
+  return !!conn.saveData || (typeof conn.downlink === 'number' && conn.downlink > 0 && conn.downlink < 5);
 }
 
 /** The built-in scenes, used when the managed homepage slides can't be loaded. */

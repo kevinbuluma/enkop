@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { builtInHeroSlides, optimizedHeroMedia, enhancedHeroMedia } from '@/lib/hero-media';
+import { builtInHeroSlides, optimizedHeroMedia, enhancedHeroMedia, prefersLiteHeroMedia } from '@/lib/hero-media';
 
 describe('optimized homepage scene media', () => {
   it('provides MP4 and WebM for all existing scenes', () => {
@@ -22,16 +22,20 @@ describe('optimized homepage scene media', () => {
     expect(optimizedHeroMedia('homepage/replacement.mp4')).toBeNull();
     expect(optimizedHeroMedia(null)).toBeNull();
   });
-  it('provides enhanced variants for each built-in scene only', () => {
+  it('provides streaming variants for each built-in scene only', () => {
     for (const n of [0, 1, 2]) {
       expect(enhancedHeroMedia(`/videos/scenes/enkop-scene-${n}.mp4`)).toEqual({
-        hd: `/videos/scenes/enkop-scene-${n}-hd.mp4`,
-        ultra: `/videos/scenes/enkop-scene-${n}-4k.mp4`,
-        hdWebm: `/videos/scenes/enkop-scene-${n}-hd.webm`,
-        ultraWebm: `/videos/scenes/enkop-scene-${n}-4k.webm`,
+        desktop: `/videos/scenes/enkop-scene-${n}-1080.mp4`,
+        mobile: `/videos/scenes/enkop-scene-${n}-720.mp4`,
       });
     }
     expect(enhancedHeroMedia('https://example.com/new-upload.mp4')).toBeNull();
     expect(enhancedHeroMedia(null)).toBeNull();
+  });
+  it('drops to the lighter stream for data saver or slow connections only', () => {
+    expect(prefersLiteHeroMedia(undefined)).toBe(false);
+    expect(prefersLiteHeroMedia({ downlink: 10 })).toBe(false);
+    expect(prefersLiteHeroMedia({ downlink: 1.2 })).toBe(true);
+    expect(prefersLiteHeroMedia({ saveData: true, downlink: 10 })).toBe(true);
   });
 });

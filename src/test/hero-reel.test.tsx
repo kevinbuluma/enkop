@@ -20,6 +20,20 @@ describe('homepage video sequencing', () => {
     if (!first) throw new Error('Missing video');
     act(() => { first.dispatchEvent(new Event('playing')); first.dispatchEvent(new Event('ended')); });
     expect(HTMLMediaElement.prototype.play).toHaveBeenCalledTimes(2);
+    act(() => vi.advanceTimersByTime(1400));
+    expect(HTMLMediaElement.prototype.pause).toHaveBeenCalled();
+  });
+  it('starts the cross-fade before the clip ends and keeps the outgoing scene playing under it', () => {
+    const { container } = render(<HeroReel slides={slides} poster="/poster.jpg" />);
+    const first = container.querySelector('video');
+    if (!first) throw new Error('Missing video');
+    Object.defineProperty(first, 'duration', { configurable: true, value: 8 });
+    Object.defineProperty(first, 'currentTime', { configurable: true, get: () => 6.8, set: () => {} });
+    act(() => { first.dispatchEvent(new Event('playing')); first.dispatchEvent(new Event('timeupdate')); });
+    expect(HTMLMediaElement.prototype.play).toHaveBeenCalledTimes(2);
+    expect(first.className).toContain('hero-video--playing');
+    expect(HTMLMediaElement.prototype.pause).not.toHaveBeenCalled();
+    act(() => vi.advanceTimersByTime(1400));
     expect(HTMLMediaElement.prototype.pause).toHaveBeenCalled();
   });
   it('uses a seven-second image hold after a media error, then advances', () => {
