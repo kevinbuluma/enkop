@@ -13,9 +13,8 @@ async function assertAdmin(ctx: { supabase: any; userId: string }) {
 async function signPortraits(rows: any[]) {
   const paths = rows.map(r => r.photo_path).filter(Boolean);
   if (!paths.length) return rows.map(r => ({ ...r, photo_url: null as string | null }));
-  const { supabaseAdmin } = await import('@/integrations/supabase/client.server');
-  const { data } = await supabaseAdmin.storage.from(BUCKET).createSignedUrls(paths, 60 * 60 * 24);
-  const urls = Object.fromEntries((data ?? []).filter(d => d.signedUrl).map(d => [d.path, d.signedUrl]));
+  const { signStoragePaths } = await import('@/integrations/supabase/privileged.server');
+  const urls = await signStoragePaths(paths, 60 * 60 * 24);
   return rows.map(r => ({ ...r, photo_url: (r.photo_path && urls[r.photo_path]) || null }));
 }
 

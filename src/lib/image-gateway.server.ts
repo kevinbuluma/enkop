@@ -1,3 +1,4 @@
+import { aiGatewayFetch } from '@/integrations/supabase/privileged.server';
 export type ImageConfig = {
   baseURL: string;
   apiKey: string;
@@ -43,7 +44,7 @@ export function generateImage(config: ImageConfig, prompt: string, stream = true
   });
 }
 
-export async function editImage(config: ImageConfig, form: FormData, signal?: AbortSignal) {
+export async function editImage(config: Omit<ImageConfig, 'apiKey'>, form: FormData, signal?: AbortSignal) {
   const streaming = form.get("stream") !== "false";
   if (config.format === "openai") {
     form.set("model", config.model);
@@ -54,9 +55,9 @@ export async function editImage(config: ImageConfig, form: FormData, signal?: Ab
       form.delete("stream");
       form.delete("partial_images");
     }
-    return fetch(`${config.baseURL}/v1/images/edits`, {
+    return aiGatewayFetch('/images/edits', {
       method: "POST",
-      headers: { Authorization: `Bearer ${config.apiKey}`, 'X-Lovable-AIG-SDK': 'fetch' },
+      headers: { 'X-Lovable-AIG-SDK': 'fetch' },
       body: form,
       signal: signal ?? null,
     });
@@ -106,12 +107,9 @@ export async function editImage(config: ImageConfig, form: FormData, signal?: Ab
         modalities: ["image", "text"],
       };
   }
-  return fetch(`${config.baseURL}/v1/images/generations`, {
+  return aiGatewayFetch('/images/generations', {
     method: "POST",
-    headers: {
-      Authorization: `Bearer ${config.apiKey}`,
-      "Content-Type": "application/json",
-    },
+    headers: { "Content-Type": "application/json" },
     body: JSON.stringify({ model: config.model, ...input, ...(streaming ? { stream: true } : {}) }),
     signal: signal ?? null,
   });

@@ -2,7 +2,6 @@ import { createServerFn } from '@tanstack/react-start';
 import { z } from 'zod';
 import { requireSupabaseAuth } from '@/integrations/supabase/auth-middleware';
 
-const GATEWAY = 'https://ai.gateway.lovable.dev/v1';
 const MODEL = 'google/gemini-omni-1.1-flash';
 const BUCKET = 'property-media';
 
@@ -14,14 +13,14 @@ async function assertAdmin({ supabase, userId }: Ctx) {
   if (!data) throw new Error('Only ENKOP administrators can manage property tours.');
 }
 
-function apiKey() {
-  const key = process.env['LOVABLE_API_KEY'];
-  if (!key) throw new Error('Video generation is not configured.');
-  return key;
+async function ai() {
+  const m = await import('@/integrations/supabase/privileged.server');
+  if (!m.aiAvailable()) throw new Error('Video generation is not configured.');
+  return m.aiGatewayFetch;
 }
 
 async function gateway(path: string, init?: RequestInit): Promise<Job> {
-  const res = await fetch(`${GATEWAY}${path}`, { ...init, headers: { Authorization: `Bearer ${apiKey()}`, 'Content-Type': 'application/json', 'X-Lovable-AIG-SDK': 'fetch' } });
+  const res = await (await ai())(path, { ...init, headers: { 'Content-Type': 'application/json', 'X-Lovable-AIG-SDK': 'fetch' } });
   if (!res.ok) {
     const body = (await res.json().catch(() => null)) as { message?: string } | null;
     const fallback = res.status === 402 ? 'Not enough AI credits to create this tour.' : res.status === 429 ? 'Another tour is generating. Please wait for it to finish.' : `Video request failed (${res.status}).`;
@@ -123,7 +122,7 @@ export const pollTour = createServerFn({ method: 'POST' })
     }
 
     const path = `${tour.property_id}/tours/${tour.id}.mp4`;
-    const res = await fetch(`${GATEWAY}/videos/${encodeURIComponent(tour.job_id)}/content`, { headers: { Authorization: `Bearer ${apiKey()}` } });
+    const res = await (await ai())(`/videos/${encodeURIComponent(tour.job_id)}/content`);
     if (!res.ok) throw new Error(`The finished video could not be downloaded (${res.status}).`);
     const { error: upErr } = await context.supabase.storage.from(BUCKET).upload(path, await res.arrayBuffer(), { contentType: 'video/mp4', upsert: true });
     if (upErr) throw new Error('The finished video could not be stored.');

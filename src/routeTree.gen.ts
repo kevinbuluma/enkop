@@ -19,6 +19,7 @@ import { Route as SitemapDotxmlRouteImport } from './routes/sitemap[.]xml'
 import { Route as ApiHomepageFallbackRouteImport } from './routes/api/homepage-fallback'
 import { Route as PropertiesIndexRouteImport } from './routes/properties.index'
 import { Route as PropertiesSlugRouteImport } from './routes/properties.$slug'
+import { Route as ApiPublicEnkopBridgeSplatRouteImport } from './routes/api/public/enkop-bridge.$'
 
 const IndexRoute = IndexRouteImport.update({
   id: '/',
@@ -70,6 +71,12 @@ const PropertiesSlugRoute = PropertiesSlugRouteImport.update({
   path: '/properties/$slug',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ApiPublicEnkopBridgeSplatRoute =
+  ApiPublicEnkopBridgeSplatRouteImport.update({
+    id: '/api/public/enkop-bridge/$',
+    path: '/api/public/enkop-bridge/$',
+    getParentRoute: () => rootRouteImport,
+  } as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -82,6 +89,7 @@ export interface FileRoutesByFullPath {
   '/api/homepage-fallback': typeof ApiHomepageFallbackRoute
   '/properties/$slug': typeof PropertiesSlugRoute
   '/properties/': typeof PropertiesIndexRoute
+  '/api/public/enkop-bridge/$': typeof ApiPublicEnkopBridgeSplatRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -94,6 +102,7 @@ export interface FileRoutesByTo {
   '/api/homepage-fallback': typeof ApiHomepageFallbackRoute
   '/properties/$slug': typeof PropertiesSlugRoute
   '/properties': typeof PropertiesIndexRoute
+  '/api/public/enkop-bridge/$': typeof ApiPublicEnkopBridgeSplatRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -107,6 +116,7 @@ export interface FileRoutesById {
   '/api/homepage-fallback': typeof ApiHomepageFallbackRoute
   '/properties/$slug': typeof PropertiesSlugRoute
   '/properties/': typeof PropertiesIndexRoute
+  '/api/public/enkop-bridge/$': typeof ApiPublicEnkopBridgeSplatRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -121,6 +131,7 @@ export interface FileRouteTypes {
     | '/api/homepage-fallback'
     | '/properties/$slug'
     | '/properties/'
+    | '/api/public/enkop-bridge/$'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -133,6 +144,7 @@ export interface FileRouteTypes {
     | '/api/homepage-fallback'
     | '/properties/$slug'
     | '/properties'
+    | '/api/public/enkop-bridge/$'
   id:
     | '__root__'
     | '/'
@@ -145,6 +157,7 @@ export interface FileRouteTypes {
     | '/api/homepage-fallback'
     | '/properties/$slug'
     | '/properties/'
+    | '/api/public/enkop-bridge/$'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -158,6 +171,7 @@ export interface RootRouteChildren {
   ApiHomepageFallbackRoute: typeof ApiHomepageFallbackRoute
   PropertiesSlugRoute: typeof PropertiesSlugRoute
   PropertiesIndexRoute: typeof PropertiesIndexRoute
+  ApiPublicEnkopBridgeSplatRoute: typeof ApiPublicEnkopBridgeSplatRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -232,6 +246,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof PropertiesSlugRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/public/enkop-bridge/$': {
+      id: '/api/public/enkop-bridge/$'
+      path: '/api/public/enkop-bridge/$'
+      fullPath: '/api/public/enkop-bridge/$'
+      preLoaderRoute: typeof ApiPublicEnkopBridgeSplatRouteImport
+      parentRoute: typeof rootRouteImport
+    }
   }
 }
 
@@ -246,6 +267,7 @@ const rootRouteChildren: RootRouteChildren = {
   ApiHomepageFallbackRoute: ApiHomepageFallbackRoute,
   PropertiesSlugRoute: PropertiesSlugRoute,
   PropertiesIndexRoute: PropertiesIndexRoute,
+  ApiPublicEnkopBridgeSplatRoute: ApiPublicEnkopBridgeSplatRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
