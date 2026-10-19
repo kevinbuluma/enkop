@@ -1,6 +1,7 @@
 import { createFileRoute, Link } from '@tanstack/react-router';
 import { useEffect, useState } from 'react';
 import { ArrowLeft, ArrowRight, ChevronLeft, ChevronRight, X, Maximize2, Share2, Phone, MessageCircle, CalendarDays } from 'lucide-react';
+import { Instagram, Facebook, Youtube, Music2, ExternalLink, MapPin, Video } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Site } from '@/components/enkop/Site';
 import { EnquiryForm } from '@/components/enkop/EnquiryForm';
@@ -12,9 +13,22 @@ import { recordView } from '@/lib/personal';
 
 export const Route = createFileRoute('/properties/$slug')({
   loader: () => getProperties(),
-  head: ({ params }) => ({ meta: [{ title: `${params.slug.replaceAll('-', ' ')} | ENKOP Real Estate` }, { name: 'description', content: `Explore ${params.slug.replaceAll('-', ' ')} with ENKOP, Nairobi's considered real estate partner.` }, { property: 'og:title', content: `${params.slug.replaceAll('-', ' ')} | ENKOP Real Estate` }, { property: 'og:description', content: 'Explore this residence with ENKOP Real Estate in Nairobi.' }, { property: 'og:type', content: 'website' }, { name: 'twitter:card', content: 'summary_large_image' }] }),
+  head: ({ params, loaderData }) => {
+    const p = (loaderData as Property[] | undefined)?.find(x => x.slug === params.slug);
+    const name = p?.title ?? params.slug.replaceAll('-', ' ');
+    const desc = p ? `${p.bedrooms}-bed ${p.property_type.toLowerCase()} ${p.listing_type === 'Sale' ? 'for sale' : 'to let'} in ${p.neighborhood}, ${p.city}. ${formatPrice(p)}.` : 'Explore this residence with ENKOP Real Estate in Nairobi.';
+    const img = p?.photo_urls?.[0];
+    const url = `https://enkop.lovable.app/properties/${params.slug}`;
+    return {
+      meta: [{ title: `${name} | ENKOP Real Estate` }, { name: 'description', content: desc }, { property: 'og:title', content: `${name} | ENKOP` }, { property: 'og:description', content: desc }, { property: 'og:type', content: 'website' }, { property: 'og:url', content: url }, { name: 'twitter:card', content: 'summary_large_image' }, ...(img ? [{ property: 'og:image', content: img }, { name: 'twitter:image', content: img }] : [])],
+      links: [{ rel: 'canonical', href: url }],
+      scripts: p ? [{ type: 'application/ld+json', children: JSON.stringify({ '@context': 'https://schema.org', '@type': 'RealEstateListing', name: p.title, description: p.description, url, ...(img ? { image: img } : {}), offers: { '@type': 'Offer', price: p.price, priceCurrency: p.currency, businessFunction: p.listing_type === 'Sale' ? 'Sell' : 'LeaseOut' }, address: { '@type': 'PostalAddress', addressLocality: p.neighborhood, addressRegion: p.city, addressCountry: 'KE' }, numberOfRooms: p.bedrooms, floorSize: { '@type': 'QuantitativeValue', value: p.area_sqm, unitCode: 'MTK' } }) }] : [],
+    };
+  },
   component: Detail,
 });
+
+const LINK_META: Record<string, { label: string; Icon: typeof ExternalLink }> = { instagram: { label: 'See on Instagram', Icon: Instagram }, tiktok: { label: 'Watch on TikTok', Icon: Music2 }, facebook: { label: 'See on Facebook', Icon: Facebook }, youtube: { label: 'Watch on YouTube', Icon: Youtube }, listing: { label: 'View original listing', Icon: ExternalLink }, tour: { label: 'Virtual tour', Icon: Video } };
 
 function ShareButton({ title }: { title: string }) {
   const [copied, setCopied] = useState(false);
@@ -36,7 +50,8 @@ function Detail() {
   if (!property) return <Site><section className="empty-results page-gutter"><p className="eyebrow">ENKOP / 404</p><h1>This property is<br/><em>no longer available.</em></h1><Button asChild variant="luxury"><Link to="/properties">Explore the collection <ArrowRight size={17}/></Link></Button></section></Site>;
   const related = properties.filter(p => p.id !== property.id).sort((a, b) => Number(b.neighborhood === property.neighborhood) - Number(a.neighborhood === property.neighborhood)).slice(0, 2);
   const waText = encodeURIComponent(`Hello ENKOP, I'm interested in ${property.title} (${typeof window !== 'undefined' ? window.location.href : ''})`);
-  const sections = [['overview','Overview'],['details','Details'],...(property.tour_url ? [['tour','Tour']] : []),['features','Features'],['enquire','Enquire']];
+  const links = Object.entries(property.external_links ?? {}).filter(([, u]) => typeof u === 'string' && u.startsWith('https://'));
+  const sections = [['overview','Overview'],['details','Details'],...(property.tour_url ? [['tour','Tour']] : []),['features','Features'],...(property.map_query ? [['location','Location']] : []),['enquire','Enquire']];
   return <Site>
     <section className="detail-heading page-gutter">
       <nav aria-label="Breadcrumb" className="breadcrumbs"><ol><li><Link to="/">Home</Link></li><li><Link to="/properties">Collection</Link></li><li><Link to="/properties" search={{ location: property.neighborhood }}>{property.neighborhood}</Link></li><li aria-current="page">{property.title}</li></ol></nav>
@@ -50,6 +65,8 @@ function Detail() {
     <section className="detail-content page-gutter" id="overview"><div className="detail-overview"><p className="eyebrow">A CLOSER LOOK / 01</p><h2>A place to<br/><em>make your own.</em></h2><p>{property.description}</p><a className="inline-arrow" href="#enquire">Enquire about this residence <ArrowRight size={18}/></a></div><div className="detail-facts" id="details"><p className="eyebrow">PROPERTY DETAILS</p>{[['Location',`${property.neighborhood}, ${property.city}`],['Property type',property.property_type],['Listing',property.listing_type === 'Sale' ? 'For sale' : 'To let'],['Bedrooms',String(property.bedrooms)],['Bathrooms',String(property.bathrooms)],['Area',`${property.area_sqm} m²`],['Parking',`${property.parking} spaces`]].map(([label,value]) => <div key={label}><span>{label}</span><strong>{value}</strong></div>)}</div></section>
     {property.tour_url && <section className="tour-section page-gutter" id="tour"><p className="eyebrow">THE CINEMATIC TOUR</p><h2>Step inside,<br/><em>from here.</em></h2><div className="tour-frame"><video src={property.tour_url} controls playsInline preload="none" poster={photos[0]}/></div></section>}
     {property.amenities.length > 0 && <section className="amenities-section page-gutter" id="features"><p className="eyebrow">THE DETAILS / 02</p><h2>Thoughtfully <em>appointed.</em></h2><div className="amenities-list">{property.amenities.map((amenity,i) => <span key={amenity}><small>0{i+1}</small>{amenity}</span>)}</div></section>}
+    {links.length > 0 && <section className="elsewhere-section page-gutter"><p className="eyebrow">EXPLORE THIS PROPERTY ELSEWHERE</p><div className="elsewhere-links">{links.map(([k, u]) => { const meta = LINK_META[k] ?? { label: 'View link', Icon: ExternalLink }; return <a key={k} href={u} target="_blank" rel="noopener noreferrer"><meta.Icon size={18}/>{meta.label}<ExternalLink size={14}/></a>; })}</div></section>}
+    {property.map_query && <section className="location-section page-gutter" id="location"><p className="eyebrow">LOCATION & SURROUNDINGS</p><h2>{property.neighborhood}, <em>{property.city}.</em></h2><p className="location-note">Approximate area shown for privacy. Exact address shared on viewing.</p><div className="map-frame"><iframe title={`Map of ${property.map_query}`} loading="lazy" referrerPolicy="no-referrer-when-downgrade" src={`https://www.google.com/maps?q=${encodeURIComponent(property.map_query)}&z=13&output=embed`}/></div><a className="inline-arrow" href={`https://www.google.com/maps/dir/?api=1&destination=${encodeURIComponent(property.map_query)}`} target="_blank" rel="noopener noreferrer"><MapPin size={16}/> Get directions</a></section>}
     <section className="detail-enquire page-gutter" id="enquire"><div><p className="eyebrow">REQUEST A PRIVATE VIEWING / 03</p><h2>Could this be<br/><em>your place?</em></h2><p>Tell us when suits you and an ENKOP representative will arrange a private viewing.</p><div className="concierge-contact"><span>Prefer to talk?</span><a href={`tel:${contact.phone.replaceAll(' ', '')}`}>{contact.phone}</a><a href={`https://wa.me/${contact.whatsappDigits}?text=${waText}`} target="_blank" rel="noopener noreferrer">Message on WhatsApp</a></div></div><EnquiryForm property={property}/></section>
     {related.length > 0 && <section className="related-section page-gutter"><p className="eyebrow">YOU MAY ALSO CONSIDER</p><div className="listing-grid">{related.map(p => <PropertyCard key={p.id} property={p}/>)}</div></section>}
     <Link className="back-link page-gutter" to="/properties"><ArrowLeft size={17}/> Back to the collection</Link>
