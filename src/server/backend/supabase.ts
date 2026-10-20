@@ -43,20 +43,17 @@ export const supabaseBackend: Backend = {
     return signStoragePaths(paths, expiresIn);
   },
   async submitEnquiry(data: Enquiry) {
-    const secret = process.env['ENKOP_BRIDGE_SECRET'];
     const master = (process.env['ENKOP_MASTER_URL'] || DEFAULT_MASTER).replace(/\/$/, '');
-    if (secret) {
-      try {
-        const res = await fetch(`${master}/api/public/enkop-master/enquiry`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json', 'x-enkop-bridge-secret': secret },
-          body: JSON.stringify(data),
-        });
-        if (res.ok) return;
-        console.error(`[enkop] master rejected forwarded enquiry (${res.status})`);
-      } catch (e) {
-        console.error('[enkop] master unreachable for enquiry', e);
-      }
+    try {
+      const res = await fetch(`${master}/api/public/enkop-master/enquiry`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(data),
+      });
+      if (res.ok) return;
+      console.error(`[enkop] master rejected forwarded enquiry (${res.status})`);
+    } catch (e) {
+      console.error('[enkop] master unreachable for enquiry', e);
     }
     // Never lose a lead: if the master can't take it, keep it in Lovable Cloud.
     const { insertEnquiry } = await import('@/integrations/supabase/privileged.server');

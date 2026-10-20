@@ -2,7 +2,7 @@ import { createFileRoute } from '@tanstack/react-router';
 import { enquirySchema } from '@/lib/enquiry-schema';
 
 // Server-to-server endpoints of the ENKOP master:
-//   POST enquiry  forwarded by the Lovable mirror (x-enkop-bridge-secret)
+//   POST enquiry  forwarded by the Lovable mirror (public, like the contact form)
 //   POST drain    pushes queued changes to the mirror (x-enkop-internal-key, used by enkop-sync)
 //   GET  status   outbox backlog (x-enkop-internal-key)
 function safeEqual(a: string, b: string) {
@@ -20,7 +20,7 @@ async function handle({ request, params }: { request: Request; params: { _splat?
   const route = params._splat ?? '';
 
   if (route === 'enquiry' && request.method === 'POST') {
-    if (!authorized(request, 'x-enkop-bridge-secret', process.env['ENKOP_BRIDGE_SECRET'])) return Response.json({ message: 'Unauthorized.' }, { status: 401 });
+    // Same validation and spam trap as the master's own public form, which needs no credential either.
     const p = enquirySchema.safeParse(await request.json().catch(() => null));
     if (!p.success) return Response.json({ message: 'Invalid enquiry.' }, { status: 400 });
     if (!p.data.website) {

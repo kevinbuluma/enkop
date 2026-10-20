@@ -15,13 +15,38 @@ const signSchema = z.object({ paths: z.array(z.string().refine(signablePath)).mi
 const mirrorSchema = z.object({ table: z.string(), rows: z.array(z.record(z.string(), z.unknown())).min(1).max(100) })
   .or(z.object({ table: z.string(), keys: z.array(z.record(z.string(), z.unknown())).min(1).max(100) }).transform((d) => ({ table: d.table, rows: d.keys })));
 
-async function handle({ request, params }: { request: Request; params: { _splat?: string } }) {
+async function sha256(value: string) {
+  const bytes = new Uint8Array(await crypto.subtle.digest('SHA-256', new TextEncoder().encode(value)));
+  return Array.from(bytes, (b) => b.toString(16).padStart(2, '0')).join('');
+}
+
+let storedHash: { value: string | null; at: number } | null = null;
+
+/**
+ * The shared secret comes from the ENKOP_BRIDGE_SECRET project secret, or, when that is not set,
+ * from the SHA-256 hash in public.enkop_bridge_auth (RLS on, no policies: service role only).
+ * Returns null when neither is configured.
+ */
+async function bridgeAuthorized(provided: string): Promise<boolean | null> {
   const secret = process.env['ENKOP_BRIDGE_SECRET'];
-  if (!secret) return Response.json({ message: 'Bridge not configured.' }, { status: 503 });
-  if (!safeEqual(request.headers.get('x-enkop-bridge-secret') ?? '', secret)) return Response.json({ message: 'Unauthorized.' }, { status: 401 });
+  if (secret) return safeEqual(provided, secret);
+  if (!process.env['SUPABASE_SERVICE_ROLE_KEY']) return null;
+  if (!storedHash || Date.now() - storedHash.at > 60_000) {
+    const { supabaseAdmin } = await import('@/integrations/supabase/client.server');
+    const { data } = await (supabaseAdmin as any).from('enkop_bridge_auth').select('secret_sha256').eq('id', 1).maybeSingle();
+    storedHash = { value: (data?.secret_sha256 as string | undefined) ?? null, at: Date.now() };
+  }
+  if (!storedHash.value) return null;
+  return provided.length > 0 && safeEqual(await sha256(provided), storedHash.value);
+}
+
+async function handle({ request, params }: { request: Request; params: { _splat?: string } }) {
   // The bridge only serves on Lovable hosting (managed keys); the ENKOP master never answers it.
   const { isMaster } = await import('@/server/runtime');
   if (await isMaster()) return Response.json({ message: 'Not found.' }, { status: 404 });
+  const ok = await bridgeAuthorized(request.headers.get('x-enkop-bridge-secret') ?? '');
+  if (ok === null) return Response.json({ message: 'Bridge not configured.' }, { status: 503 });
+  if (!ok) return Response.json({ message: 'Unauthorized.' }, { status: 401 });
   // Never relay onwards: the bridge only serves where managed keys exist.
   const { privilegedMode, signStoragePaths, insertEnquiry, aiGatewayFetch } = await import('@/integrations/supabase/privileged.server');
   const route = params._splat ?? '';
