@@ -69,6 +69,17 @@ export class MasterStore {
     return this.db.prepare(`INSERT INTO outbox (kind, payload) VALUES (?, ?)`).bind(kind, JSON.stringify(payload));
   }
 
+  /** Inserts a row copied from the mirror unless it already exists. No outbox entry: the mirror has it. */
+  async importRow(table: MirrorTable, row: Row): Promise<boolean> {
+    const cols = Object.keys(row).filter((c) => (TABLES[table].columns as readonly string[]).includes(c));
+    // Only an existing primary key is skipped; any other constraint failure must surface.
+    const res = await this.db
+      .prepare(`INSERT INTO ${table} (${cols.join(', ')}) VALUES (${cols.map(() => '?').join(', ')}) ON CONFLICT (${TABLES[table].pk}) DO NOTHING`)
+      .bind(...cols.map((c) => encodeValue(table, c, row[c])))
+      .run();
+    return (res.meta?.changes ?? 0) > 0;
+  }
+
   async run(statements: D1PreparedStatement[]) {
     if (statements.length) await this.db.batch(statements);
   }

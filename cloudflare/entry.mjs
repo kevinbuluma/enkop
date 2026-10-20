@@ -1,10 +1,42 @@
 // Worker entry for the ENKOP master. Copied next to the Nitro build as .output/server/enkop-entry.mjs
 // by cloudflare/scripts/install-entry.mjs, so `./index.mjs` is the Nitro handler.
-// Workers Static Assets ignores Range headers; Safari will not play <video> without 206 responses,
-// so /videos/* (routed here by assets.run_worker_first) is served with byte ranges.
+// - Workers Static Assets ignores Range headers; Safari will not play <video> without 206 responses,
+//   so /videos/* (routed here by assets.run_worker_first) is served with byte ranges.
+// - Lovable is the fallback: when a public page fails, the Lovable-hosted copy is served instead.
+//   Admin, media and backend endpoints never fall back.
 import nitro from './index.mjs';
 
 const VIDEO = /^\/videos\/[\w./-]+\.(mp4|webm)$/;
+const NO_FALLBACK = /^\/(admin|api\/admin\/|api\/public\/enkop-|media\/|api\/homepage-fallback)/;
+const LOVABLE = 'https://enkop-real-estate.lovable.app';
+
+function safeEqual(a, b) {
+  if (!a || !b || a.length !== b.length) return false;
+  let diff = 0;
+  for (let i = 0; i < a.length; i++) diff |= a.charCodeAt(i) ^ b.charCodeAt(i);
+  return diff === 0;
+}
+
+async function fromLovable(request, env, body) {
+  const url = new URL(request.url);
+  const headers = new Headers(request.headers);
+  for (const h of ['cookie', 'host', 'x-enkop-test-fallback']) headers.delete(h);
+  const origin = String(env.ENKOP_BRIDGE_URL || LOVABLE).replace(/\/$/, '');
+  const res = await fetch(`${origin}${url.pathname}${url.search}`, { method: request.method, headers, body, redirect: 'manual' });
+  const out = new Response(res.body, res);
+  out.headers.set('x-enkop-served-by', 'lovable-fallback');
+  out.headers.set('cache-control', 'no-store');
+  out.headers.delete('set-cookie');
+  return out;
+}
+
+const fromAdmin = (request) => {
+  try {
+    return new URL(request.headers.get('referer') ?? '').pathname.startsWith('/admin');
+  } catch {
+    return false;
+  }
+};
 
 function parseRange(header, size) {
   const m = /^bytes=(\d*)-(\d*)$/.exec(header.trim());
@@ -79,10 +111,36 @@ async function serveVideo(request, env) {
 
 export default {
   ...nitro,
-  fetch(request, env, ctx) {
-    if ((request.method === 'GET' || request.method === 'HEAD') && env.ASSETS && VIDEO.test(new URL(request.url).pathname)) {
-      return serveVideo(request, env);
+  async fetch(request, env, ctx) {
+    const url = new URL(request.url);
+    const read = request.method === 'GET' || request.method === 'HEAD';
+    const serverFn = url.pathname.startsWith('/_serverFn/');
+    const eligible = !NO_FALLBACK.test(url.pathname) && (read || (serverFn && request.method === 'POST')) && !(serverFn && fromAdmin(request));
+    if (eligible && safeEqual(request.headers.get('x-enkop-test-fallback'), env.ENKOP_INTERNAL_KEY)) return fromLovable(request, env);
+
+    if (read && env.ASSETS && VIDEO.test(url.pathname)) {
+      const res = await serveVideo(request, env).catch(() => null);
+      if (res && res.status < 500 && res.status !== 404) return res;
+      return fromLovable(request, env).catch(() => res ?? new Response(null, { status: 502 }));
     }
-    return nitro.fetch(request, env, ctx);
+    if (!eligible) return nitro.fetch(request, env, ctx);
+
+    const body = read ? undefined : await request.clone().arrayBuffer();
+    let res = null;
+    try {
+      res = await nitro.fetch(request, env, ctx);
+    } catch (e) {
+      console.error('[enkop] request failed; serving the Lovable fallback', e);
+    }
+    // Server functions answer ordinary errors with 500, so only infrastructure failures fall back.
+    const failed = !res || (serverFn ? res.status >= 502 && res.status <= 504 : res.status >= 500);
+    const assetMiss = res?.status === 404 && read && url.pathname.startsWith('/assets/');
+    if (!failed && !assetMiss) return res;
+    try {
+      return await fromLovable(request, env, body);
+    } catch (e) {
+      console.error('[enkop] Lovable fallback unreachable', e);
+      return res ?? new Response('ENKOP is temporarily unavailable. Please try again shortly.', { status: 503 });
+    }
   },
 };

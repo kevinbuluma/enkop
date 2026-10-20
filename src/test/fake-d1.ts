@@ -17,7 +17,10 @@ const bindable = (v: unknown) => (v === undefined ? null : typeof v === 'boolean
 
 class FakeStatement {
   private params: unknown[] = [];
-  constructor(private db: Db, readonly sql: string) {}
+  constructor(private db: Db, readonly sql: string) {
+    // D1 caps compound SELECTs at five terms; local SQLite allows 500.
+    if ((sql.match(/\b(UNION|INTERSECT|EXCEPT)\b/gi) ?? []).length > 4) throw new Error('too many terms in compound SELECT: SQLITE_ERROR');
+  }
   bind(...values: unknown[]) {
     const s = new FakeStatement(this.db, this.sql);
     s.params = values.map(bindable);

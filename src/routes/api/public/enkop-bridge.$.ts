@@ -86,6 +86,14 @@ async function handle({ request, params }: { request: Request; params: { _splat?
   if (request.method !== 'POST') return Response.json({ message: 'Not found.' }, { status: 404 });
   if (privilegedMode('db') !== 'direct') return Response.json({ message: 'Storage not configured.' }, { status: 503 });
   const json = await request.json().catch(() => null);
+  if (route === 'mirror/enquiries') {
+    // Leads stored here while the master was unreachable; the master imports them back.
+    const p = z.object({ since: z.string().datetime({ offset: true }) }).safeParse(json);
+    if (!p.success) return Response.json({ message: 'Invalid request.' }, { status: 400 });
+    const { supabaseAdmin } = await import('@/integrations/supabase/client.server');
+    const { data, error } = await (supabaseAdmin as any).from('enquiries').select('*').gte('created_at', p.data.since).order('created_at').limit(200);
+    return error ? Response.json({ message: error.message }, { status: 500 }) : Response.json({ rows: data ?? [] });
+  }
   if (route === 'mirror/upsert' || route === 'mirror/delete') {
     const { isMirrorTable, TABLES } = await import('@/server/backend/tables');
     const p = mirrorSchema.safeParse(json);

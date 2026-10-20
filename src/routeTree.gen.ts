@@ -24,6 +24,7 @@ import { Route as ApiAdminMediaRouteImport } from './routes/api/admin/media'
 import { Route as ApiAdminSessionRouteImport } from './routes/api/admin/session'
 import { Route as ApiPublicEnkopHealthRouteImport } from './routes/api/public/enkop-health'
 import { Route as ApiPublicEnkopBridgeSplatRouteImport } from './routes/api/public/enkop-bridge.$'
+import { Route as ApiPublicEnkopContentSplatRouteImport } from './routes/api/public/enkop-content.$'
 import { Route as ApiPublicEnkopMasterSplatRouteImport } from './routes/api/public/enkop-master.$'
 
 const IndexRoute = IndexRouteImport.update({
@@ -102,6 +103,12 @@ const ApiPublicEnkopBridgeSplatRoute =
     path: '/api/public/enkop-bridge/$',
     getParentRoute: () => rootRouteImport,
   } as any)
+const ApiPublicEnkopContentSplatRoute =
+  ApiPublicEnkopContentSplatRouteImport.update({
+    id: '/api/public/enkop-content/$',
+    path: '/api/public/enkop-content/$',
+    getParentRoute: () => rootRouteImport,
+  } as any)
 const ApiPublicEnkopMasterSplatRoute =
   ApiPublicEnkopMasterSplatRouteImport.update({
     id: '/api/public/enkop-master/$',
@@ -125,6 +132,7 @@ export interface FileRoutesByFullPath {
   '/api/admin/session': typeof ApiAdminSessionRoute
   '/api/public/enkop-health': typeof ApiPublicEnkopHealthRoute
   '/api/public/enkop-bridge/$': typeof ApiPublicEnkopBridgeSplatRoute
+  '/api/public/enkop-content/$': typeof ApiPublicEnkopContentSplatRoute
   '/api/public/enkop-master/$': typeof ApiPublicEnkopMasterSplatRoute
 }
 export interface FileRoutesByTo {
@@ -143,6 +151,7 @@ export interface FileRoutesByTo {
   '/api/admin/session': typeof ApiAdminSessionRoute
   '/api/public/enkop-health': typeof ApiPublicEnkopHealthRoute
   '/api/public/enkop-bridge/$': typeof ApiPublicEnkopBridgeSplatRoute
+  '/api/public/enkop-content/$': typeof ApiPublicEnkopContentSplatRoute
   '/api/public/enkop-master/$': typeof ApiPublicEnkopMasterSplatRoute
 }
 export interface FileRoutesById {
@@ -162,6 +171,7 @@ export interface FileRoutesById {
   '/api/admin/session': typeof ApiAdminSessionRoute
   '/api/public/enkop-health': typeof ApiPublicEnkopHealthRoute
   '/api/public/enkop-bridge/$': typeof ApiPublicEnkopBridgeSplatRoute
+  '/api/public/enkop-content/$': typeof ApiPublicEnkopContentSplatRoute
   '/api/public/enkop-master/$': typeof ApiPublicEnkopMasterSplatRoute
 }
 export interface FileRouteTypes {
@@ -182,6 +192,7 @@ export interface FileRouteTypes {
     | '/api/admin/session'
     | '/api/public/enkop-health'
     | '/api/public/enkop-bridge/$'
+    | '/api/public/enkop-content/$'
     | '/api/public/enkop-master/$'
   fileRoutesByTo: FileRoutesByTo
   to:
@@ -200,6 +211,7 @@ export interface FileRouteTypes {
     | '/api/admin/session'
     | '/api/public/enkop-health'
     | '/api/public/enkop-bridge/$'
+    | '/api/public/enkop-content/$'
     | '/api/public/enkop-master/$'
   id:
     | '__root__'
@@ -218,6 +230,7 @@ export interface FileRouteTypes {
     | '/api/admin/session'
     | '/api/public/enkop-health'
     | '/api/public/enkop-bridge/$'
+    | '/api/public/enkop-content/$'
     | '/api/public/enkop-master/$'
   fileRoutesById: FileRoutesById
 }
@@ -237,6 +250,7 @@ export interface RootRouteChildren {
   ApiAdminSessionRoute: typeof ApiAdminSessionRoute
   ApiPublicEnkopHealthRoute: typeof ApiPublicEnkopHealthRoute
   ApiPublicEnkopBridgeSplatRoute: typeof ApiPublicEnkopBridgeSplatRoute
+  ApiPublicEnkopContentSplatRoute: typeof ApiPublicEnkopContentSplatRoute
   ApiPublicEnkopMasterSplatRoute: typeof ApiPublicEnkopMasterSplatRoute
 }
 
@@ -347,6 +361,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiPublicEnkopBridgeSplatRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/public/enkop-content/$': {
+      id: '/api/public/enkop-content/$'
+      path: '/api/public/enkop-content/$'
+      fullPath: '/api/public/enkop-content/$'
+      preLoaderRoute: typeof ApiPublicEnkopContentSplatRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/api/public/enkop-master/$': {
       id: '/api/public/enkop-master/$'
       path: '/api/public/enkop-master/$'
@@ -373,6 +394,7 @@ const rootRouteChildren: RootRouteChildren = {
   ApiAdminSessionRoute: ApiAdminSessionRoute,
   ApiPublicEnkopHealthRoute: ApiPublicEnkopHealthRoute,
   ApiPublicEnkopBridgeSplatRoute: ApiPublicEnkopBridgeSplatRoute,
+  ApiPublicEnkopContentSplatRoute: ApiPublicEnkopContentSplatRoute,
   ApiPublicEnkopMasterSplatRoute: ApiPublicEnkopMasterSplatRoute,
 }
 export const routeTree = rootRouteImport

@@ -3,8 +3,10 @@ import { enquirySchema } from '@/lib/enquiry-schema';
 
 // Server-to-server endpoints of the ENKOP master:
 //   POST enquiry  forwarded by the Lovable mirror (public, like the contact form)
-//   POST drain    pushes queued changes to the mirror (x-enkop-internal-key, used by enkop-sync)
+//   POST drain    pulls fallback enquiries from the mirror, then pushes queued changes to it
+//                 (keyless calls are throttled; x-enkop-internal-key shows results)
 //   GET  status   outbox backlog (x-enkop-internal-key)
+//   POST test-alert  sends a test alert on every configured channel (x-enkop-internal-key)
 function safeEqual(a: string, b: string) {
   if (a.length !== b.length) return false;
   let diff = 0;
@@ -65,6 +67,8 @@ async function handle({ request, params }: { request: Request; params: { _splat?
     if (Date.now() - last < 60_000) return Response.json({ ok: true, throttled: true });
     if (kv) await kv.put('meta:last-public-drain', String(Date.now()));
     const sync = await import('@/server/sync');
+    const { pullMirrorEnquiries } = await import('@/server/reconcile');
+    await pullMirrorEnquiries(env).catch((e) => console.error('[enkop] mirror enquiry pull failed', e));
     for (let i = 0; i < 4; i++) {
       const r = await sync.drainOutbox(env, 25);
       if (!r.sent || r.failed || !r.pending) break;
@@ -72,10 +76,23 @@ async function handle({ request, params }: { request: Request; params: { _splat?
     return Response.json({ ok: true });
   }
 
+  if (route === 'test-alert' && request.method === 'POST') {
+    if (!authorized(request, 'x-enkop-internal-key', process.env['ENKOP_INTERNAL_KEY'])) return Response.json({ message: 'Unauthorized.' }, { status: 401 });
+    const { notify } = await import('@/server/notify');
+    try {
+      const delivered = await notify(env, { kind: 'test', text: 'ENKOP test alert: enquiry alerts are reaching you. No action needed.' });
+      return Response.json({ delivered });
+    } catch (e) {
+      return Response.json({ message: e instanceof Error ? e.message : String(e) }, { status: 502 });
+    }
+  }
+
   if (route === 'drain' || route === 'status') {
     if (!authorized(request, 'x-enkop-internal-key', process.env['ENKOP_INTERNAL_KEY'])) return Response.json({ message: 'Unauthorized.' }, { status: 401 });
     const sync = await import('@/server/sync');
     if (route === 'drain' && request.method === 'POST') {
+      const { pullMirrorEnquiries } = await import('@/server/reconcile');
+      const enquiries = await pullMirrorEnquiries(env).catch((e) => ({ error: e instanceof Error ? e.message : String(e) }));
       const results = [];
       // Up to four rounds so a backlog clears within one cron tick.
       for (let i = 0; i < 4; i++) {
@@ -83,7 +100,7 @@ async function handle({ request, params }: { request: Request; params: { _splat?
         results.push(r);
         if (!r.sent || r.failed || !r.pending) break;
       }
-      return Response.json({ rounds: results, ...(await sync.outboxStatus(env)) });
+      return Response.json({ enquiries, rounds: results, ...(await sync.outboxStatus(env)) });
     }
     if (route === 'status' && request.method === 'GET') return Response.json(await sync.outboxStatus(env));
   }

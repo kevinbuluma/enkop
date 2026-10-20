@@ -25,7 +25,9 @@
   //   ENKOP_BRIDGE_SECRET  shared with Lovable's bridge
   //   ENKOP_MEDIA_KEY      HMAC key for signed /media links
   //   ENKOP_INTERNAL_KEY   authenticates the enkop-sync cron Worker
-  //   META_WA_TOKEN, META_WA_PHONE_ID  optional, direct WhatsApp Cloud API
+  //   META_WA_TOKEN, META_WA_PHONE_ID  direct WhatsApp Cloud API (preferred over Lovable's connector)
+  //   META_WA_TEMPLATE     approved template with one body variable; required for business-initiated
+  //                        alerts outside a 24-hour chat window (optional META_WA_TEMPLATE_LANG, default en)
   // Email alerts: add "send_email": [{ "name": "EMAIL" }] and the ENKOP_ALERT_FROM / ENKOP_ALERT_TO vars
   // once a domain is onboarded to Cloudflare Email Sending.
 }
