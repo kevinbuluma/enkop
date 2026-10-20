@@ -37,9 +37,7 @@ function Index() {
     <Entrance />
     <SectionNavigator sections={NAV} />
     <section className="home-hero" id="top">
-      <Parallax className="hero-parallax" strength={0.14}>
-        <HeroReel slides={slides} poster={hero} />
-      </Parallax>
+      <HeroReel slides={slides} poster={hero} />
       <div className="hero-shade"/>
       <div className="hero-content">
         <p className="eyebrow">ENKOP REAL ESTATE  /  NAIROBI, KENYA</p>
