@@ -32,5 +32,5 @@
 - [ ] Real Nairobi villa videos replace AI hero (needs user's footage — upload via Homepage scenes tab; matching fallback images via the existing generator)
 
 - [x] Secure server-to-server bridge so enquiries, signed media, WhatsApp alerts and AI tools work on non-Lovable hosts (Cloudflare)
-- [ ] Sharper homepage videos: needs higher-resolution footage (regenerate at 1080p or owner 4K upload) — awaiting user choice
+- [x] Sharper homepage videos: three scenes regenerated at native 1080p and installed
 - [ ] Bridge activation: owner adds ENKOP_BRIDGE_SECRET in Project Settings → Secrets (both hosts) and republishes
