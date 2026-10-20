@@ -1,14 +1,14 @@
 // Deploy config for the ENKOP master backend on Cloudflare. Lovable never reads this file.
-// Build first (`npm run build`), then: npx wrangler deploy -c cloudflare/wrangler.jsonc --keep-vars
+// Deploy: npm run deploy:cloudflare (build, install cloudflare/entry.mjs, wrangler deploy --keep-vars)
 {
   "$schema": "../node_modules/wrangler/config-schema.json",
   "name": "enkop",
-  "main": "../.output/server/index.mjs",
+  "main": "../.output/server/enkop-entry.mjs",
   "compatibility_date": "2026-10-20",
   "compatibility_flags": ["nodejs_compat"],
   "no_bundle": true,
   "rules": [{ "type": "ESModule", "globs": ["**/*.mjs", "**/*.js"] }],
-  "assets": { "binding": "ASSETS", "directory": "../.output/public" },
+  "assets": { "binding": "ASSETS", "directory": "../.output/public", "run_worker_first": ["/videos/*"] },
   "observability": { "enabled": true },
   "d1_databases": [
     { "binding": "DB", "database_name": "enkop-db", "database_id": "7f5bf83f-992a-42fd-9e94-e80cd3ba1b79", "migrations_dir": "migrations" }

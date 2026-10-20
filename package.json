@@ -11,7 +11,8 @@
     "lint": "eslint .",
     "format": "prettier --write .",
     "test": "vitest run",
-    "test:watch": "vitest"
+    "test:watch": "vitest",
+    "deploy:cloudflare": "vite build && node cloudflare/scripts/install-entry.mjs && npx wrangler deploy -c cloudflare/wrangler.jsonc --keep-vars"
   },
   "overrides": {
     "rolldown": "1.2.1",

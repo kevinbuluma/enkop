@@ -79,16 +79,20 @@ export class MediaStore {
 
   /** Paths referenced by content rows that are not in the media store yet. */
   async missingPaths(): Promise<string[]> {
-    const { results } = await this.store.db.prepare(`
-      SELECT video_path AS p FROM homepage_slides WHERE video_path IS NOT NULL
-      UNION SELECT image_path FROM homepage_slides WHERE image_path IS NOT NULL
-      UNION SELECT photo_path FROM team_members WHERE photo_path IS NOT NULL
-      UNION SELECT video_path FROM property_tours WHERE video_path IS NOT NULL
-      UNION SELECT j.value FROM property_tours, json_each(property_tours.photo_paths) j
-      UNION SELECT j.value FROM properties, json_each(properties.image_paths) j`).all<{ p: string }>();
-    const { results: have } = await this.store.db.prepare('SELECT path FROM media').all<{ path: string }>();
+    // D1 rejects compound SELECTs with more than five terms.
+    const [{ results: columns }, { results: lists }, { results: have }] = await Promise.all([
+      this.store.db.prepare(`
+        SELECT video_path AS p FROM homepage_slides WHERE video_path IS NOT NULL
+        UNION SELECT image_path FROM homepage_slides WHERE image_path IS NOT NULL
+        UNION SELECT photo_path FROM team_members WHERE photo_path IS NOT NULL
+        UNION SELECT video_path FROM property_tours WHERE video_path IS NOT NULL`).all<{ p: string }>(),
+      this.store.db.prepare(`
+        SELECT j.value AS p FROM property_tours, json_each(property_tours.photo_paths) j
+        UNION SELECT j.value FROM properties, json_each(properties.image_paths) j`).all<{ p: string }>(),
+      this.store.db.prepare('SELECT path FROM media').all<{ path: string }>(),
+    ]);
     const stored = new Set(have.map((h) => h.path));
-    return results.map((r) => r.p).filter((p) => p && !stored.has(p));
+    return [...new Set([...columns, ...lists].map((r) => r.p))].filter((p) => p && !stored.has(p));
   }
 
   async get(path: string): Promise<MediaObject | null> {
