@@ -900,3 +900,23 @@ html { scrollbar-color: color-mix(in oklab, var(--gold) 60%, transparent) transp
   .property-card:hover .property-visual, .property-card:hover .property-visual img { transform: none; }
   html[data-season="autumn"] .reveal:not(.reveal--in) { transform: translateY(24px); }
 }
+
+/* ===== Brand logo (public/brand) ===== */
+.wordmark { display: inline-flex; align-items: center; font-size: 0; letter-spacing: 0; line-height: 0; }
+.brand-lockup, .brand-tone { display: inline-flex; align-items: center; gap: 12px; }
+.brand-mark { height: 46px; width: auto; transition: height .4s; }
+.brand-name { height: 19px; width: auto; transition: height .4s; }
+.brand-lockup--auto .brand-tone--light { display: none; }
+.site-header--inverse .brand-lockup--auto .brand-tone--light { display: inline-flex; }
+.site-header--inverse .brand-lockup--auto .brand-tone--dark { display: none; }
+.site-header--solid .brand-mark { height: 40px; }
+.site-header--solid .brand-name { height: 17px; }
+.footer-mark { display: inline-flex; line-height: 0; margin-right: 18px; }
+.footer-mark .brand-logo { height: 104px; width: auto; }
+.entrance-mark.brand-logo { height: clamp(150px, 30vh, 260px); width: auto; }
+@media (max-width: 760px) {
+  .brand-lockup, .brand-tone { gap: 9px; }
+  .brand-mark, .site-header--solid .brand-mark { height: 36px; }
+  .brand-name, .site-header--solid .brand-name { height: 15px; }
+  .footer-mark .brand-logo { height: 92px; }
+}

@@ -13,11 +13,15 @@ import { useEffect, type ReactNode } from "react";
 import appCss from "../styles.css?url";
 import { reportLovableError } from "../lib/lovable-error-reporting";
 import { SeasonalPageTransition } from '@/components/enkop/SeasonalPageTransition';
+import { BrandLogo } from '@/components/enkop/BrandLogo';
+
+const SHARE_IMAGE = 'https://enkop-real-estate.lovable.app/brand/enkop-og.jpg';
 
 function NotFoundComponent() {
   return (
     <div className="flex min-h-screen items-center justify-center bg-background px-4">
       <div className="max-w-md text-center">
+        <Link to="/" aria-label="ENKOP Real Estate home" className="mx-auto mb-10 block w-fit"><BrandLogo tone="dark" className="h-28 w-auto" /></Link>
         <h1 className="text-7xl font-bold text-foreground">404</h1>
         <h2 className="mt-4 text-xl font-semibold text-foreground">Page not found</h2>
         <p className="mt-2 text-sm text-muted-foreground">
@@ -85,14 +89,23 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
        { property: "og:title", content: "ENKOP Real Estate" },
        { property: "og:description", content: "Exceptional spaces, thoughtfully represented across Nairobi." },
       { property: "og:type", content: "website" },
+      { property: "og:image", content: SHARE_IMAGE },
+      { property: "og:image:width", content: "1200" },
+      { property: "og:image:height", content: "630" },
+      { property: "og:image:alt", content: "ENKOP Real Estate logo" },
       { name: "twitter:card", content: "summary_large_image" },
+      { name: "twitter:image", content: SHARE_IMAGE },
+      { name: "theme-color", content: "#0e2334" },
     ],
     links: [
       {
         rel: "stylesheet",
         href: appCss,
       },
-      { rel: "icon", href: "/favicon.ico", type: "image/x-icon" },
+      { rel: "icon", href: "/favicon.ico", sizes: "48x48" },
+      { rel: "icon", href: "/favicon-32.png", type: "image/png", sizes: "32x32" },
+      { rel: "icon", href: "/brand/enkop-icon-192.png", type: "image/png", sizes: "192x192" },
+      { rel: "apple-touch-icon", href: "/apple-touch-icon.png" },
        { rel: "preconnect", href: "https://fonts.googleapis.com" },
        { rel: "preconnect", href: "https://fonts.gstatic.com", crossOrigin: "anonymous" },
        { rel: "stylesheet", href: "https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Instrument+Serif:ital@0;1&display=swap" },

@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import { BrandLogo } from './BrandLogo';
 
 /** Short cinematic opening for first-time visitors only. Skippable; never shown with reduced motion. */
 export function Entrance() {
@@ -16,7 +17,7 @@ export function Entrance() {
   const skip = () => { setLeaving(true); setTimeout(() => setShow(false), 500); };
   return <div className={`entrance ${leaving ? 'entrance--out' : ''}`} role="presentation" onClick={skip}>
     <div className="entrance-line" />
-    <p className="entrance-mark">ENKOP<span>.</span></p>
+    <BrandLogo tone="light" className="entrance-mark" />
     <p className="entrance-tag">Exceptional spaces</p>
     <button type="button" className="entrance-skip" onClick={skip}>Skip intro</button>
   </div>;
