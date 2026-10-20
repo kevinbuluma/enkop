@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { ImagePlus, Sparkles, X } from 'lucide-react';
-import { supabase } from '@/integrations/supabase/client';
+import { removeMedia, uploadMedia } from '@/lib/admin-client';
 import { Button } from '@/components/ui/button';
 import { captureVideoFrame } from '@/lib/video-frame';
 import { streamImage } from '@/lib/stream-image';
@@ -21,12 +21,10 @@ export function FallbackImageGenerator({ scene, disabled, onSaved }: { scene: Sc
     setBusy('Reading video…'); setError(''); setPreview(''); setFinal(false);
     try {
       const frame = await captureVideoFrame(scene.video_url);
-      const { data } = await supabase.auth.getSession();
-      if (!data.session) throw new Error('Please sign in again.');
       const form = new FormData();
       form.set('image', frame); form.set('slideId', scene.id); form.set('videoPath', scene.video_path); form.set('notes', notes);
       setBusy('Creating image…');
-      await streamImage('/api/homepage-fallback', form, (src, done) => { setPreview(src); setFinal(done); }, undefined, { Authorization: `Bearer ${data.session.access_token}` });
+      await streamImage('/api/homepage-fallback', form, (src, done) => { setPreview(src); setFinal(done); });
     } catch (e) { setFinal(false); setError(e instanceof Error ? e.message : 'The image could not be created.'); }
     finally { setBusy(''); }
   }
@@ -38,13 +36,13 @@ export function FallbackImageGenerator({ scene, disabled, onSaved }: { scene: Sc
     try {
       const blob = await (await fetch(preview)).blob();
       path = `homepage/${crypto.randomUUID()}.png`;
-      const { error: uploadError } = await supabase.storage.from('property-media').upload(path, blob, { contentType: 'image/png' });
-      if (uploadError) throw new Error('The image could not be uploaded.');
+      try { await uploadMedia(path, blob, 'image/png'); }
+      catch { throw new Error('The image could not be uploaded.'); }
       await saveSlide({ data: { id: scene.id, label: scene.label, video_path: scene.video_path, image_path: path, active: scene.active } });
       path = undefined;
       await onSaved(); setOpen(false); setPreview(''); setFinal(false);
     } catch (e) {
-      if (path) await supabase.storage.from('property-media').remove([path]);
+      if (path) await removeMedia([path]).catch(() => {});
       setError(e instanceof Error ? e.message : 'The image could not be saved.');
     } finally { setBusy(''); }
   }

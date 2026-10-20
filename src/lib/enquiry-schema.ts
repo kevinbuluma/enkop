@@ -18,6 +18,7 @@ export function signablePath(p: string) {
   return p.length <= 300 && !p.includes('..') && (
     /^homepage\/[\w.-]+$/.test(p) ||
     /^[0-9a-f-]{36}\/photos\/[\w./-]+$/.test(p) ||
+    /^[0-9a-f-]{36}\/gallery\/[\w./-]+$/.test(p) ||
     /^[0-9a-f-]{36}\/tours\/[0-9a-f-]{36}\.mp4$/.test(p) ||
     /^team\/[\w./-]+$/.test(p)
   );

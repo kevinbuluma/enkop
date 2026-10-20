@@ -1,6 +1,6 @@
 import { useEffect, useState, type FormEvent } from 'react';
 import { ArrowRight, ImagePlus, Pencil, Plus, Trash2, X } from 'lucide-react';
-import { supabase } from '@/integrations/supabase/client';
+import { uploadMedia } from '@/lib/admin-client';
 import { Button } from '@/components/ui/button';
 import { deleteListing, getListings, saveListing } from '@/lib/listings.functions';
 import { formatPrice } from '@/lib/enkop';
@@ -110,9 +110,8 @@ function ListingEditor({ draft: initial, onDone }: { draft: Draft; onDone: (save
         const uploaded = await Promise.all(files.map(async (file, i) => {
           const ext = (file.type.split('/')[1] ?? 'jpg').replace('jpeg', 'jpg');
           const path = `${id}/gallery/${Date.now()}-${i}.${ext}`;
-          const { error: upErr } = await supabase.storage.from('property-media').upload(path, file, { contentType: file.type });
-          if (upErr) throw new Error('A photo could not be uploaded. Please try again.');
-          return path;
+          try { return await uploadMedia(path, file); }
+          catch { throw new Error('A photo could not be uploaded. Please try again.'); }
         }));
         imagePaths = [...imagePaths, ...uploaded];
       }

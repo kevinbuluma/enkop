@@ -1,0 +1,31 @@
+// Deploy config for the ENKOP master backend on Cloudflare. Lovable never reads this file.
+// Build first (`npm run build`), then: npx wrangler deploy -c cloudflare/wrangler.jsonc --keep-vars
+{
+  "$schema": "../node_modules/wrangler/config-schema.json",
+  "name": "enkop",
+  "main": "../.output/server/index.mjs",
+  "compatibility_date": "2026-10-20",
+  "compatibility_flags": ["nodejs_compat"],
+  "no_bundle": true,
+  "rules": [{ "type": "ESModule", "globs": ["**/*.mjs", "**/*.js"] }],
+  "assets": { "binding": "ASSETS", "directory": "../.output/public" },
+  "observability": { "enabled": true },
+  "d1_databases": [
+    { "binding": "DB", "database_name": "enkop-db", "database_id": "7f5bf83f-992a-42fd-9e94-e80cd3ba1b79", "migrations_dir": "migrations" }
+  ],
+  // Media lives in KV until R2 is enabled on the account; then add:
+  // "r2_buckets": [{ "binding": "MEDIA", "bucket_name": "enkop-media" }]
+  "kv_namespaces": [{ "binding": "MEDIA_KV", "id": "602aa349dbf349d4a7ca93ab54849b31" }],
+  "vars": {
+    "ENKOP_BRIDGE_URL": "https://enkop-real-estate.lovable.app",
+    "ENKOP_MASTER_URL": "https://enkop.kevinbuluma9-7ff.workers.dev",
+    "ENKOP_NOTIFY_WHATSAPP": "254707465190"
+  }
+  // Secrets (wrangler secret put -c cloudflare/wrangler.jsonc <NAME>):
+  //   ENKOP_BRIDGE_SECRET  shared with Lovable's bridge
+  //   ENKOP_MEDIA_KEY      HMAC key for signed /media links
+  //   ENKOP_INTERNAL_KEY   authenticates the enkop-sync cron Worker
+  //   META_WA_TOKEN, META_WA_PHONE_ID  optional, direct WhatsApp Cloud API
+  // Email alerts: add "send_email": [{ "name": "EMAIL" }] and the ENKOP_ALERT_FROM / ENKOP_ALERT_TO vars
+  // once a domain is onboarded to Cloudflare Email Sending.
+}

@@ -17,9 +17,14 @@ import { Route as InsightsRouteImport } from './routes/insights'
 import { Route as ServicesRouteImport } from './routes/services'
 import { Route as SitemapDotxmlRouteImport } from './routes/sitemap[.]xml'
 import { Route as ApiHomepageFallbackRouteImport } from './routes/api/homepage-fallback'
+import { Route as MediaSplatRouteImport } from './routes/media.$'
 import { Route as PropertiesIndexRouteImport } from './routes/properties.index'
 import { Route as PropertiesSlugRouteImport } from './routes/properties.$slug'
+import { Route as ApiAdminMediaRouteImport } from './routes/api/admin/media'
+import { Route as ApiAdminSessionRouteImport } from './routes/api/admin/session'
+import { Route as ApiPublicEnkopHealthRouteImport } from './routes/api/public/enkop-health'
 import { Route as ApiPublicEnkopBridgeSplatRouteImport } from './routes/api/public/enkop-bridge.$'
+import { Route as ApiPublicEnkopMasterSplatRouteImport } from './routes/api/public/enkop-master.$'
 
 const IndexRoute = IndexRouteImport.update({
   id: '/',
@@ -61,6 +66,11 @@ const ApiHomepageFallbackRoute = ApiHomepageFallbackRouteImport.update({
   path: '/api/homepage-fallback',
   getParentRoute: () => rootRouteImport,
 } as any)
+const MediaSplatRoute = MediaSplatRouteImport.update({
+  id: '/media/$',
+  path: '/media/$',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const PropertiesIndexRoute = PropertiesIndexRouteImport.update({
   id: '/properties/',
   path: '/properties/',
@@ -71,10 +81,31 @@ const PropertiesSlugRoute = PropertiesSlugRouteImport.update({
   path: '/properties/$slug',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ApiAdminMediaRoute = ApiAdminMediaRouteImport.update({
+  id: '/api/admin/media',
+  path: '/api/admin/media',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiAdminSessionRoute = ApiAdminSessionRouteImport.update({
+  id: '/api/admin/session',
+  path: '/api/admin/session',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiPublicEnkopHealthRoute = ApiPublicEnkopHealthRouteImport.update({
+  id: '/api/public/enkop-health',
+  path: '/api/public/enkop-health',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ApiPublicEnkopBridgeSplatRoute =
   ApiPublicEnkopBridgeSplatRouteImport.update({
     id: '/api/public/enkop-bridge/$',
     path: '/api/public/enkop-bridge/$',
+    getParentRoute: () => rootRouteImport,
+  } as any)
+const ApiPublicEnkopMasterSplatRoute =
+  ApiPublicEnkopMasterSplatRouteImport.update({
+    id: '/api/public/enkop-master/$',
+    path: '/api/public/enkop-master/$',
     getParentRoute: () => rootRouteImport,
   } as any)
 
@@ -87,9 +118,14 @@ export interface FileRoutesByFullPath {
   '/services': typeof ServicesRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
   '/api/homepage-fallback': typeof ApiHomepageFallbackRoute
+  '/media/$': typeof MediaSplatRoute
   '/properties/$slug': typeof PropertiesSlugRoute
   '/properties/': typeof PropertiesIndexRoute
+  '/api/admin/media': typeof ApiAdminMediaRoute
+  '/api/admin/session': typeof ApiAdminSessionRoute
+  '/api/public/enkop-health': typeof ApiPublicEnkopHealthRoute
   '/api/public/enkop-bridge/$': typeof ApiPublicEnkopBridgeSplatRoute
+  '/api/public/enkop-master/$': typeof ApiPublicEnkopMasterSplatRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -100,9 +136,14 @@ export interface FileRoutesByTo {
   '/services': typeof ServicesRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
   '/api/homepage-fallback': typeof ApiHomepageFallbackRoute
+  '/media/$': typeof MediaSplatRoute
   '/properties/$slug': typeof PropertiesSlugRoute
   '/properties': typeof PropertiesIndexRoute
+  '/api/admin/media': typeof ApiAdminMediaRoute
+  '/api/admin/session': typeof ApiAdminSessionRoute
+  '/api/public/enkop-health': typeof ApiPublicEnkopHealthRoute
   '/api/public/enkop-bridge/$': typeof ApiPublicEnkopBridgeSplatRoute
+  '/api/public/enkop-master/$': typeof ApiPublicEnkopMasterSplatRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -114,9 +155,14 @@ export interface FileRoutesById {
   '/services': typeof ServicesRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
   '/api/homepage-fallback': typeof ApiHomepageFallbackRoute
+  '/media/$': typeof MediaSplatRoute
   '/properties/$slug': typeof PropertiesSlugRoute
   '/properties/': typeof PropertiesIndexRoute
+  '/api/admin/media': typeof ApiAdminMediaRoute
+  '/api/admin/session': typeof ApiAdminSessionRoute
+  '/api/public/enkop-health': typeof ApiPublicEnkopHealthRoute
   '/api/public/enkop-bridge/$': typeof ApiPublicEnkopBridgeSplatRoute
+  '/api/public/enkop-master/$': typeof ApiPublicEnkopMasterSplatRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -129,9 +175,14 @@ export interface FileRouteTypes {
     | '/services'
     | '/sitemap.xml'
     | '/api/homepage-fallback'
+    | '/media/$'
     | '/properties/$slug'
     | '/properties/'
+    | '/api/admin/media'
+    | '/api/admin/session'
+    | '/api/public/enkop-health'
     | '/api/public/enkop-bridge/$'
+    | '/api/public/enkop-master/$'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -142,9 +193,14 @@ export interface FileRouteTypes {
     | '/services'
     | '/sitemap.xml'
     | '/api/homepage-fallback'
+    | '/media/$'
     | '/properties/$slug'
     | '/properties'
+    | '/api/admin/media'
+    | '/api/admin/session'
+    | '/api/public/enkop-health'
     | '/api/public/enkop-bridge/$'
+    | '/api/public/enkop-master/$'
   id:
     | '__root__'
     | '/'
@@ -155,9 +211,14 @@ export interface FileRouteTypes {
     | '/services'
     | '/sitemap.xml'
     | '/api/homepage-fallback'
+    | '/media/$'
     | '/properties/$slug'
     | '/properties/'
+    | '/api/admin/media'
+    | '/api/admin/session'
+    | '/api/public/enkop-health'
     | '/api/public/enkop-bridge/$'
+    | '/api/public/enkop-master/$'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -169,9 +230,14 @@ export interface RootRouteChildren {
   ServicesRoute: typeof ServicesRoute
   SitemapDotxmlRoute: typeof SitemapDotxmlRoute
   ApiHomepageFallbackRoute: typeof ApiHomepageFallbackRoute
+  MediaSplatRoute: typeof MediaSplatRoute
   PropertiesSlugRoute: typeof PropertiesSlugRoute
   PropertiesIndexRoute: typeof PropertiesIndexRoute
+  ApiAdminMediaRoute: typeof ApiAdminMediaRoute
+  ApiAdminSessionRoute: typeof ApiAdminSessionRoute
+  ApiPublicEnkopHealthRoute: typeof ApiPublicEnkopHealthRoute
   ApiPublicEnkopBridgeSplatRoute: typeof ApiPublicEnkopBridgeSplatRoute
+  ApiPublicEnkopMasterSplatRoute: typeof ApiPublicEnkopMasterSplatRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -232,6 +298,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiHomepageFallbackRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/media/$': {
+      id: '/media/$'
+      path: '/media/$'
+      fullPath: '/media/$'
+      preLoaderRoute: typeof MediaSplatRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/properties/': {
       id: '/properties/'
       path: '/properties'
@@ -246,11 +319,39 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof PropertiesSlugRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/admin/media': {
+      id: '/api/admin/media'
+      path: '/api/admin/media'
+      fullPath: '/api/admin/media'
+      preLoaderRoute: typeof ApiAdminMediaRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/admin/session': {
+      id: '/api/admin/session'
+      path: '/api/admin/session'
+      fullPath: '/api/admin/session'
+      preLoaderRoute: typeof ApiAdminSessionRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/public/enkop-health': {
+      id: '/api/public/enkop-health'
+      path: '/api/public/enkop-health'
+      fullPath: '/api/public/enkop-health'
+      preLoaderRoute: typeof ApiPublicEnkopHealthRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/api/public/enkop-bridge/$': {
       id: '/api/public/enkop-bridge/$'
       path: '/api/public/enkop-bridge/$'
       fullPath: '/api/public/enkop-bridge/$'
       preLoaderRoute: typeof ApiPublicEnkopBridgeSplatRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/public/enkop-master/$': {
+      id: '/api/public/enkop-master/$'
+      path: '/api/public/enkop-master/$'
+      fullPath: '/api/public/enkop-master/$'
+      preLoaderRoute: typeof ApiPublicEnkopMasterSplatRouteImport
       parentRoute: typeof rootRouteImport
     }
   }
@@ -265,9 +366,14 @@ const rootRouteChildren: RootRouteChildren = {
   ServicesRoute: ServicesRoute,
   SitemapDotxmlRoute: SitemapDotxmlRoute,
   ApiHomepageFallbackRoute: ApiHomepageFallbackRoute,
+  MediaSplatRoute: MediaSplatRoute,
   PropertiesSlugRoute: PropertiesSlugRoute,
   PropertiesIndexRoute: PropertiesIndexRoute,
+  ApiAdminMediaRoute: ApiAdminMediaRoute,
+  ApiAdminSessionRoute: ApiAdminSessionRoute,
+  ApiPublicEnkopHealthRoute: ApiPublicEnkopHealthRoute,
   ApiPublicEnkopBridgeSplatRoute: ApiPublicEnkopBridgeSplatRoute,
+  ApiPublicEnkopMasterSplatRoute: ApiPublicEnkopMasterSplatRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)

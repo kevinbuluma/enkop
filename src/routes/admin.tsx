@@ -1,8 +1,7 @@
 import { createFileRoute } from '@tanstack/react-router';
 import { useCallback, useEffect, useRef, useState, type FormEvent } from 'react';
 import { ArrowRight, ImagePlus, LogOut, X } from 'lucide-react';
-import type { Session } from '@supabase/supabase-js';
-import { supabase } from '@/integrations/supabase/client';
+import { adminSession, adminSetup, adminSignIn, adminSignOut, uploadMedia, type AdminSession } from '@/lib/admin-client';
 import { Button } from '@/components/ui/button';
 import { Site } from '@/components/enkop/Site';
 import { getStudio, pollTour, startTour } from '@/lib/tours.functions';
@@ -29,26 +28,33 @@ type Studio = Awaited<ReturnType<typeof getStudio>>;
 type Tour = Studio['tours'][number];
 
 function Admin() {
-  const [session, setSession] = useState<Session | null | undefined>(undefined);
+  const [session, setSession] = useState<AdminSession | undefined>(undefined);
+  const [failed, setFailed] = useState('');
+  const setupToken = typeof window === 'undefined' ? null : new URLSearchParams(window.location.search).get('setup');
+  const refresh = useCallback(() => adminSession().then(setSession).catch((e) => setFailed(e.message)), []);
+  useEffect(() => { refresh(); }, [refresh]);
   useEffect(() => {
-    supabase.auth.getSession().then(({ data }) => setSession(data.session));
-    const { data } = supabase.auth.onAuthStateChange((_e, s) => setSession(s));
-    return () => data.subscription.unsubscribe();
-  }, []);
+    if (session?.mode === 'mirror') window.location.replace(`${session.masterUrl.replace(/\/$/, '')}/admin${window.location.search}`);
+  }, [session]);
+  const body = failed ? <p className="studio-error">{failed}</p>
+    : session === undefined ? <p className="studio-muted">Loading…</p>
+    : session.mode === 'mirror' ? <p className="studio-muted">Administration lives on the ENKOP master site. Taking you there… <a className="inline-arrow" href={`${session.masterUrl}/admin`}>Open it <ArrowRight size={15} /></a></p>
+    : setupToken && !session.admin ? <SetPassword token={setupToken} onDone={refresh} />
+    : session.admin ? <StudioPanel onSignOut={() => adminSignOut().finally(refresh)} /> : <SignIn onSignedIn={refresh} />;
   return <Site><section className="interior-hero page-gutter studio-hero"><p className="eyebrow">ENKOP / ADMINISTRATION</p><h1>Tour<br/><em>studio.</em></h1></section>
-    <section className="studio page-gutter">{session === undefined ? <p className="studio-muted">Loading…</p> : session ? <StudioPanel /> : <SignIn />}</section>
+    <section className="studio page-gutter">{body}</section>
   </Site>;
 }
 
-function SignIn() {
+function SignIn({ onSignedIn }: { onSignedIn: () => void }) {
   const [error, setError] = useState('');
   const [busy, setBusy] = useState(false);
   async function submit(e: FormEvent<HTMLFormElement>) {
     e.preventDefault(); setBusy(true); setError('');
     const f = new FormData(e.currentTarget);
-    const { error } = await supabase.auth.signInWithPassword({ email: String(f.get('email')), password: String(f.get('password')) });
-    if (error) setError(error.message);
-    setBusy(false);
+    try { await adminSignIn(String(f.get('email')), String(f.get('password'))); onSignedIn(); }
+    catch (err) { setError(err instanceof Error ? err.message : 'Sign-in failed.'); }
+    finally { setBusy(false); }
   }
   return <form className="enquiry-form studio-signin" onSubmit={submit}><p className="eyebrow">ADMINISTRATOR SIGN IN</p>
     <label>Email<input name="email" type="email" required autoComplete="email" /></label>
@@ -57,13 +63,36 @@ function SignIn() {
     <Button type="submit" variant="luxury" disabled={busy}>{busy ? 'Signing in…' : 'Sign in'} <ArrowRight size={16} /></Button></form>;
 }
 
-function StudioPanel() {
+function SetPassword({ token, onDone }: { token: string; onDone: () => void }) {
+  const [error, setError] = useState('');
+  const [busy, setBusy] = useState(false);
+  async function submit(e: FormEvent<HTMLFormElement>) {
+    e.preventDefault(); setError('');
+    const f = new FormData(e.currentTarget);
+    const password = String(f.get('password'));
+    if (password !== String(f.get('confirm'))) { setError('The passwords do not match.'); return; }
+    setBusy(true);
+    try {
+      await adminSetup(token, password);
+      window.history.replaceState(null, '', '/admin');
+      onDone();
+    } catch (err) { setError(err instanceof Error ? err.message : 'The password could not be set.'); }
+    finally { setBusy(false); }
+  }
+  return <form className="enquiry-form studio-signin" onSubmit={submit}><p className="eyebrow">SET YOUR ADMINISTRATOR PASSWORD</p>
+    <label>New password<input name="password" type="password" required minLength={10} autoComplete="new-password" /></label>
+    <label>Confirm password<input name="confirm" type="password" required minLength={10} autoComplete="new-password" /></label>
+    {error && <p className="studio-error" role="alert">{error}</p>}
+    <Button type="submit" variant="luxury" disabled={busy}>{busy ? 'Saving…' : 'Set password and sign in'} <ArrowRight size={16} /></Button></form>;
+}
+
+function StudioPanel({ onSignOut }: { onSignOut: () => void }) {
   const [studio, setStudio] = useState<Studio | null>(null);
   const [loadError, setLoadError] = useState('');
   const [tab, setTab] = useState<'listings' | 'enquiries' | 'tours' | 'homepage' | 'team' | 'testimonials' | 'season'>('listings');
   const load = useCallback(() => getStudio().then(setStudio).catch((e) => setLoadError(e.message)), []);
   useEffect(() => { load(); }, [load]);
-  const signOut = <Button variant="textArrow" onClick={() => supabase.auth.signOut()}>Sign out <LogOut size={15} /></Button>;
+  const signOut = <Button variant="textArrow" onClick={onSignOut}>Sign out <LogOut size={15} /></Button>;
   if (loadError) return <div><p className="studio-error">{loadError}</p>{signOut}</div>;
   if (!studio) return <p className="studio-muted">Loading the studio…</p>;
   if (!studio.isAdmin) return <div><p className="studio-muted">This account does not have administrator access.</p>{signOut}</div>;
@@ -96,9 +125,8 @@ function CreateTour({ properties, busy, onCreated }: { properties: Studio['prope
       const paths = await Promise.all(files.map(async (file, i) => {
         const ext = (file.type.split('/')[1] ?? 'jpg').replace('jpeg', 'jpg');
         const path = `${propertyId}/photos/${Date.now()}-${i}.${ext}`;
-        const { error } = await supabase.storage.from('property-media').upload(path, file, { contentType: file.type });
-        if (error) throw new Error('A photo could not be uploaded. Please try again.');
-        return path;
+        try { return await uploadMedia(path, file); }
+        catch { throw new Error('A photo could not be uploaded. Please try again.'); }
       }));
       setState('starting');
       await startTour({ data: { propertyId, photoPaths: paths, direction } });

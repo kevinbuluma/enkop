@@ -1,64 +1,55 @@
 import { createServerFn } from '@tanstack/react-start';
 import { z } from 'zod';
-import { requireSupabaseAuth } from '@/integrations/supabase/auth-middleware';
+import { requireAdmin } from '@/lib/require-admin';
 import { seasonSettingsSchema, type SeasonSettings } from '@/lib/season';
 
-const BUCKET = 'property-media';
-
-async function assertAdmin(ctx: { supabase: any; userId: string }) {
-  const { data } = await ctx.supabase.from('user_roles').select('role').eq('user_id', ctx.userId).eq('role', 'admin').maybeSingle();
-  if (!data) throw new Error('Only ENKOP administrators can do this.');
-}
-
-async function signPortraits(rows: any[]) {
+async function signPortraits(rows: any[], sign?: (paths: string[], expiresIn: number) => Promise<Record<string, string>>) {
   const paths = rows.map(r => r.photo_path).filter(Boolean);
   if (!paths.length) return rows.map(r => ({ ...r, photo_url: null as string | null }));
-  const { signStoragePaths } = await import('@/integrations/supabase/privileged.server');
-  const urls = await signStoragePaths(paths, 60 * 60 * 24);
+  const signer = sign ?? (await (await import('@/server/backend')).getBackend()).signMedia;
+  const urls = await signer(paths, 60 * 60 * 24);
   return rows.map(r => ({ ...r, photo_url: (r.photo_path && urls[r.photo_path]) || null }));
 }
 
 /* ---------- Public ---------- */
 export const getSeasonSettings = createServerFn({ method: 'GET' }).handler(async (): Promise<SeasonSettings | null> => {
-  const { supabase } = await import('@/integrations/supabase/client');
-  const { data } = await supabase.from('site_settings').select('value').eq('key', 'season').maybeSingle();
-  const parsed = seasonSettingsSchema.safeParse(data?.value);
+  const { getBackend } = await import('@/server/backend');
+  const parsed = seasonSettingsSchema.safeParse(await (await getBackend()).setting('season'));
   return parsed.success ? parsed.data : null;
 });
 
 export const getTeam = createServerFn({ method: 'GET' }).handler(async () => {
-  const { supabase } = await import('@/integrations/supabase/client');
-  const { data } = await supabase.from('team_members').select('id,name,role,bio,photo_path,position').eq('active', true).order('position');
-  return signPortraits(data ?? []) as Promise<{ id: string; name: string; role: string; bio: string; photo_url: string | null }[]>;
+  const { getBackend } = await import('@/server/backend');
+  const backend = await getBackend();
+  const rows = (await backend.activeTeam()).map((r: any) => ({ id: r.id, name: r.name, role: r.role, bio: r.bio, photo_path: r.photo_path, position: r.position }));
+  return signPortraits(rows, backend.signMedia) as Promise<{ id: string; name: string; role: string; bio: string; photo_url: string | null }[]>;
 });
 
 export const getTestimonials = createServerFn({ method: 'GET' }).handler(async () => {
-  const { supabase } = await import('@/integrations/supabase/client');
-  const { data } = await supabase.from('testimonials').select('id,quote,author,context').eq('approved', true).order('position');
-  return data ?? [];
+  const { getBackend } = await import('@/server/backend');
+  return (await (await getBackend()).approvedTestimonials()).map((r: any) => ({ id: r.id as string, quote: r.quote as string, author: r.author as string, context: r.context as string }));
 });
 
 /* ---------- Admin ---------- */
 export const getContentAdmin = createServerFn({ method: 'GET' })
-  .middleware([requireSupabaseAuth])
+  .middleware([requireAdmin])
   .handler(async ({ context }) => {
-    await assertAdmin(context);
+    const { store, signMedia } = context.master;
     const [team, quotes, season] = await Promise.all([
-      context.supabase.from('team_members').select('*').order('position'),
-      context.supabase.from('testimonials').select('*').order('position'),
-      context.supabase.from('site_settings').select('value').eq('key', 'season').maybeSingle(),
+      store.all('team_members', '', [], 'ORDER BY position'),
+      store.all('testimonials', '', [], 'ORDER BY position'),
+      store.first('site_settings', 'key = ?', ['season']),
     ]);
-    const s = seasonSettingsSchema.safeParse(season.data?.value);
-    return { team: await signPortraits(team.data ?? []), testimonials: quotes.data ?? [], season: s.success ? s.data : null };
+    const s = seasonSettingsSchema.safeParse(season?.['value']);
+    return { team: await signPortraits(team as any[], signMedia), testimonials: quotes as any[], season: s.success ? s.data : null };
   });
 
 export const saveSeasonSettings = createServerFn({ method: 'POST' })
-  .middleware([requireSupabaseAuth])
+  .middleware([requireAdmin])
   .inputValidator(d => seasonSettingsSchema.parse(d))
   .handler(async ({ data, context }) => {
-    await assertAdmin(context);
-    const { error } = await context.supabase.from('site_settings').upsert({ key: 'season', value: data, updated_at: new Date().toISOString() });
-    if (error) throw new Error('Seasonal settings could not be saved.');
+    await context.master.store.upsert('site_settings', { key: 'season', value: data });
+    await context.master.afterWrite();
     return { ok: true };
   });
 
@@ -72,14 +63,18 @@ const memberInput = z.object({
   active: z.boolean(),
 });
 export const saveTeamMember = createServerFn({ method: 'POST' })
-  .middleware([requireSupabaseAuth])
+  .middleware([requireAdmin])
   .inputValidator(d => memberInput.parse(d))
   .handler(async ({ data, context }) => {
-    await assertAdmin(context);
     const { id, ...row } = data;
-    const payload = { ...row, updated_at: new Date().toISOString() };
-    const r = id ? await context.supabase.from('team_members').update(payload).eq('id', id) : await context.supabase.from('team_members').insert(payload);
-    if (r.error) throw new Error('The team member could not be saved.');
+    const { store } = context.master;
+    try {
+      if (id) await store.update('team_members', id, row); else await store.upsert('team_members', row);
+    } catch (e) {
+      console.error(e);
+      throw new Error('The team member could not be saved.');
+    }
+    await context.master.afterWrite();
     return { ok: true };
   });
 
@@ -92,23 +87,26 @@ const quoteInput = z.object({
   position: z.number().int().min(0).max(999),
 });
 export const saveTestimonial = createServerFn({ method: 'POST' })
-  .middleware([requireSupabaseAuth])
+  .middleware([requireAdmin])
   .inputValidator(d => quoteInput.parse(d))
   .handler(async ({ data, context }) => {
-    await assertAdmin(context);
     const { id, ...row } = data;
-    const payload = { ...row, updated_at: new Date().toISOString() };
-    const r = id ? await context.supabase.from('testimonials').update(payload).eq('id', id) : await context.supabase.from('testimonials').insert(payload);
-    if (r.error) throw new Error('The testimonial could not be saved.');
+    const { store } = context.master;
+    try {
+      if (id) await store.update('testimonials', id, row); else await store.upsert('testimonials', row);
+    } catch (e) {
+      console.error(e);
+      throw new Error('The testimonial could not be saved.');
+    }
+    await context.master.afterWrite();
     return { ok: true };
   });
 
 export const deleteContent = createServerFn({ method: 'POST' })
-  .middleware([requireSupabaseAuth])
+  .middleware([requireAdmin])
   .inputValidator(d => z.object({ table: z.enum(['team_members', 'testimonials']), id: z.string().uuid() }).parse(d))
   .handler(async ({ data, context }) => {
-    await assertAdmin(context);
-    const { error } = await context.supabase.from(data.table).delete().eq('id', data.id);
-    if (error) throw new Error('Could not delete.');
+    await context.master.store.remove(data.table, data.id);
+    await context.master.afterWrite();
     return { ok: true };
   });

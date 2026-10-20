@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useState } from 'react';
 import { ArrowRight, ImagePlus, Plus, Trash2 } from 'lucide-react';
 import { useServerFn } from '@tanstack/react-start';
-import { supabase } from '@/integrations/supabase/client';
+import { uploadMedia } from '@/lib/admin-client';
 import { Button } from '@/components/ui/button';
 import { deleteContent, getContentAdmin, saveSeasonSettings, saveTeamMember, saveTestimonial } from '@/lib/content.functions';
 import { computeSeason, seasonLabels, toConfig, type SeasonSettings } from '@/lib/season';
@@ -75,8 +75,8 @@ export function TeamManager() {
       if (file) {
         if (file.size > 8 * 1024 * 1024) throw new Error('Portraits must be under 8MB.');
         const path = `team/${crypto.randomUUID()}.${file.name.split('.').pop()?.toLowerCase() || 'jpg'}`;
-        const { error: up } = await supabase.storage.from('property-media').upload(path, file, { contentType: file.type });
-        if (up) throw new Error('The portrait could not be uploaded.');
+        try { await uploadMedia(path, file); }
+        catch { throw new Error('The portrait could not be uploaded.'); }
         photo_path = path;
       }
       await save({ data: { id: edit.id, name: edit.name, role: edit.role, bio: edit.bio, photo_path, position: edit.position, active: edit.active } });

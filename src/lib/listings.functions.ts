@@ -1,30 +1,22 @@
 import { createServerFn } from '@tanstack/react-start';
 import { z } from 'zod';
-import { requireSupabaseAuth } from '@/integrations/supabase/auth-middleware';
+import { requireAdmin } from '@/lib/require-admin';
 
-const BUCKET = 'property-media';
 const galleryPath = (propertyId: string, p: string) => p.startsWith(`${propertyId}/gallery/`);
 
-async function assertAdmin(ctx: { supabase: any; userId: string }) {
-  const { data } = await ctx.supabase.from('user_roles').select('role').eq('user_id', ctx.userId).eq('role', 'admin').maybeSingle();
-  if (!data) throw new Error('Only ENKOP administrators can manage listings.');
-}
-
-async function signPhotos(storage: any, rows: any[]) {
-  const paths = [...new Set(rows.flatMap((r) => r.image_paths ?? []))];
+async function signPhotos(sign: (paths: string[], expiresIn: number) => Promise<Record<string, string>>, rows: any[]) {
+  const paths = [...new Set(rows.flatMap((r) => r.image_paths ?? []))] as string[];
   if (!paths.length) return rows.map((r) => ({ ...r, photo_urls: [] as string[] }));
-  const { data } = await storage.from(BUCKET).createSignedUrls(paths, 60 * 60 * 24);
-  const urls = Object.fromEntries((data ?? []).filter((d: any) => d.signedUrl).map((d: any) => [d.path, d.signedUrl]));
+  const urls = await sign(paths, 60 * 60 * 24);
   return rows.map((r) => ({ ...r, photo_urls: (r.image_paths ?? []).map((p: string) => urls[p]).filter(Boolean) as string[] }));
 }
 
 export const getListings = createServerFn({ method: 'GET' })
-  .middleware([requireSupabaseAuth])
+  .middleware([requireAdmin])
   .handler(async ({ context }) => {
-    await assertAdmin(context);
-    const { data, error } = await context.supabase.from('properties').select('*').order('created_at', { ascending: false });
-    if (error) throw new Error('The listings could not be loaded.');
-    return signPhotos(context.supabase.storage, data ?? []);
+    const { store, signMedia } = context.master;
+    const rows = await store.all('properties', '', [], 'ORDER BY created_at DESC');
+    return signPhotos(signMedia, rows as any[]);
   });
 
 const listingInput = z.object({
@@ -51,27 +43,43 @@ const listingInput = z.object({
 });
 
 export const saveListing = createServerFn({ method: 'POST' })
-  .middleware([requireSupabaseAuth])
+  .middleware([requireAdmin])
   .inputValidator((d) => listingInput.parse(d))
   .handler(async ({ data, context }) => {
-    await assertAdmin(context);
     const { id, ...row } = data;
     if (id && !row.image_paths.every((p) => galleryPath(id, p))) throw new Error('Invalid photo.');
-    const payload = { ...row, is_sample: false, image_key: 'residence-1', updated_at: new Date().toISOString() };
-    const db = context.supabase.from('properties');
-    const result = id
-      ? await db.update(payload).eq('id', id).select('id').single()
-      : await db.insert(payload).select('id').single();
-    if (result.error) throw new Error(result.error.code === '23505' ? 'Another listing already uses that web address (slug).' : 'The listing could not be saved.');
-    return { id: result.data.id as string };
+    const payload = { ...row, is_sample: false, image_key: 'residence-1' };
+    const { store } = context.master;
+    const clash = await store.first('properties', id ? 'slug = ? AND id <> ?' : 'slug = ?', id ? [row.slug, id] : [row.slug]);
+    if (clash) throw new Error('Another listing already uses that web address (slug).');
+    let savedId: string;
+    try {
+      if (id) { await store.update('properties', id, payload); savedId = id; }
+      else savedId = String(await store.upsert('properties', payload));
+    } catch (e) {
+      console.error(e);
+      throw new Error('The listing could not be saved.');
+    }
+    await context.master.afterWrite();
+    return { id: savedId };
   });
 
 export const deleteListing = createServerFn({ method: 'POST' })
-  .middleware([requireSupabaseAuth])
+  .middleware([requireAdmin])
   .inputValidator((d) => z.object({ id: z.string().uuid() }).parse(d))
   .handler(async ({ data, context }) => {
-    await assertAdmin(context);
-    const { error } = await context.supabase.from('properties').delete().eq('id', data.id);
-    if (error) throw new Error('The listing could not be deleted.');
+    const { store, media } = context.master;
+    const listing = await store.first('properties', 'id = ?', [data.id]);
+    const tours = await store.all('property_tours', 'property_id = ?', [data.id]);
+    try {
+      // Tours are removed explicitly so their deletion is mirrored too (D1 would cascade silently).
+      await store.run([...tours.flatMap((t) => store.deleteStatements('property_tours', t['id'])), ...store.deleteStatements('properties', data.id)]);
+    } catch (e) {
+      console.error(e);
+      throw new Error('The listing could not be deleted.');
+    }
+    const files = [...((listing?.['image_paths'] as string[] | undefined) ?? []), ...tours.flatMap((t) => [...((t['photo_paths'] as string[]) ?? []), ...(t['video_path'] ? [t['video_path'] as string] : [])])];
+    if (files.length) await media.remove(files).catch((e) => console.error('[enkop] media cleanup failed', e));
+    await context.master.afterWrite();
     return { ok: true };
   });

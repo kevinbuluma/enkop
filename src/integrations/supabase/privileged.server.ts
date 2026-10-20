@@ -24,6 +24,20 @@ function bridgeFetch(route: string, init: RequestInit = {}) {
   return fetch(bridgeUrl(route), { ...init, headers });
 }
 
+/** Lovable-hosted only: sends a WhatsApp alert through Lovable's managed connection. */
+export async function sendWhatsAppAlert(text: string) {
+  const lovableKey = process.env['LOVABLE_API_KEY'];
+  const whatsappKey = process.env['WHATSAPP_API_KEY'];
+  const to = (process.env['ENKOP_NOTIFY_WHATSAPP'] || '254707465190').replace(/\D/g, '');
+  if (!lovableKey || !whatsappKey || !to) throw new Error('WhatsApp is not connected.');
+  const res = await fetch('https://connector-gateway.lovable.dev/whatsapp/messages', {
+    method: 'POST',
+    headers: { Authorization: `Bearer ${lovableKey}`, 'X-Connection-Api-Key': whatsappKey, 'Content-Type': 'application/json' },
+    body: JSON.stringify({ messaging_product: 'whatsapp', to, type: 'text', text: { body: text } }),
+  });
+  if (!res.ok) throw new Error(`WhatsApp notify failed [${res.status}]: ${await res.text()}`);
+}
+
 export function aiAvailable() { return privilegedMode('ai') !== 'none'; }
 
 /** Signed URLs keyed by path; missing entries mean the path could not be signed. */

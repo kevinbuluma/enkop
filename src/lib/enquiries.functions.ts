@@ -1,5 +1,5 @@
 import { createServerFn } from '@tanstack/react-start';
-import { requireSupabaseAuth } from '@/integrations/supabase/auth-middleware';
+import { requireAdmin } from '@/lib/require-admin';
 
 export type EnquiryRow = {
   id: string;
@@ -16,48 +16,24 @@ export type EnquiryRow = {
   created_at: string;
 };
 
-async function requireAdmin(supabase: any, userId: string) {
-  const { data: role, error } = await supabase.from('user_roles').select('role').eq('user_id', userId).eq('role', 'admin').maybeSingle();
-  if (error || !role) throw new Error('Administrator access required.');
-}
-
 export const getEnquiries = createServerFn({ method: 'GET' })
-  .middleware([requireSupabaseAuth])
+  .middleware([requireAdmin])
   .handler(async ({ context }) => {
-    const { supabase, userId } = context;
-    await requireAdmin(supabase, userId);
-    const { data, error } = await supabase
-      .from('enquiries')
-      .select('id, property_id, name, email, phone, message, preferred_date, preferred_contact, interest, status, created_at, properties(title)')
-      .order('created_at', { ascending: false })
-      .limit(200);
-    if (error) throw new Error(error.message);
-    return (data ?? []).map((row: any) => ({
-      id: row.id,
-      property_id: row.property_id,
-      property_title: row.properties?.title ?? null,
-      name: row.name,
-      email: row.email,
-      phone: row.phone,
-      message: row.message,
-      preferred_date: row.preferred_date,
-      preferred_contact: row.preferred_contact,
-      interest: row.interest,
-      status: row.status,
-      created_at: row.created_at,
-    })) as EnquiryRow[];
+    const { results } = await context.master.env.DB.prepare(
+      `SELECT e.id, e.property_id, p.title AS property_title, e.name, e.email, e.phone, e.message, e.preferred_date, e.preferred_contact, e.interest, e.status, e.created_at
+       FROM enquiries e LEFT JOIN properties p ON p.id = e.property_id ORDER BY e.created_at DESC LIMIT 200`,
+    ).all<EnquiryRow>();
+    return results;
   });
 
 export const updateEnquiryStatus = createServerFn({ method: 'POST' })
-  .middleware([requireSupabaseAuth])
+  .middleware([requireAdmin])
   .inputValidator((input: { id: string; status: 'new' | 'contacted' | 'closed' }) => {
     if (!input?.id || !['new', 'contacted', 'closed'].includes(input.status)) throw new Error('Invalid enquiry update.');
     return input;
   })
   .handler(async ({ data, context }) => {
-    const { supabase, userId } = context;
-    await requireAdmin(supabase, userId);
-    const { error } = await supabase.from('enquiries').update({ status: data.status }).eq('id', data.id);
-    if (error) throw new Error(error.message);
+    await context.master.store.update('enquiries', data.id, { status: data.status });
+    await context.master.afterWrite();
     return { ok: true };
   });

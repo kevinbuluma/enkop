@@ -11,11 +11,17 @@ function safeEqual(a: string, b: string) {
 }
 
 const signSchema = z.object({ paths: z.array(z.string().refine(signablePath)).min(1).max(200), expiresIn: z.number().int().positive().max(86400) });
+// Mirror writes from the ENKOP master. `rows` carries full rows (upsert) or primary keys (delete).
+const mirrorSchema = z.object({ table: z.string(), rows: z.array(z.record(z.string(), z.unknown())).min(1).max(100) })
+  .or(z.object({ table: z.string(), keys: z.array(z.record(z.string(), z.unknown())).min(1).max(100) }).transform((d) => ({ table: d.table, rows: d.keys })));
 
 async function handle({ request, params }: { request: Request; params: { _splat?: string } }) {
   const secret = process.env['ENKOP_BRIDGE_SECRET'];
   if (!secret) return Response.json({ message: 'Bridge not configured.' }, { status: 503 });
   if (!safeEqual(request.headers.get('x-enkop-bridge-secret') ?? '', secret)) return Response.json({ message: 'Unauthorized.' }, { status: 401 });
+  // The bridge only serves on Lovable hosting (managed keys); the ENKOP master never answers it.
+  const { isMaster } = await import('@/server/runtime');
+  if (await isMaster()) return Response.json({ message: 'Not found.' }, { status: 404 });
   // Never relay onwards: the bridge only serves where managed keys exist.
   const { privilegedMode, signStoragePaths, insertEnquiry, aiGatewayFetch } = await import('@/integrations/supabase/privileged.server');
   const route = params._splat ?? '';
@@ -35,9 +41,53 @@ async function handle({ request, params }: { request: Request; params: { _splat?
     return new Response(up.body, { status: up.status, headers: out });
   }
 
+  if (route.startsWith('mirror/media/')) {
+    if (privilegedMode('db') !== 'direct') return Response.json({ message: 'Storage not configured.' }, { status: 503 });
+    const path = route.slice('mirror/media/'.length).split('/').map(decodeURIComponent).join('/');
+    if (!signablePath(path)) return Response.json({ message: 'Invalid path.' }, { status: 400 });
+    const { supabaseAdmin } = await import('@/integrations/supabase/client.server');
+    const bucket = supabaseAdmin.storage.from('property-media');
+    if (request.method === 'PUT') {
+      const { error } = await bucket.upload(path, await request.arrayBuffer(), { contentType: request.headers.get('content-type') ?? 'application/octet-stream', upsert: true });
+      return error ? Response.json({ message: error.message }, { status: 500 }) : Response.json({ ok: true });
+    }
+    if (request.method === 'DELETE') {
+      const { error } = await bucket.remove([path]);
+      return error ? Response.json({ message: error.message }, { status: 500 }) : Response.json({ ok: true });
+    }
+    return Response.json({ message: 'Not found.' }, { status: 404 });
+  }
+
   if (request.method !== 'POST') return Response.json({ message: 'Not found.' }, { status: 404 });
   if (privilegedMode('db') !== 'direct') return Response.json({ message: 'Storage not configured.' }, { status: 503 });
   const json = await request.json().catch(() => null);
+  if (route === 'mirror/upsert' || route === 'mirror/delete') {
+    const { isMirrorTable, TABLES } = await import('@/server/backend/tables');
+    const p = mirrorSchema.safeParse(json);
+    if (!p.success || !isMirrorTable(p.data.table)) return Response.json({ message: 'Invalid mirror request.' }, { status: 400 });
+    const table = p.data.table;
+    const pk = TABLES[table].pk;
+    const allowed = new Set<string>(TABLES[table].columns);
+    const { supabaseAdmin } = await import('@/integrations/supabase/client.server');
+    const db = (supabaseAdmin as any).from(table);
+    if (route === 'mirror/upsert') {
+      const rows = p.data.rows.map((r) => Object.fromEntries(Object.entries(r).filter(([k]) => allowed.has(k))));
+      if (rows.some((r) => r[pk] === undefined)) return Response.json({ message: 'Rows need a primary key.' }, { status: 400 });
+      const { error } = await db.upsert(rows, { onConflict: pk });
+      return error ? Response.json({ message: error.message }, { status: 500 }) : Response.json({ ok: true, count: rows.length });
+    }
+    const keys = p.data.rows.map((r) => r[pk]).filter((v): v is string => typeof v === 'string');
+    if (!keys.length) return Response.json({ message: 'No keys to delete.' }, { status: 400 });
+    const { error } = await db.delete().in(pk, keys);
+    return error ? Response.json({ message: error.message }, { status: 500 }) : Response.json({ ok: true, count: keys.length });
+  }
+  if (route === 'notify') {
+    const p = z.object({ text: z.string().min(1).max(4000) }).safeParse(json);
+    if (!p.success) return Response.json({ message: 'Invalid alert.' }, { status: 400 });
+    const { sendWhatsAppAlert } = await import('@/integrations/supabase/privileged.server');
+    try { await sendWhatsAppAlert(p.data.text); } catch (e) { return Response.json({ message: e instanceof Error ? e.message : 'Alert failed.' }, { status: 502 }); }
+    return Response.json({ ok: true });
+  }
   if (route === 'sign') {
     const p = signSchema.safeParse(json);
     if (!p.success) return Response.json({ message: 'Invalid request.' }, { status: 400 });

@@ -1,0 +1,13 @@
+// enkop-sync: cron Worker that drains the ENKOP master's outbox into the Lovable mirror.
+// Deploy: npx wrangler deploy -c cloudflare/sync-worker/wrangler.jsonc
+// Secret: npx wrangler secret put ENKOP_INTERNAL_KEY -c cloudflare/sync-worker/wrangler.jsonc (same value as on "enkop")
+{
+  "$schema": "../../node_modules/wrangler/config-schema.json",
+  "name": "enkop-sync",
+  "main": "index.js",
+  "compatibility_date": "2026-10-20",
+  "workers_dev": false,
+  "triggers": { "crons": ["*/5 * * * *"] },
+  "services": [{ "binding": "MASTER", "service": "enkop" }],
+  "observability": { "enabled": true }
+}

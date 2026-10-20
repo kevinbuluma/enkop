@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useState } from 'react';
 import { ArrowDown, ArrowUp, Film, ImagePlus, Plus, Trash2 } from 'lucide-react';
-import { supabase } from '@/integrations/supabase/client';
+import { uploadMedia as storeMedia } from '@/lib/admin-client';
 import { Button } from '@/components/ui/button';
 import { deleteSlide, getSlideAdmin, reorderSlides, saveSlide } from '@/lib/slides.functions';
 import { FallbackImageGenerator } from './FallbackImageGenerator';
@@ -10,14 +10,13 @@ type Slide = Data['slides'][number];
 
 async function uploadMedia(file: File, kind: 'video' | 'image') {
   const okType = kind === 'video' ? /^video\/(mp4|webm)$/ : /^image\/(png|jpeg|webp)$/;
-  const max = kind === 'video' ? 50 : 8;
+  const max = kind === 'video' ? 25 : 8;
   if (!okType.test(file.type)) throw new Error(kind === 'video' ? 'Use an MP4 or WebM video.' : 'Use a JPG, PNG or WebP image.');
   if (file.size > max * 1024 * 1024) throw new Error(`Files must be under ${max} MB.`);
   const ext = (file.type.split('/')[1] ?? 'bin').replace('jpeg', 'jpg');
   const path = `homepage/${Date.now()}-${Math.random().toString(36).slice(2, 8)}.${ext}`;
-  const { error } = await supabase.storage.from('property-media').upload(path, file, { contentType: file.type });
-  if (error) throw new Error('The file could not be uploaded. Please try again.');
-  return path;
+  try { return await storeMedia(path, file); }
+  catch { throw new Error('The file could not be uploaded. Please try again.'); }
 }
 
 export function HomepageManager() {
