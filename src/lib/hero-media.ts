@@ -28,7 +28,8 @@ export function enhancedHeroMedia(url: string | null) {
 }
 
 /** The built-in scenes, used when the managed homepage slides can't be loaded. */
+const builtInLabels = ['Arrival at golden hour', 'The living room', 'The pool at dusk'];
 export const builtInHeroSlides = [0, 1, 2].map(n => {
   const s = scene(n);
-  return { id: `built-in-scene-${n}`, label: '', video_url: s.mp4, webm_url: s.webm, image_url: s.poster };
+  return { id: `built-in-scene-${n}`, label: builtInLabels[n] ?? '', video_url: s.mp4, webm_url: s.webm, image_url: s.poster };
 });
