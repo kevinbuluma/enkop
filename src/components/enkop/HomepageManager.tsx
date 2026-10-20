@@ -10,7 +10,7 @@ type Slide = Data['slides'][number];
 
 async function uploadMedia(file: File, kind: 'video' | 'image') {
   const okType = kind === 'video' ? /^video\/(mp4|webm)$/ : /^image\/(png|jpeg|webp)$/;
-  const max = kind === 'video' ? 25 : 8;
+  const max = kind === 'video' ? 50 : 8;
   if (!okType.test(file.type)) throw new Error(kind === 'video' ? 'Use an MP4 or WebM video.' : 'Use a JPG, PNG or WebP image.');
   if (file.size > max * 1024 * 1024) throw new Error(`Files must be under ${max} MB.`);
   const ext = (file.type.split('/')[1] ?? 'bin').replace('jpeg', 'jpg');

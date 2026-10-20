@@ -25,8 +25,8 @@ async function handle({ request, params }: { request: Request; params: { _splat?
   const secret = process.env['ENKOP_INTERNAL_KEY'];
   if (!secret || !safeEqual(request.headers.get('x-enkop-internal-key') ?? '', secret)) return Response.json({ message: 'Unauthorized.' }, { status: 401 });
 
-  const { d1Backend } = await import('@/server/backend/d1');
-  const { store, media } = d1Backend(env);
+  const { masterBackend } = await import('@/server/backend/master');
+  const { store, media } = masterBackend(env);
   const drainSoon = () => afterResponse(async () => (await import('@/server/sync')).drainOutbox(env));
   const [action, table, key] = (params._splat ?? '').split('/').map(decodeURIComponent);
 

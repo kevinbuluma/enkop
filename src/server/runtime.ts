@@ -1,5 +1,6 @@
-// Cloudflare bindings for the master backend. On Lovable hosting and in `vite dev` there are
-// no ENKOP bindings, so everything here resolves to null and the app runs in mirror mode.
+// Cloudflare bindings for the master backend. The master's database is your Supabase Postgres,
+// reached through the HYPERDRIVE binding. On Lovable hosting and in `vite dev` there are no ENKOP
+// bindings, so everything here resolves to null and the app runs in mirror mode.
 
 export interface D1Result<T = Record<string, unknown>> { results: T[]; meta?: { changes?: number } }
 export interface D1PreparedStatement {
@@ -18,18 +19,13 @@ export interface KVNamespace {
   put(key: string, value: ArrayBuffer | ReadableStream | string, options?: { metadata?: unknown }): Promise<void>;
   delete(key: string): Promise<void>;
 }
-export interface R2Object { body: ReadableStream; httpMetadata?: { contentType?: string }; size: number }
-export interface R2Bucket {
-  get(key: string): Promise<R2Object | null>;
-  head(key: string): Promise<{ size: number } | null>;
-  put(key: string, value: ArrayBuffer | ReadableStream, options?: { httpMetadata?: { contentType?: string } }): Promise<unknown>;
-  delete(key: string): Promise<void>;
-}
 export interface SendEmail { send(message: { from: string | { email: string; name?: string }; to: string | string[]; subject: string; text: string; html?: string; replyTo?: string }): Promise<unknown> }
 
 export interface MasterEnv {
+  /** The master Postgres (built from HYPERDRIVE). */
   DB: D1Database;
-  MEDIA?: R2Bucket;
+  HYPERDRIVE?: { connectionString: string };
+  /** Legacy Cloudflare KV media, kept only so it can be copied into Supabase Storage. */
   MEDIA_KV?: KVNamespace;
   EMAIL?: SendEmail;
   [key: string]: unknown;
@@ -50,10 +46,16 @@ async function workers(): Promise<WorkersModule | null> {
   return mod;
 }
 
+let master: MasterEnv | null | undefined;
+
 /** The master's bindings, or null when running as the Lovable mirror. */
 export async function masterEnv(): Promise<MasterEnv | null> {
+  if (master !== undefined) return master;
   const env = (await workers())?.env;
-  return env && typeof env === 'object' && 'DB' in env && env['DB'] ? (env as unknown as MasterEnv) : null;
+  const hyperdrive = env?.['HYPERDRIVE'] as { connectionString?: string } | undefined;
+  if (!hyperdrive?.connectionString) return (master = null);
+  const { hyperdriveDatabase } = await import('@/server/backend/pg');
+  return (master = Object.assign(Object.create(env as object), { DB: hyperdriveDatabase(hyperdrive.connectionString) }) as MasterEnv);
 }
 
 export async function isMaster() {

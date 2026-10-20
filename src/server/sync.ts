@@ -92,6 +92,33 @@ export async function drainOutbox(env: MasterEnv, limit = 25) {
   return { sent, failed, pending: pending?.n ?? 0 };
 }
 
+async function drainRounds(env: MasterEnv) {
+  const rounds = [];
+  // Up to four rounds so a backlog clears within one cron tick.
+  for (let i = 0; i < 4; i++) {
+    const r = await drainOutbox(env, 25);
+    rounds.push(r);
+    if (!r.sent || r.failed || !r.pending) break;
+  }
+  return rounds;
+}
+
+/**
+ * Full two-way sync with the Lovable mirror: push queued changes first (so the mirror has the
+ * master's deletes before anything is read back), then pull enquiries the mirror took while the
+ * master was unavailable, then push the alerts that pull queued.
+ */
+export async function syncWithMirror(env: MasterEnv) {
+  const rounds = await drainRounds(env);
+  const { pullMirrorEnquiries } = await import('@/server/reconcile');
+  const enquiries = await pullMirrorEnquiries(env).catch((e) => {
+    console.error('[enkop] mirror enquiry pull failed', e);
+    return { error: e instanceof Error ? e.message : String(e) };
+  });
+  if ('imported' in enquiries && enquiries.imported.length) rounds.push(...(await drainRounds(env)));
+  return { enquiries, rounds };
+}
+
 export async function outboxStatus(env: MasterEnv) {
   const { results } = await env.DB.prepare(
     `SELECT kind, count(*) AS pending, max(attempts) AS max_attempts, min(created_at) AS oldest FROM outbox WHERE done_at IS NULL GROUP BY kind`,

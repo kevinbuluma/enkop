@@ -15,30 +15,30 @@ async function drainOccasionally(env: NonNullable<Awaited<ReturnType<typeof mast
 }
 
 /**
- * The master (D1/media on Cloudflare) when its bindings exist, falling back to the mirror if D1
- * fails; otherwise the Lovable Cloud mirror itself.
+ * The master (your Supabase, through Cloudflare Hyperdrive) when its bindings exist, falling back to
+ * the mirror if it fails; otherwise the Lovable Cloud mirror itself.
  */
 export async function getBackend(): Promise<Backend> {
   const env = await masterEnv();
   if (env) {
-    const { d1Backend } = await import('./d1');
+    const { masterBackend } = await import('./master');
     const { withMirrorFallback } = await import('./fallback');
     await drainOccasionally(env);
-    return withMirrorFallback(d1Backend(env));
+    return withMirrorFallback(masterBackend(env));
   }
   const { supabaseBackend } = await import('./supabase');
   return supabaseBackend;
 }
 
-/** Master-only access to the D1 store and media; throws on the mirror. */
+/** Master-only access to the database and media; throws on the mirror. */
 export async function getMaster() {
   const env = await masterEnv();
   if (!env) throw new Error(`Administration has moved to the ENKOP master site: ${process.env['ENKOP_MASTER_URL'] || 'https://enkop.kevinbuluma9-7ff.workers.dev'}/admin`);
-  const { d1Backend } = await import('./d1');
+  const { masterBackend } = await import('./master');
   const { afterResponse } = await import('@/server/runtime');
   return {
     env,
-    ...d1Backend(env),
+    ...masterBackend(env),
     /** Pushes queued changes to the mirror once the response is on its way. */
     afterWrite: () => afterResponse(async () => (await import('@/server/sync')).drainOutbox(env)),
   };

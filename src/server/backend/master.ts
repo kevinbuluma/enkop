@@ -2,7 +2,7 @@ import type { Enquiry } from '@/lib/enquiry-schema';
 import type { MasterEnv } from '@/server/runtime';
 import { afterResponse } from '@/server/runtime';
 import { MasterStore } from './master-store';
-import { MediaStore, signMediaPaths } from './media';
+import { MediaStore, signStorageMedia } from './media';
 import type { Backend } from './types';
 
 export function enquiryRow(data: Enquiry) {
@@ -21,7 +21,8 @@ export function enquiryAlertText(data: Enquiry) {
   ].filter(Boolean).join('\n');
 }
 
-export function d1Backend(env: MasterEnv): Backend & { store: MasterStore; media: MediaStore } {
+/** The master backend: your Supabase Postgres for data and Supabase Storage for media. */
+export function masterBackend(env: MasterEnv): Backend & { store: MasterStore; media: MediaStore } {
   const store = new MasterStore(env.DB);
   const media = new MediaStore(env, store);
   return {
@@ -34,15 +35,15 @@ export function d1Backend(env: MasterEnv): Backend & { store: MasterStore; media
       return rows.map((r) => ({ property_id: String(r['property_id']), video_path: String(r['video_path']), created_at: String(r['created_at']) }));
     },
     async activeSlides() {
-      const rows = await store.all('homepage_slides', 'active = 1', [], 'ORDER BY position');
+      const rows = await store.all('homepage_slides', 'active', [], 'ORDER BY position');
       return rows.map((r) => ({ id: String(r['id']), label: String(r['label'] ?? ''), video_path: (r['video_path'] as string | null) ?? null, image_path: (r['image_path'] as string | null) ?? null }));
     },
-    activeTeam: () => store.all('team_members', 'active = 1', [], 'ORDER BY position'),
-    approvedTestimonials: () => store.all('testimonials', 'approved = 1', [], 'ORDER BY position'),
+    activeTeam: () => store.all('team_members', 'active', [], 'ORDER BY position'),
+    approvedTestimonials: () => store.all('testimonials', 'approved', [], 'ORDER BY position'),
     async setting(key) {
       return (await store.first('site_settings', 'key = ?', [key]))?.['value'] ?? null;
     },
-    signMedia: (paths, expiresIn) => signMediaPaths(paths, expiresIn),
+    signMedia: (paths, expiresIn) => signStorageMedia(paths, expiresIn),
     async submitEnquiry(data) {
       const { statements } = store.upsertStatements('enquiries', enquiryRow(data));
       await store.run([...statements, store.outboxStatement('notify', { kind: 'enquiry', text: enquiryAlertText(data), replyTo: data.email })]);

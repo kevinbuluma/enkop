@@ -16,8 +16,8 @@ export const Route = createFileRoute('/api/homepage-fallback')({
     if (!admin) return Response.json({ message: 'Please sign in again.' }, { status: 401 });
     if (!aiAvailable()) return Response.json({ message: 'Image generation is not configured.' }, { status: 500 });
 
-    const { d1Backend } = await import('@/server/backend/d1');
-    const { store } = d1Backend(env);
+    const { masterBackend } = await import('@/server/backend/master');
+    const { store } = masterBackend(env);
     const denial = await store.first('site_settings', 'key = ?', [DENIAL_KEY]);
     if (denial) {
       const blocked = (denial['value'] ?? {}) as { message?: string };

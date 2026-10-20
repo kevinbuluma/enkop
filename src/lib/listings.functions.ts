@@ -72,7 +72,6 @@ export const deleteListing = createServerFn({ method: 'POST' })
     const listing = await store.first('properties', 'id = ?', [data.id]);
     const tours = await store.all('property_tours', 'property_id = ?', [data.id]);
     try {
-      // Tours are removed explicitly so their deletion is mirrored too (D1 would cascade silently).
       await store.run([...tours.flatMap((t) => store.deleteStatements('property_tours', t['id'])), ...store.deleteStatements('properties', data.id)]);
     } catch (e) {
       console.error(e);

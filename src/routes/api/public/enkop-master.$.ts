@@ -7,6 +7,7 @@ import { enquirySchema } from '@/lib/enquiry-schema';
 //                 (keyless calls are throttled; x-enkop-internal-key shows results)
 //   GET  status   outbox backlog (x-enkop-internal-key)
 //   POST test-alert  sends a test alert on every configured channel (x-enkop-internal-key)
+//   POST backfill-media / copy-kv-media  fill Supabase Storage from the mirror / legacy KV (keyed)
 function safeEqual(a: string, b: string) {
   if (a.length !== b.length) return false;
   let diff = 0;
@@ -26,18 +27,18 @@ async function handle({ request, params }: { request: Request; params: { _splat?
     const p = enquirySchema.safeParse(await request.json().catch(() => null));
     if (!p.success) return Response.json({ message: 'Invalid enquiry.' }, { status: 400 });
     if (!p.data.website) {
-      const { d1Backend } = await import('@/server/backend/d1');
-      await d1Backend(env).submitEnquiry(p.data);
+      const { masterBackend } = await import('@/server/backend/master');
+      await masterBackend(env).submitEnquiry(p.data);
     }
     return Response.json({ ok: true });
   }
 
   if (route === 'backfill-media' && request.method === 'POST') {
-    // Copies media referenced in D1 but not yet stored on the master from the Lovable mirror.
+    // Copies media referenced by content rows but not yet in the master's Storage from the Lovable mirror.
     if (!authorized(request, 'x-enkop-internal-key', process.env['ENKOP_INTERNAL_KEY'])) return Response.json({ message: 'Unauthorized.' }, { status: 401 });
-    const { d1Backend } = await import('@/server/backend/d1');
+    const { masterBackend } = await import('@/server/backend/master');
     const { bridgeFetch } = await import('@/server/bridge-client');
-    const { media } = d1Backend(env);
+    const { media } = masterBackend(env);
     const missing = await media.missingPaths();
     const copied: string[] = [], failed: Record<string, string> = {};
     if (missing.length) {
@@ -59,20 +60,37 @@ async function handle({ request, params }: { request: Request; params: { _splat?
     return Response.json({ missing: missing.length, copied, failed });
   }
 
-  if (route === 'drain' && request.method === 'POST' && !authorized(request, 'x-enkop-internal-key', process.env['ENKOP_INTERNAL_KEY'])) {
-    // Keyless trigger for external schedulers (Lovable Cloud pg_cron): only pushes already-queued
-    // changes, at most once a minute, and reveals nothing.
+  if (route === 'copy-kv-media' && request.method === 'POST') {
+    // One-time move of files from the legacy Cloudflare KV store into Supabase Storage.
+    if (!authorized(request, 'x-enkop-internal-key', process.env['ENKOP_INTERNAL_KEY'])) return Response.json({ message: 'Unauthorized.' }, { status: 401 });
     const kv = env.MEDIA_KV;
-    const last = kv ? Number(await new Response(await kv.get('meta:last-public-drain', 'stream')).text().catch(() => '0')) || 0 : 0;
-    if (Date.now() - last < 60_000) return Response.json({ ok: true, throttled: true });
-    if (kv) await kv.put('meta:last-public-drain', String(Date.now()));
-    const sync = await import('@/server/sync');
-    const { pullMirrorEnquiries } = await import('@/server/reconcile');
-    await pullMirrorEnquiries(env).catch((e) => console.error('[enkop] mirror enquiry pull failed', e));
-    for (let i = 0; i < 4; i++) {
-      const r = await sync.drainOutbox(env, 25);
-      if (!r.sent || r.failed || !r.pending) break;
+    if (!kv) return Response.json({ message: 'No KV namespace is bound.' }, { status: 409 });
+    const { masterBackend } = await import('@/server/backend/master');
+    const { media } = masterBackend(env);
+    const { results } = await env.DB.prepare('SELECT path, content_type FROM media ORDER BY path').all<{ path: string; content_type: string }>();
+    const copied: string[] = [], failed: Record<string, string> = {};
+    for (const { path, content_type } of results) {
+      try {
+        const { value } = await kv.getWithMetadata<{ contentType?: string }>(path, 'stream');
+        if (!value) throw new Error('not in KV');
+        await media.putImported(path, await new Response(value).arrayBuffer(), content_type);
+        copied.push(path);
+      } catch (e) { failed[path] = e instanceof Error ? e.message : String(e); }
     }
+    return Response.json({ indexed: results.length, copied, failed });
+  }
+
+  if (route === 'drain' && request.method === 'POST' && !authorized(request, 'x-enkop-internal-key', process.env['ENKOP_INTERNAL_KEY'])) {
+    // Keyless trigger for external schedulers (pg_cron in Supabase and Lovable Cloud): only pushes
+    // already-queued changes, at most once a minute, and reveals nothing.
+    const now = Date.now();
+    const { results: claimed } = await env.DB.prepare(
+      `INSERT INTO meta (key, value) VALUES ('last-public-drain', ?) ON CONFLICT (key) DO UPDATE SET value = excluded.value, updated_at = now()
+       WHERE meta.value::bigint < ? RETURNING key`,
+    ).bind(String(now), now - 60_000).all();
+    if (!claimed.length) return Response.json({ ok: true, throttled: true });
+    const sync = await import('@/server/sync');
+    await sync.syncWithMirror(env);
     return Response.json({ ok: true });
   }
 
@@ -91,16 +109,7 @@ async function handle({ request, params }: { request: Request; params: { _splat?
     if (!authorized(request, 'x-enkop-internal-key', process.env['ENKOP_INTERNAL_KEY'])) return Response.json({ message: 'Unauthorized.' }, { status: 401 });
     const sync = await import('@/server/sync');
     if (route === 'drain' && request.method === 'POST') {
-      const { pullMirrorEnquiries } = await import('@/server/reconcile');
-      const enquiries = await pullMirrorEnquiries(env).catch((e) => ({ error: e instanceof Error ? e.message : String(e) }));
-      const results = [];
-      // Up to four rounds so a backlog clears within one cron tick.
-      for (let i = 0; i < 4; i++) {
-        const r = await sync.drainOutbox(env, 25);
-        results.push(r);
-        if (!r.sent || r.failed || !r.pending) break;
-      }
-      return Response.json({ enquiries, rounds: results, ...(await sync.outboxStatus(env)) });
+      return Response.json({ ...(await sync.syncWithMirror(env)), ...(await sync.outboxStatus(env)) });
     }
     if (route === 'status' && request.method === 'GET') return Response.json(await sync.outboxStatus(env));
   }

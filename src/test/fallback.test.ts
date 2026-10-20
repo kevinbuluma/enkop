@@ -1,5 +1,7 @@
-import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { hasSqlite, masterDb, type FakeD1 } from './fake-d1';
+// @vitest-environment node
+import { afterEach, beforeAll, beforeEach, describe, expect, it, vi } from 'vitest';
+import { masterDb, pglite, resetMasterDb } from './pg-db';
+import type { PgDatabase } from '@/server/backend/pg';
 import { withMirrorFallback } from '@/server/backend/fallback';
 import type { Backend } from '@/server/backend/types';
 import type { Enquiry } from '@/lib/enquiry-schema';
@@ -20,7 +22,7 @@ const enquiry: Enquiry = {
 } as unknown as Enquiry;
 
 function backend(overrides: Partial<Backend>): Backend {
-  const fail = async () => { throw new Error('D1 down'); };
+  const fail = async () => { throw new Error('database down'); };
   return {
     mode: 'master', publishedProperties: fail, completedTours: fail, activeSlides: fail, activeTeam: fail,
     approvedTestimonials: fail, setting: fail, signMedia: async () => ({}), submitEnquiry: fail, ...overrides,
@@ -31,21 +33,21 @@ describe('master falls back to the Lovable mirror', () => {
   afterEach(() => vi.restoreAllMocks());
   beforeEach(() => { vi.spyOn(console, 'error').mockImplementation(() => {}); });
 
-  it('serves public reads from D1 while it works', async () => {
+  it('serves public reads from the master while it works', async () => {
     const mirror = vi.fn();
     const b = withMirrorFallback(backend({ activeSlides: async () => [{ id: 'd1', label: '', video_path: null, image_path: null }] }), { mirror, storeEnquiry: vi.fn() });
     expect(await b.activeSlides()).toEqual([{ id: 'd1', label: '', video_path: null, image_path: null }]);
     expect(mirror).not.toHaveBeenCalled();
   });
 
-  it('reads the mirror when D1 fails, keeping arguments', async () => {
+  it('reads the mirror when the master fails, keeping arguments', async () => {
     const setting = vi.fn(async (key: string) => `mirror:${key}`);
     const b = withMirrorFallback(backend({}), { mirror: async () => backend({ setting }), storeEnquiry: vi.fn() });
     expect(await b.setting('hero')).toBe('mirror:hero');
     expect(setting).toHaveBeenCalledWith('hero');
   });
 
-  it('never loses an enquiry: stores it in Lovable Cloud when D1 rejects it', async () => {
+  it('never loses an enquiry: stores it in Lovable Cloud when the master rejects it', async () => {
     const storeEnquiry = vi.fn(async () => {});
     await withMirrorFallback(backend({}), { mirror: vi.fn(), storeEnquiry }).submitEnquiry(enquiry);
     expect(storeEnquiry).toHaveBeenCalledWith(enquiry);
@@ -75,22 +77,16 @@ describe('WhatsApp alerts through Meta', () => {
   });
 });
 
-describe.skipIf(!hasSqlite)('enquiries taken by the Lovable fallback come back to the master', () => {
-  let db: FakeD1;
-  const kv = new Map<string, string>();
-  const env = () => ({
-    DB: db,
-    MEDIA_KV: {
-      get: async (k: string) => (kv.has(k) ? new Response(kv.get(k)).body : null),
-      put: async (k: string, v: string) => { kv.set(k, v); },
-    },
-  }) as never;
+describe('enquiries taken by the Lovable fallback come back to the master', () => {
+  let db: PgDatabase;
+  const env = () => ({ DB: db }) as never;
   const lead = (id: string, created_at: string, extra: Record<string, unknown> = {}) => ({
     id, name: 'Ann', email: 'ann@example.com', phone: '', message: 'Hello', property_id: null, preferred_date: null,
     preferred_contact: 'email', interest: 'buy', status: 'new', created_at, updated_at: created_at, ...extra,
   });
 
-  beforeEach(async () => { db = await masterDb(); kv.clear(); bridge.rows = []; bridge.since = []; });
+  beforeAll(() => pglite(), 120_000);
+  beforeEach(async () => { await resetMasterDb(); db = await masterDb(); bridge.rows = []; bridge.since = []; });
 
   it('imports new leads once, queues one alert each and advances the cursor', async () => {
     const { pullMirrorEnquiries } = await import('@/server/reconcile');
@@ -104,6 +100,18 @@ describe.skipIf(!hasSqlite)('enquiries taken by the Lovable fallback come back t
     expect(JSON.parse(alerts[0].payload).text).toMatch(/Lovable fallback/);
     expect((await db.prepare(`SELECT count(*) AS n FROM outbox WHERE kind <> 'notify'`).first<any>()).n).toBe(0);
     expect(bridge.since.at(-1)).toBe('2026-10-20T10:00:00.123Z');
+  });
+
+  it('never brings back a lead deleted on the master before the mirror applied the delete', async () => {
+    const { pullMirrorEnquiries } = await import('@/server/reconcile');
+    const { MasterStore } = await import('@/server/backend/master-store');
+    const id = '44444444-4444-4444-8444-444444444444';
+    bridge.rows = [lead(id, '2026-10-20T12:00:00.000Z')];
+    expect((await pullMirrorEnquiries(env())).imported).toEqual([id]);
+    await new MasterStore(db).remove('enquiries', id);
+    await db.prepare(`UPDATE meta SET value = '2026-01-01T00:00:00.000Z' WHERE key = 'enquiry-pull-since'`).run();
+    expect((await pullMirrorEnquiries(env())).imported).toEqual([]);
+    expect(await db.prepare('SELECT id FROM enquiries').all()).toMatchObject({ results: [] });
   });
 
   it('keeps a lead whose listing no longer exists on the master', async () => {

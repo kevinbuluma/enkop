@@ -10,18 +10,21 @@
   "rules": [{ "type": "ESModule", "globs": ["**/*.mjs", "**/*.js"] }],
   "assets": { "binding": "ASSETS", "directory": "../.output/public", "run_worker_first": ["/videos/*"] },
   "observability": { "enabled": true },
+  // The master database: ENKOP's Supabase project (enkop, eu-west-2) through Hyperdrive.
+  "hyperdrive": [{ "binding": "HYPERDRIVE", "id": "97f8ef23492148118bf2f4c00a9bf565" }],
+  // Legacy D1 master and KV media, kept read-only as a rollback (and for the one-time copy scripts).
   "d1_databases": [
-    { "binding": "DB", "database_name": "enkop-db", "database_id": "7f5bf83f-992a-42fd-9e94-e80cd3ba1b79", "migrations_dir": "migrations" }
+    { "binding": "LEGACY_D1", "database_name": "enkop-db", "database_id": "7f5bf83f-992a-42fd-9e94-e80cd3ba1b79", "migrations_dir": "migrations" }
   ],
-  // Media lives in KV until R2 is enabled on the account; then add:
-  // "r2_buckets": [{ "binding": "MEDIA", "bucket_name": "enkop-media" }]
   "kv_namespaces": [{ "binding": "MEDIA_KV", "id": "602aa349dbf349d4a7ca93ab54849b31" }],
   "vars": {
     "ENKOP_BRIDGE_URL": "https://enkop-real-estate.lovable.app",
     "ENKOP_MASTER_URL": "https://enkop.kevinbuluma9-7ff.workers.dev",
+    "ENKOP_SUPABASE_URL": "https://lucrwaoacfjpgujvzmrl.supabase.co",
     "ENKOP_NOTIFY_WHATSAPP": "254707465190"
   }
   // Secrets (wrangler secret put -c cloudflare/wrangler.jsonc <NAME>):
+  //   ENKOP_SUPABASE_SERVICE_KEY  service key of the enkop Supabase project (Storage access)
   //   ENKOP_BRIDGE_SECRET  shared with Lovable's bridge
   //   ENKOP_MEDIA_KEY      HMAC key for signed /media links
   //   ENKOP_INTERNAL_KEY   authenticates the enkop-sync cron Worker

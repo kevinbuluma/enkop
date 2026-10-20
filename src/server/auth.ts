@@ -43,8 +43,10 @@ export type Admin = { id: string; email: string; role: string };
 
 type AdminRow = Admin & { password_hash: string | null; password_salt: string | null; password_iterations: number | null };
 
+const normalEmail = (email: string) => email.trim().toLowerCase();
+
 export async function verifyLogin(db: D1Database, email: string, password: string): Promise<Admin | null> {
-  const row = await db.prepare('SELECT id, email, role, password_hash, password_salt, password_iterations FROM admins WHERE email = ?').bind(email.trim()).first<AdminRow>();
+  const row = await db.prepare('SELECT id, email, role, password_hash, password_salt, password_iterations FROM admins WHERE email = ?').bind(normalEmail(email)).first<AdminRow>();
   // Hash anyway so unknown emails take as long as wrong passwords.
   const { hash } = await hashPassword(password, row?.password_salt ?? 'enkop-no-user', row?.password_iterations ?? PBKDF2_ITERATIONS);
   if (!row?.password_hash || !timingSafeEqual(hash, row.password_hash)) return null;
@@ -74,7 +76,7 @@ export async function issueSetupToken(db: D1Database, email: string, id: string 
   const expires = new Date(Date.now() + SETUP_HOURS * 36e5).toISOString();
   await db.prepare(`INSERT INTO admins (id, email, setup_token_hash, setup_expires_at) VALUES (?, ?, ?, ?)
     ON CONFLICT (email) DO UPDATE SET setup_token_hash = excluded.setup_token_hash, setup_expires_at = excluded.setup_expires_at`)
-    .bind(id, email.trim(), await sha256(token), expires).run();
+    .bind(id, normalEmail(email), await sha256(token), expires).run();
   return token;
 }
 

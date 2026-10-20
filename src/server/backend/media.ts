@@ -2,10 +2,12 @@ import type { MasterEnv } from '@/server/runtime';
 import { envString } from '@/server/runtime';
 import type { MasterStore } from './master-store';
 
-// Private media for the master. Bytes live in R2 when the MEDIA bucket is bound, otherwise in KV
-// (MEDIA_KV, 25 MiB per file). The `media` table indexes both. Links are HMAC-signed and expire.
+// Private media for the master, in the `property-media` bucket of your Supabase project
+// (ENKOP_SUPABASE_URL + ENKOP_SUPABASE_SERVICE_KEY). The `media` table indexes it. Visitors get
+// expiring Storage signed URLs, served by Supabase's CDN with byte-range support for video.
 
-export const MAX_MEDIA_BYTES = 25 * 1024 * 1024;
+export const MAX_MEDIA_BYTES = 50 * 1024 * 1024;
+export const MEDIA_BUCKET = 'property-media';
 const enc = new TextEncoder();
 
 function b64url(bytes: ArrayBuffer) {
@@ -27,7 +29,7 @@ function mediaKey() {
 
 const encodePath = (path: string) => path.split('/').map(encodeURIComponent).join('/');
 
-/** Signed, expiring links to private media, keyed by path. */
+/** HMAC-signed /media links. Superseded by Storage signed URLs; /media still honours old links. */
 export async function signMediaPaths(paths: string[], expiresIn: number, origin = envString('ENKOP_MASTER_URL') ?? ''): Promise<Record<string, string>> {
   const key = mediaKey();
   const exp = Math.floor(Date.now() / 1000) + expiresIn;
@@ -47,81 +49,117 @@ export async function verifyMediaSignature(path: string, exp: string | null, sig
   return diff === 0;
 }
 
-export type MediaObject = { body: ReadableStream | ArrayBuffer; contentType: string; size: number };
+/** Storage REST client for your project's media bucket (no SDK: works the same on any key format). */
+export class SupabaseBucket {
+  constructor(readonly url: string, private key: string, readonly bucket = MEDIA_BUCKET) {}
+
+  static fromEnv() {
+    const url = envString('ENKOP_SUPABASE_URL');
+    const key = envString('ENKOP_SUPABASE_SERVICE_KEY');
+    if (!url || !key) throw new Error('Media storage is not configured (ENKOP_SUPABASE_URL / ENKOP_SUPABASE_SERVICE_KEY).');
+    return new SupabaseBucket(url.replace(/\/$/, ''), key);
+  }
+
+  private headers(extra: Record<string, string> = {}) {
+    // Legacy JWT keys go in Authorization; new sb_secret_ keys are sent only as apikey.
+    return { apikey: this.key, ...(this.key.startsWith('sb_') ? {} : { Authorization: `Bearer ${this.key}` }), ...extra };
+  }
+
+  private async ok(res: Response, what: string) {
+    if (!res.ok) throw new Error(`Storage ${what} failed (${res.status}): ${(await res.text().catch(() => '')).slice(0, 200)}`);
+    return res;
+  }
+
+  async upload(path: string, data: ArrayBuffer, contentType: string) {
+    await this.ok(await fetch(`${this.url}/storage/v1/object/${this.bucket}/${encodePath(path)}`, {
+      method: 'POST', headers: this.headers({ 'Content-Type': contentType, 'x-upsert': 'true', 'Cache-Control': 'max-age=3600' }), body: data,
+    }), 'upload');
+  }
+
+  async download(path: string): Promise<{ data: ArrayBuffer; contentType: string } | null> {
+    const res = await fetch(`${this.url}/storage/v1/object/authenticated/${this.bucket}/${encodePath(path)}`, { headers: this.headers() });
+    if (res.status === 400 || res.status === 404) return null;
+    await this.ok(res, 'download');
+    return { data: await res.arrayBuffer(), contentType: res.headers.get('content-type') ?? 'application/octet-stream' };
+  }
+
+  async remove(paths: string[]) {
+    if (!paths.length) return;
+    await this.ok(await fetch(`${this.url}/storage/v1/object/${this.bucket}`, {
+      method: 'DELETE', headers: this.headers({ 'Content-Type': 'application/json' }), body: JSON.stringify({ prefixes: paths }),
+    }), 'delete');
+  }
+
+  async sign(paths: string[], expiresIn: number): Promise<Record<string, string>> {
+    const list = [...new Set(paths.filter(Boolean))];
+    if (!list.length) return {};
+    const res = await this.ok(await fetch(`${this.url}/storage/v1/object/sign/${this.bucket}`, {
+      method: 'POST', headers: this.headers({ 'Content-Type': 'application/json' }), body: JSON.stringify({ expiresIn, paths: list }),
+    }), 'signing');
+    const out: Record<string, string> = {};
+    for (const r of (await res.json()) as { path: string | null; signedURL: string | null; error: string | null }[]) {
+      if (r.path && r.signedURL && !r.error) out[r.path] = `${this.url}/storage/v1${r.signedURL}`;
+    }
+    return out;
+  }
+}
+
+/** Expiring Storage signed URLs, keyed by path; missing entries could not be signed. */
+export function signStorageMedia(paths: string[], expiresIn: number) {
+  return SupabaseBucket.fromEnv().sign(paths, expiresIn);
+}
 
 export class MediaStore {
-  constructor(private env: MasterEnv, private store: MasterStore) {}
+  constructor(private env: MasterEnv, private store: MasterStore, private bucket?: SupabaseBucket) {}
 
-  get backend(): 'r2' | 'kv' {
-    if (this.env.MEDIA) return 'r2';
-    if (this.env.MEDIA_KV) return 'kv';
-    throw new Error('No media storage is bound (MEDIA or MEDIA_KV).');
+  private get files() {
+    return (this.bucket ??= SupabaseBucket.fromEnv());
+  }
+
+  private indexStatement(path: string, contentType: string, size: number) {
+    return this.store.db.prepare(`INSERT INTO media (path, content_type, size) VALUES (?, ?, ?) ON CONFLICT (path) DO UPDATE SET content_type = excluded.content_type, size = excluded.size`).bind(path, contentType, size);
   }
 
   /** Stores the file, records it and queues a copy to the Lovable mirror. */
   async put(path: string, data: ArrayBuffer, contentType: string) {
-    if (data.byteLength > MAX_MEDIA_BYTES) throw new Error('Files must be 25 MB or smaller.');
-    if (this.backend === 'r2') await this.env.MEDIA!.put(path, data, { httpMetadata: { contentType } });
-    else await this.env.MEDIA_KV!.put(path, data, { metadata: { contentType } });
-    await this.store.run([
-      this.store.db.prepare(`INSERT INTO media (path, content_type, size) VALUES (?, ?, ?) ON CONFLICT (path) DO UPDATE SET content_type = excluded.content_type, size = excluded.size`).bind(path, contentType, data.byteLength),
-      this.store.outboxStatement('media_put', { path, contentType }),
-    ]);
+    if (data.byteLength > MAX_MEDIA_BYTES) throw new Error('Files must be 50 MB or smaller.');
+    await this.files.upload(path, data, contentType);
+    await this.store.run([this.indexStatement(path, contentType, data.byteLength), this.store.outboxStatement('media_put', { path, contentType })]);
   }
 
-  /** Stores a file copied from the mirror (no outbox entry: the mirror already has it). */
+  /** Stores a file copied from the mirror or legacy KV (no outbox entry: the mirror already has it). */
   async putImported(path: string, data: ArrayBuffer, contentType: string) {
-    if (data.byteLength > MAX_MEDIA_BYTES) throw new Error(`${path} is larger than 25 MB; enable R2 for files this size.`);
-    if (this.backend === 'r2') await this.env.MEDIA!.put(path, data, { httpMetadata: { contentType } });
-    else await this.env.MEDIA_KV!.put(path, data, { metadata: { contentType } });
-    await this.store.db.prepare(`INSERT INTO media (path, content_type, size) VALUES (?, ?, ?) ON CONFLICT (path) DO UPDATE SET content_type = excluded.content_type, size = excluded.size`).bind(path, contentType, data.byteLength).run();
+    if (data.byteLength > MAX_MEDIA_BYTES) throw new Error(`${path} is larger than 50 MB.`);
+    await this.files.upload(path, data, contentType);
+    await this.store.run([this.indexStatement(path, contentType, data.byteLength)]);
   }
 
   /** Paths referenced by content rows that are not in the media store yet. */
   async missingPaths(): Promise<string[]> {
-    // D1 rejects compound SELECTs with more than five terms.
-    const [{ results: columns }, { results: lists }, { results: have }] = await Promise.all([
+    const [{ results: refs }, { results: have }] = await Promise.all([
       this.store.db.prepare(`
         SELECT video_path AS p FROM homepage_slides WHERE video_path IS NOT NULL
         UNION SELECT image_path FROM homepage_slides WHERE image_path IS NOT NULL
         UNION SELECT photo_path FROM team_members WHERE photo_path IS NOT NULL
-        UNION SELECT video_path FROM property_tours WHERE video_path IS NOT NULL`).all<{ p: string }>(),
-      this.store.db.prepare(`
-        SELECT j.value AS p FROM property_tours, json_each(property_tours.photo_paths) j
-        UNION SELECT j.value FROM properties, json_each(properties.image_paths) j`).all<{ p: string }>(),
+        UNION SELECT video_path FROM property_tours WHERE video_path IS NOT NULL
+        UNION SELECT unnest(photo_paths) FROM property_tours
+        UNION SELECT unnest(image_paths) FROM properties`).all<{ p: string }>(),
       this.store.db.prepare('SELECT path FROM media').all<{ path: string }>(),
     ]);
     const stored = new Set(have.map((h) => h.path));
-    return [...new Set([...columns, ...lists].map((r) => r.p))].filter((p) => p && !stored.has(p));
+    return [...new Set(refs.map((r) => r.p))].filter((p) => p && !stored.has(p));
   }
 
-  async get(path: string): Promise<MediaObject | null> {
-    if (this.env.MEDIA) {
-      const obj = await this.env.MEDIA.get(path);
-      if (obj) return { body: obj.body, contentType: obj.httpMetadata?.contentType ?? 'application/octet-stream', size: obj.size };
-    }
-    if (this.env.MEDIA_KV) {
-      const { value, metadata } = await this.env.MEDIA_KV.getWithMetadata<{ contentType?: string }>(path, 'stream');
-      if (value) {
-        const buf = await new Response(value).arrayBuffer();
-        return { body: buf, contentType: metadata?.contentType ?? 'application/octet-stream', size: buf.byteLength };
-      }
-    }
-    return null;
+  sign(paths: string[], expiresIn: number) {
+    return this.files.sign(paths, expiresIn);
   }
 
-  async bytes(path: string): Promise<{ data: ArrayBuffer; contentType: string } | null> {
-    const obj = await this.get(path);
-    if (!obj) return null;
-    const data = obj.body instanceof ArrayBuffer ? obj.body : await new Response(obj.body).arrayBuffer();
-    return { data, contentType: obj.contentType };
+  bytes(path: string) {
+    return this.files.download(path);
   }
 
   async remove(paths: string[]) {
-    for (const p of paths) {
-      if (this.env.MEDIA) await this.env.MEDIA.delete(p);
-      if (this.env.MEDIA_KV) await this.env.MEDIA_KV.delete(p);
-    }
+    await this.files.remove(paths);
     await this.store.run(paths.flatMap((p) => [
       this.store.db.prepare(`DELETE FROM media WHERE path = ?`).bind(p),
       this.store.outboxStatement('media_delete', { path: p }),

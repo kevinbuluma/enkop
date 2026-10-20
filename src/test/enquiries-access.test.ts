@@ -1,8 +1,9 @@
-import { beforeEach, describe, expect, it, vi } from 'vitest';
+// @vitest-environment node
+import { beforeAll, beforeEach, describe, expect, it, vi } from 'vitest';
 import { createSession, sessionAdmin } from '@/server/auth';
-import { FakeD1, hasSqlite } from './fake-d1';
+import { masterDb, pglite, resetMasterDb } from './pg-db';
 
-const state = vi.hoisted(() => ({ read: vi.fn(), db: null as unknown }));
+const state = vi.hoisted(() => ({ db: null as unknown }));
 vi.mock('@/lib/require-admin', () => ({ requireAdmin: {} }));
 vi.mock('@tanstack/react-start', () => ({
   createServerFn: () => {
@@ -16,37 +17,40 @@ vi.mock('@tanstack/react-start', () => ({
 }));
 import { getEnquiries } from '@/lib/enquiries.functions';
 
-describe.skipIf(!hasSqlite)('enquiry administrator access', () => {
-  let db: FakeD1;
+const P1 = '0a000000-0000-4000-8000-000000000001';
+const E1 = '0e000000-0000-4000-8000-000000000001';
+const ADMIN = '0b000000-0000-4000-8000-000000000001';
+const VIEWER = '0b000000-0000-4000-8000-000000000002';
+
+describe('enquiry administrator access', () => {
+  beforeAll(() => pglite(), 120_000);
   beforeEach(async () => {
-    db = new FakeD1();
-    await db.exec(`
-      CREATE TABLE properties (id TEXT PRIMARY KEY, title TEXT);
-      CREATE TABLE enquiries (id TEXT PRIMARY KEY, property_id TEXT, name TEXT, email TEXT, phone TEXT, message TEXT, preferred_date TEXT, preferred_contact TEXT, interest TEXT, status TEXT, created_at TEXT);
-      CREATE TABLE admins (id TEXT PRIMARY KEY, email TEXT UNIQUE, role TEXT NOT NULL DEFAULT 'admin');
-      CREATE TABLE sessions (token_hash TEXT PRIMARY KEY, admin_id TEXT NOT NULL, expires_at TEXT NOT NULL);
-      INSERT INTO properties VALUES ('p1', 'The Atelier');
-      INSERT INTO enquiries VALUES ('e1', 'p1', 'Ann', 'ann@example.com', '', 'Hello there', NULL, 'Email', 'Buying', 'new', '2026-10-20T10:00:00.000Z');
-      INSERT INTO admins (id, email, role) VALUES ('a1', 'admin@example.com', 'admin'), ('u1', 'viewer@example.com', 'user');`);
-    state.db = db;
-    state.read.mockClear();
+    await resetMasterDb();
+    await (await pglite()).exec(`
+      SELECT set_config('enkop.skip_outbox', 'on', false);
+      INSERT INTO properties (id, slug, title, neighborhood, property_type, price) VALUES ('${P1}', 'the-atelier', 'The Atelier', 'Westlands', 'Apartment', 1);
+      INSERT INTO enquiries (id, property_id, name, email, message, interest, created_at) VALUES ('${E1}', '${P1}', 'Ann', 'ann@example.com', 'Hello there', 'Buying', '2026-10-20T10:00:00.000Z');
+      INSERT INTO admins (id, email, role) VALUES ('${ADMIN}', 'admin@example.com', 'admin'), ('${VIEWER}', 'viewer@example.com', 'user');
+      SELECT set_config('enkop.skip_outbox', '', false);`);
+    state.db = await masterDb();
   });
 
   it('lets a signed-in administrator read enquiries with their listing title', async () => {
     const rows = await getEnquiries();
-    expect(rows).toEqual([expect.objectContaining({ id: 'e1', property_title: 'The Atelier', email: 'ann@example.com' })]);
+    expect(rows).toEqual([expect.objectContaining({ id: E1, property_title: 'The Atelier', email: 'ann@example.com', created_at: '2026-10-20T10:00:00.000Z' })]);
   });
 
   it('only accepts live sessions of administrator accounts', async () => {
-    const { token } = await createSession(db as never, 'a1');
-    expect(await sessionAdmin(db as never, token)).toMatchObject({ id: 'a1', email: 'admin@example.com' });
-    expect(await sessionAdmin(db as never, null)).toBeNull();
-    expect(await sessionAdmin(db as never, 'forged-token')).toBeNull();
+    const db = state.db as never;
+    const { token } = await createSession(db, ADMIN);
+    expect(await sessionAdmin(db, token)).toMatchObject({ id: ADMIN, email: 'admin@example.com' });
+    expect(await sessionAdmin(db, null)).toBeNull();
+    expect(await sessionAdmin(db, 'forged-token')).toBeNull();
 
-    const viewer = await createSession(db as never, 'u1');
-    expect(await sessionAdmin(db as never, viewer.token)).toBeNull();
+    const viewer = await createSession(db, VIEWER);
+    expect(await sessionAdmin(db, viewer.token)).toBeNull();
 
-    await db.exec(`UPDATE sessions SET expires_at = '2000-01-01T00:00:00.000Z'`);
-    expect(await sessionAdmin(db as never, token)).toBeNull();
+    await (await pglite()).exec(`UPDATE sessions SET expires_at = '2000-01-01T00:00:00.000Z'`);
+    expect(await sessionAdmin(db, token)).toBeNull();
   });
 });

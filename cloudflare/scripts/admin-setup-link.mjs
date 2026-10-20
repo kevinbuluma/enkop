@@ -1,12 +1,13 @@
 // Creates (or refreshes) an ENKOP master admin and a one-time password-setup link (valid 48 hours).
 //
 // Usage: node cloudflare/scripts/admin-setup-link.mjs <email> <sql-out> <link-out> [admin-id]
-//        npx wrangler d1 execute enkop-db -c cloudflare/wrangler.jsonc --remote --file <sql-out>
+//        node master-db/scripts/sql.mjs <sql-out>
 // Then open the link in <link-out> and choose a password. Keep the link private; it works once.
 import { createHash, randomBytes, randomUUID } from 'node:crypto';
 import { appendFileSync, writeFileSync } from 'node:fs';
 
-const [email, sqlOut, linkOut, id = randomUUID()] = process.argv.slice(2);
+const [rawEmail, sqlOut, linkOut, id = randomUUID()] = process.argv.slice(2);
+const email = rawEmail?.trim().toLowerCase();
 if (!email || !sqlOut || !linkOut) {
   console.error('usage: admin-setup-link.mjs <email> <sql-out> <link-out> [admin-id]');
   process.exit(1);

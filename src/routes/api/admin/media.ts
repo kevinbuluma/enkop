@@ -11,8 +11,8 @@ async function signedInMaster(request: Request) {
   if (!auth.sameOrigin(request)) return { error: Response.json({ message: 'Forbidden.' }, { status: 403 }) };
   const admin = await auth.sessionAdmin(env.DB, auth.readCookie(request.headers.get('cookie'), auth.SESSION_COOKIE));
   if (!admin) return { error: Response.json({ message: 'Please sign in again.' }, { status: 401 }) };
-  const { d1Backend } = await import('@/server/backend/d1');
-  return { env, master: d1Backend(env) };
+  const { masterBackend } = await import('@/server/backend/master');
+  return { env, master: masterBackend(env) };
 }
 
 async function drainSoon(env: Parameters<typeof import('@/server/sync').drainOutbox>[0]) {
