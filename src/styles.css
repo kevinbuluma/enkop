@@ -417,10 +417,55 @@ label.studio-file input { position: absolute; width: 1px; height: 1px; opacity: 
 .studio-toggle { display: inline-flex; gap: 8px; align-items: center; font-size: 12px; }
 .studio-slide-media video, .studio-slide-media img { width: 100%; aspect-ratio: 16/9; object-fit: cover; background: var(--muted); }
 .studio-tour--off .studio-slide-media { opacity: .4; }
-.hero-layer { position: absolute; inset: 0; opacity: 0; transition: opacity 1.4s ease; }
-.hero-layer--on { opacity: 1; }
+.hero-layer { position: absolute; inset: 0; opacity: 0; overflow: hidden; }
+.hero-layer--on { opacity: 1; z-index: 1; transition: opacity 1.1s ease; }
 .hero-media .hero-layer video { opacity: 0; animation: none; transition: opacity .6s ease; }
 .hero-media .hero-layer video.hero-video--playing { opacity: 1; }
+
+/* ===== Homepage property tour: push-in camera, walk-through cuts, look-around ===== */
+.hero-reel { position: absolute; inset: 0; }
+.hero-media { perspective: 1400px; overflow: hidden; }
+.hero-look { position: absolute; inset: 0; transform: scale(1.07); transform-style: preserve-3d; will-change: transform; }
+.hero-camera { position: absolute; inset: 0; will-change: transform; }
+.hero-layer--on .hero-camera { animation: hero-push 13s cubic-bezier(.25,.1,.3,1) forwards; }
+.hero-reel--paused .hero-camera, .hero-reel--paused .hero-tour-fill--run { animation-play-state: paused; }
+/* The outgoing room keeps moving toward the camera and dissolves, like stepping through a doorway. */
+.hero-layer--leaving { z-index: 2; animation: hero-walk-through 1.4s cubic-bezier(.55,.05,.4,1) forwards; }
+.hero-layer--leaving .hero-camera { animation-play-state: paused; }
+@keyframes hero-push { from { transform: scale(1); } to { transform: scale(1.16); } }
+@keyframes hero-walk-through { 0% { opacity: 1; transform: scale(1); filter: blur(0); } 100% { opacity: 0; transform: scale(1.32); filter: blur(6px); } }
+
+.hero-tour { position: absolute; z-index: 3; right: clamp(24px, 5.6vw, 100px); bottom: 30px; display: flex; align-items: center; gap: 6px; padding: 6px; border-radius: 999px; color: var(--inverse-foreground); background: color-mix(in oklab, var(--inverse) 30%, transparent); backdrop-filter: blur(18px) saturate(150%); border: 1px solid color-mix(in oklab, var(--gold-soft) 40%, transparent); box-shadow: 0 18px 50px -24px color-mix(in oklab, var(--inverse) 80%, transparent); animation: rise-in .9s .9s both; }
+.hero-tour ol { display: flex; gap: 2px; list-style: none; margin: 0; padding: 0; }
+.hero-tour button { display: inline-flex; align-items: center; border: 0; background: transparent; color: inherit; cursor: pointer; border-radius: 999px; min-height: 40px; font-family: var(--font-sans); }
+.hero-tour-toggle { justify-content: center; width: 40px; border: 1px solid color-mix(in oklab, var(--inverse-foreground) 22%, transparent)!important; }
+.hero-tour-toggle:hover, .hero-tour-chapter:hover { background: color-mix(in oklab, var(--inverse-foreground) 10%, transparent); }
+.hero-tour-chapter { gap: 9px; padding: 0 12px; font-size: 10px; letter-spacing: .14em; text-transform: uppercase; opacity: .62; transition: opacity .3s, background .3s; }
+.hero-tour-chapter--on { opacity: 1; }
+.hero-tour-num { color: var(--gold-soft); font-weight: 600; }
+.hero-tour-name { max-width: 0; overflow: hidden; white-space: nowrap; transition: max-width .6s cubic-bezier(.22,.61,.21,1); }
+.hero-tour-chapter--on .hero-tour-name { max-width: 190px; }
+.hero-tour-track { position: relative; width: 34px; height: 2px; border-radius: 2px; overflow: hidden; background: color-mix(in oklab, var(--inverse-foreground) 25%, transparent); }
+.hero-tour-fill { position: absolute; inset: 0; transform-origin: left; transform: scaleX(0); background: var(--gold); }
+.hero-tour-fill--done { transform: scaleX(1); opacity: .55; }
+.hero-tour-fill--run { animation: hero-progress var(--scene-ms, 7s) linear forwards; }
+@keyframes hero-progress { to { transform: scaleX(1); } }
+.hero-tour-next { gap: 10px; padding: 0 16px 0 18px; white-space: nowrap; font-size: 10px; font-weight: 600; letter-spacing: .14em; text-transform: uppercase; color: var(--inverse)!important; background: linear-gradient(135deg, var(--gold), color-mix(in oklab, var(--gold) 70%, var(--inverse)))!important; transition: transform .3s, box-shadow .3s; }
+.hero-tour-next:hover { transform: translateX(2px); box-shadow: 0 0 0 4px color-mix(in oklab, var(--gold) 25%, transparent); }
+.hero-tour-next svg { transition: transform .3s; }
+.hero-tour-next:hover svg { transform: translateX(3px); }
+@media (max-width: 760px) {
+  .hero-scroll { display: none; }
+  .hero-tour { left: 50%; right: auto; bottom: max(18px, env(safe-area-inset-bottom)); transform: translateX(-50%); animation: none; max-width: calc(100vw - 32px); }
+  .hero-tour button { min-height: 44px; }
+  .hero-tour-toggle { width: 44px; }
+  .hero-tour-chapter { padding: 0 9px; gap: 7px; }
+  .hero-tour-chapter--on .hero-tour-name { display: none; }
+  .hero-tour-track { width: 22px; }
+  .hero-tour-next { padding: 0 14px; }
+}
+@media (max-width: 380px) { .hero-tour-next span { display: none; } }
+@media (prefers-reduced-motion: reduce) { .hero-camera, .hero-layer--leaving { animation: none!important; } .hero-look { transform: none; } }
 .studio-fallback { border-top: 1px solid var(--border); padding-top: 12px; margin-top: 8px; }
 .studio-fallback-editor { margin-top: 18px; gap: 18px; }
 .studio-fallback-preview { display: block; width: 100%; aspect-ratio: 16/9; object-fit: cover; background: var(--muted); transition: filter .4s; }
