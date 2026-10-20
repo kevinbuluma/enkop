@@ -34,3 +34,5 @@
 - [x] Secure server-to-server bridge so enquiries, signed media, WhatsApp alerts and AI tools work on non-Lovable hosts (Cloudflare)
 - [x] Sharper homepage videos: three scenes regenerated at native 1080p and installed
 - [ ] Bridge activation: owner adds ENKOP_BRIDGE_SECRET in Project Settings → Secrets (both hosts) and republishes
+
+- [x] Interactive homepage tour: push-in camera, walk-through scene changes, look-around, chapter/pause/next controls

@@ -450,7 +450,7 @@ label.studio-file input { position: absolute; width: 1px; height: 1px; opacity: 
 .hero-tour-fill--done { transform: scaleX(1); opacity: .55; }
 .hero-tour-fill--run { animation: hero-progress var(--scene-ms, 7s) linear forwards; }
 @keyframes hero-progress { to { transform: scaleX(1); } }
-.hero-tour-next { gap: 10px; padding: 0 16px 0 18px; font-size: 10px; font-weight: 600; letter-spacing: .14em; text-transform: uppercase; color: var(--inverse)!important; background: linear-gradient(135deg, var(--gold), color-mix(in oklab, var(--gold) 70%, var(--inverse)))!important; transition: transform .3s, box-shadow .3s; }
+.hero-tour-next { gap: 10px; padding: 0 16px 0 18px; white-space: nowrap; font-size: 10px; font-weight: 600; letter-spacing: .14em; text-transform: uppercase; color: var(--inverse)!important; background: linear-gradient(135deg, var(--gold), color-mix(in oklab, var(--gold) 70%, var(--inverse)))!important; transition: transform .3s, box-shadow .3s; }
 .hero-tour-next:hover { transform: translateX(2px); box-shadow: 0 0 0 4px color-mix(in oklab, var(--gold) 25%, transparent); }
 .hero-tour-next svg { transition: transform .3s; }
 .hero-tour-next:hover svg { transform: translateX(3px); }
