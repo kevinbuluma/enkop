@@ -1,5 +1,4 @@
 import { useEffect, useRef, useState } from 'react';
-import { ArrowRight, Pause, Play } from 'lucide-react';
 import type { PublicSlide } from '@/lib/slides.functions';
 import { enhancedHeroMedia } from '@/lib/hero-media';
 import { Parallax } from '@/components/enkop/Parallax';
@@ -11,16 +10,15 @@ const PUSH_ORIGINS = ['50% 62%', '40% 50%', '60% 46%', '52% 40%'];
 
 /**
  * Homepage property tour: scenes play in order with a slow camera push-in,
- * walk-through transitions, pointer look-around and chapter controls.
- * Images stand in while videos load and for reduced-motion visitors.
+ * walk-through transitions and pointer look-around. There are no on-screen controls,
+ * so reduced-motion visitors get the first scene as a still image rather than an
+ * auto-advancing tour they cannot pause.
  */
 export function HeroReel({ slides, poster }: { slides: PublicSlide[]; poster: string }) {
   const [index, setIndex] = useState(0);
   const [leaving, setLeaving] = useState<number | null>(null);
   const [reduced, setReduced] = useState(false);
-  const [paused, setPaused] = useState(false);
   const [playing, setPlaying] = useState<string | null>(null);
-  const [sceneMs, setSceneMs] = useState(IMAGE_HOLD_MS);
   const videos = useRef<(HTMLVideoElement | null)[]>([]);
   const started = useRef<number | null>(null);
   const root = useRef<HTMLDivElement>(null);
@@ -92,20 +90,17 @@ export function HeroReel({ slides, poster }: { slides: PublicSlide[]; poster: st
     const next = () => { if (!disposed) { setPlaying(null); goTo(activeIndex + 1); } };
     const fallback = () => {
       window.clearTimeout(timer); window.clearTimeout(stallTimer);
-      setPlaying(null); setSceneMs(IMAGE_HOLD_MS); video?.pause();
-      if (count > 1 && !paused) timer = window.setTimeout(next, IMAGE_HOLD_MS);
+      setPlaying(null); video?.pause();
+      if (count > 1) timer = window.setTimeout(next, IMAGE_HOLD_MS);
     };
     if (fresh) setPlaying(null);
     videos.current.forEach((v, i) => { if (v && i !== activeIndex) v.pause(); });
-    if (paused) { video?.pause(); return; }
     if (slide?.video_url && video && !reduced) {
       if (fresh) video.currentTime = 0;
       video.loop = count < 2;
       const onPlaying = () => {
         window.clearTimeout(stallTimer);
         if (disposed) return;
-        const remaining = Number.isFinite(video.duration) && video.duration > 0 ? (video.duration - video.currentTime) * 1000 : MAX_VIDEO_MS;
-        setSceneMs(Math.min(MAX_VIDEO_MS, Math.max(1000, remaining)));
         setPlaying(slide.id);
         window.clearTimeout(timer);
         if (count > 1) timer = window.setTimeout(next, MAX_VIDEO_MS);
@@ -123,16 +118,12 @@ export function HeroReel({ slides, poster }: { slides: PublicSlide[]; poster: st
         video.removeEventListener('error', fallback); video.removeEventListener('ended', next); video.pause();
       };
     }
-    setSceneMs(IMAGE_HOLD_MS);
-    if (count < 2) return;
+    if (count < 2 || reduced) return;
     const t = window.setTimeout(next, IMAGE_HOLD_MS);
     return () => { disposed = true; window.clearTimeout(t); };
-  }, [index, count, reduced, slides, paused]);
+  }, [index, count, reduced, slides]);
 
-  const active = slides[index];
-  const progressRunning = !paused && (!active?.video_url || reduced || playing === active.id);
-
-  return <div ref={root} className={`hero-reel${paused ? ' hero-reel--paused' : ''}`} style={{ ['--scene-ms' as string]: `${sceneMs}ms` }}>
+  return <div ref={root} className="hero-reel">
     <Parallax className="hero-parallax" strength={0.14}>
       <div className="hero-media" aria-hidden="true">
         <div ref={look} className="hero-look">
@@ -157,25 +148,5 @@ export function HeroReel({ slides, poster }: { slides: PublicSlide[]; poster: st
         </div>
       </div>
     </Parallax>
-    {count > 1 && <nav className="hero-tour" aria-label="Homepage property tour">
-      <button type="button" className="hero-tour-toggle" onClick={() => setPaused(p => !p)} aria-label={paused ? 'Play the tour' : 'Pause the tour'}>
-        {paused ? <Play size={14} /> : <Pause size={14} />}
-      </button>
-      <ol>
-        {slides.map((s, i) => {
-          const name = s.label || `Scene ${i + 1}`;
-          return <li key={s.id}>
-            <button type="button" className={`hero-tour-chapter${i === index ? ' hero-tour-chapter--on' : ''}`} onClick={() => goTo(i)} aria-label={`Scene ${i + 1}: ${name}`} aria-current={i === index ? 'step' : undefined}>
-              <span className="hero-tour-num">{String(i + 1).padStart(2, '0')}</span>
-              <span className="hero-tour-name">{name}</span>
-              <span className="hero-tour-track"><span key={`${index}-${i}`} className={`hero-tour-fill${i === index && progressRunning ? ' hero-tour-fill--run' : ''}${i < index ? ' hero-tour-fill--done' : ''}`} /></span>
-            </button>
-          </li>;
-        })}
-      </ol>
-      <button type="button" className="hero-tour-next" onClick={() => goTo(index + 1)} aria-label="Step into the next scene">
-        <span>Step inside</span><ArrowRight size={15} />
-      </button>
-    </nav>}
   </div>;
 }
