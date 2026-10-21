@@ -52,7 +52,7 @@ export function FallbackImageGenerator({ scene, disabled, onSaved }: { scene: Sc
     <Button variant="textArrow" disabled={disabled || !!busy} onClick={() => setOpen(!open)}><Sparkles size={15} /> Create matching image</Button>
     {open && <div className="enquiry-form studio-fallback-editor">
       <label>Style notes (optional)<textarea rows={2} maxLength={500} value={notes} disabled={!!busy} onChange={e => setNotes(e.target.value)} placeholder="Soft morning light, subtle film grain…" /></label>
-      <div className="studio-actions"><Button variant="luxury" disabled={disabled || !!busy} onClick={generate}><Sparkles size={15} />{busy || (preview ? 'Generate another' : 'Generate image')}</Button>
+      <div className="studio-actions"><Button variant="primary" disabled={disabled || !!busy} onClick={generate}><Sparkles size={15} />{busy || (preview ? 'Generate another' : 'Generate image')}</Button>
         <Button variant="iconPlain" aria-label="Close image generator" disabled={!!busy} onClick={() => setOpen(false)}><X size={16} /></Button></div>
       <p className="studio-muted">Uses AI credits.</p>
       {preview && <img className={`studio-fallback-preview ${final ? '' : 'blur-2xl'}`} src={preview} alt={`Generated fallback for ${scene.label || 'homepage scene'}`} />}

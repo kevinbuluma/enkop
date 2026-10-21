@@ -1,5 +1,5 @@
 // Cut-outs of the ENKOP logo in public/brand. "light" keeps the white parts white for dark
-// backgrounds; "dark" paints them brand navy for light backgrounds. The gold is identical in both.
+// backgrounds; "dark" paints them brand royal blue (#142B59) for light backgrounds. The gold (#C6A45A) is identical in both.
 const SIZES = {
   mark: { w: 222, h: 353 },
   name: { w: 566, h: 126 },

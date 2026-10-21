@@ -16,6 +16,6 @@ export function HeroSearch({ properties }: { properties: Property[] }) {
     <label><span>Buy / Rent</span><select value={f.status} onChange={set('status')}><option value="">Both</option><option value="Sale">Buy</option><option value="Rent">Rent</option></select></label>
     <label><span>Budget</span><select value={f.price} onChange={set('price')}><option value="">Any</option><option value="30000000">To KES 30M</option><option value="60000000">To KES 60M</option><option value="100000000">To KES 100M</option></select></label>
     <label><span>Beds</span><select value={f.bedrooms} onChange={set('bedrooms')}><option value="">Any</option>{[2,3,4,5].map(n => <option key={n} value={n}>{n}+</option>)}</select></label>
-    <Button type="submit" variant="luxury"><Search size={17}/> Search</Button>
+    <Button type="submit" variant="primary"><Search size={17}/> Search</Button>
   </form>;
 }

@@ -60,7 +60,7 @@ function SignIn({ onSignedIn }: { onSignedIn: () => void }) {
     <label>Email<input name="email" type="email" required autoComplete="email" /></label>
     <label>Password<input name="password" type="password" required autoComplete="current-password" /></label>
     {error && <p className="studio-error" role="alert">{error}</p>}
-    <Button type="submit" variant="luxury" disabled={busy}>{busy ? 'Signing in…' : 'Sign in'} <ArrowRight size={16} /></Button></form>;
+    <Button type="submit" variant="primary" disabled={busy}>{busy ? 'Signing in…' : 'Sign in'} <ArrowRight size={16} /></Button></form>;
 }
 
 function SetPassword({ token, onDone }: { token: string; onDone: () => void }) {
@@ -83,7 +83,7 @@ function SetPassword({ token, onDone }: { token: string; onDone: () => void }) {
     <label>New password<input name="password" type="password" required minLength={10} autoComplete="new-password" /></label>
     <label>Confirm password<input name="confirm" type="password" required minLength={10} autoComplete="new-password" /></label>
     {error && <p className="studio-error" role="alert">{error}</p>}
-    <Button type="submit" variant="luxury" disabled={busy}>{busy ? 'Saving…' : 'Set password and sign in'} <ArrowRight size={16} /></Button></form>;
+    <Button type="submit" variant="primary" disabled={busy}>{busy ? 'Saving…' : 'Set password and sign in'} <ArrowRight size={16} /></Button></form>;
 }
 
 function StudioPanel({ onSignOut }: { onSignOut: () => void }) {
@@ -143,7 +143,7 @@ function CreateTour({ properties, busy, onCreated }: { properties: Studio['prope
     <label>Direction (optional)<textarea rows={3} maxLength={500} value={direction} onChange={e => setDirection(e.target.value)} placeholder="e.g. Golden hour, begin at the entrance and glide toward the garden." /></label>
     {error && <p className="studio-error" role="alert">{error}</p>}
     {busy && <p className="studio-muted">A tour is generating. You can start another once it finishes.</p>}
-    <Button type="submit" variant="luxury" disabled={state !== 'idle' || busy || !files.length}>{state === 'uploading' ? 'Uploading photos…' : state === 'starting' ? 'Starting…' : 'Create tour'} <ArrowRight size={16} /></Button>
+    <Button type="submit" variant="primary" disabled={state !== 'idle' || busy || !files.length}>{state === 'uploading' ? 'Uploading photos…' : state === 'starting' ? 'Starting…' : 'Create tour'} <ArrowRight size={16} /></Button>
     <p className="studio-muted">Each tour is an 8-second clip and uses AI credits. Generation takes one to three minutes.</p></form>;
 }
 

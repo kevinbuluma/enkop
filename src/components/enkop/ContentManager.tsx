@@ -52,7 +52,7 @@ export function SeasonManager() {
     </fieldset>}
     <p className="studio-muted">Preview a season on the homepage (only for you, just this visit): {['winter', 'spring', 'summer', 'autumn', 'long-rains'].map(k => <a key={k} href={`/?season=${k}`} target="_blank" rel="noopener noreferrer" style={{ marginRight: 12, textDecoration: 'underline' }}>{seasonLabels[k]}</a>)}</p>
     {msg && <p className="studio-muted" role="status">{msg}</p>}
-    <Button type="submit" variant="luxury">Save seasonal settings <ArrowRight size={16} /></Button>
+    <Button type="submit" variant="primary">Save seasonal settings <ArrowRight size={16} /></Button>
   </form>;
 }
 
@@ -96,7 +96,7 @@ export function TeamManager() {
       <div className="form-row"><label>Order<input type="number" min="0" value={edit.position} onChange={e => setEdit({ ...edit, position: Number(e.target.value) || 0 })} /></label><label className="listing-featured"><input type="checkbox" checked={edit.active} onChange={e => setEdit({ ...edit, active: e.target.checked })} /> Show on the site</label></div>
       <label className="studio-add"><ImagePlus size={20} /><span>{file ? file.name : edit.photo_path ? 'Replace portrait' : 'Upload portrait'}</span><input type="file" accept="image/jpeg,image/png,image/webp" onChange={e => setFile(e.target.files?.[0] ?? null)} /></label>
       {msg && <p className="studio-error" role="alert">{msg}</p>}
-      <div className="form-row"><Button type="submit" variant="luxury" disabled={busy}>{busy ? 'Saving…' : 'Save member'} <ArrowRight size={16} /></Button><Button type="button" variant="textArrow" onClick={() => setEdit(null)}>Cancel</Button></div>
+      <div className="form-row"><Button type="submit" variant="primary" disabled={busy}>{busy ? 'Saving…' : 'Save member'} <ArrowRight size={16} /></Button><Button type="button" variant="textArrow" onClick={() => setEdit(null)}>Cancel</Button></div>
     </form>}
   </div>;
 }
@@ -124,7 +124,7 @@ export function TestimonialsManager() {
       <div className="form-row"><label>Client name<input required minLength={2} maxLength={100} value={edit.author} onChange={e => setEdit({ ...edit, author: e.target.value })} /></label><label>Context (optional)<input maxLength={120} value={edit.context} onChange={e => setEdit({ ...edit, context: e.target.value })} placeholder="Bought in Karen, 2026" /></label></div>
       <div className="form-row"><label>Order<input type="number" min="0" value={edit.position} onChange={e => setEdit({ ...edit, position: Number(e.target.value) || 0 })} /></label><label className="listing-featured"><input type="checkbox" checked={edit.approved} onChange={e => setEdit({ ...edit, approved: e.target.checked })} /> Approved by the client</label></div>
       {msg && <p className="studio-error" role="alert">{msg}</p>}
-      <div className="form-row"><Button type="submit" variant="luxury">Save quote <ArrowRight size={16} /></Button><Button type="button" variant="textArrow" onClick={() => setEdit(null)}>Cancel</Button></div>
+      <div className="form-row"><Button type="submit" variant="primary">Save quote <ArrowRight size={16} /></Button><Button type="button" variant="textArrow" onClick={() => setEdit(null)}>Cancel</Button></div>
     </form>}
   </div>;
 }

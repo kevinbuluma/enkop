@@ -4,11 +4,11 @@ type Shape = 'drop' | 'mote' | 'snow' | 'petal' | 'leaf';
 type Kind = { colors: string[]; count: number; speed: number; drift: number; size: [number, number]; shape: Shape; alpha: number };
 
 const kinds: Record<string, Kind> = {
-  'long-rains': { colors: ['150,170,160'], count: 60, speed: 6, drift: 0.4, size: [10, 18], shape: 'drop', alpha: 0.3 },
-  'short-rains': { colors: ['160,175,150'], count: 45, speed: 5, drift: 0.5, size: [8, 14], shape: 'drop', alpha: 0.28 },
+  'long-rains': { colors: ['96,118,168', '132,150,190'], count: 60, speed: 6, drift: 0.4, size: [10, 18], shape: 'drop', alpha: 0.3 },
+  'short-rains': { colors: ['110,130,176', '146,162,198'], count: 45, speed: 5, drift: 0.5, size: [8, 14], shape: 'drop', alpha: 0.28 },
   'dry-warm': { colors: ['214,180,120', '236,206,150'], count: 34, speed: -0.15, drift: 0.25, size: [1.2, 3], shape: 'mote', alpha: 0.6 },
   'cool-dry': { colors: ['180,195,210'], count: 28, speed: 0.15, drift: 0.2, size: [1, 2.4], shape: 'mote', alpha: 0.5 },
-  winter: { colors: ['255,255,255', '232,240,250'], count: 140, speed: 0.9, drift: 0.6, size: [1.2, 4.2], shape: 'snow', alpha: 0.9 },
+  winter: { colors: ['255,255,255', '226,232,244', '206,214,230'], count: 140, speed: 0.9, drift: 0.6, size: [1.2, 4.2], shape: 'snow', alpha: 0.9 },
   spring: { colors: ['244,196,206', '250,214,222', '236,176,190'], count: 38, speed: 0.8, drift: 0.9, size: [4, 7], shape: 'petal', alpha: 0.8 },
   summer: { colors: ['240,200,120', '255,226,160', '220,180,110'], count: 46, speed: -0.2, drift: 0.3, size: [1.2, 3.4], shape: 'mote', alpha: 0.7 },
   autumn: { colors: ['184,104,50', '204,140,60', '150,80,40', '214,166,80'], count: 34, speed: 1.1, drift: 1, size: [6, 11], shape: 'leaf', alpha: 0.85 },

@@ -51,7 +51,7 @@ export function ListingsManager() {
 
   return <div>
     <div className="studio-head"><p className="eyebrow">LISTINGS · {listings.length.toString().padStart(2, '0')}</p>
-      <Button variant="luxury" onClick={() => setDraft(emptyDraft)}>New listing <Plus size={16} /></Button></div>
+      <Button variant="primary" onClick={() => setDraft(emptyDraft)}>New listing <Plus size={16} /></Button></div>
     {!listings.length && <p className="studio-muted">No listings yet. Add the first.</p>}
     <div className="listing-rows">{listings.map((l) => <article key={l.id} className="listing-row">
       {l.photo_urls?.[0] ? <img src={l.photo_urls[0]} alt="" /> : <div className="listing-row-blank" aria-hidden="true" />}
@@ -169,7 +169,7 @@ function ListingEditor({ draft: initial, onDone }: { draft: Draft; onDone: (save
       <label className="listing-featured"><input type="checkbox" checked={draft.featured} onChange={(e) => set({ featured: e.target.checked })} /> Feature on the homepage</label>
     </div>
     {error && <p className="studio-error" role="alert">{error}</p>}
-    <Button type="submit" variant="luxury" disabled={state !== 'idle'}>{state === 'uploading' ? 'Uploading photos…' : state === 'saving' ? 'Saving…' : 'Save listing'} <ArrowRight size={16} /></Button>
+    <Button type="submit" variant="primary" disabled={state !== 'idle'}>{state === 'uploading' ? 'Uploading photos…' : state === 'saving' ? 'Saving…' : 'Save listing'} <ArrowRight size={16} /></Button>
   </form>;
 }
 

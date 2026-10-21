@@ -30,6 +30,6 @@ export function EnquiryForm({ property }: { property?: Property }) {
     <label>Message<textarea name="message" rows={4} minLength={10} maxLength={3000} required placeholder={property ? `I'd like to know more about ${property.title}...` : 'Tell us what you have in mind...'}/></label>
     <div className="trap-field" aria-hidden="true"><label>Website<input name="website" tabIndex={-1} autoComplete="off"/></label></div>
     {status === 'error' && <p role="alert" className="form-error">{errorText}</p>}
-    <Button type="submit" variant="luxury" disabled={status === 'sending'}>{status === 'sending' ? 'Sending...' : 'Send enquiry'}<ArrowRight size={17}/></Button>
+    <Button type="submit" variant="premium" disabled={status === 'sending'}>{status === 'sending' ? 'Sending...' : 'Send enquiry'}<ArrowRight size={17}/></Button>
   </form>;
 }

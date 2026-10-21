@@ -44,7 +44,7 @@ function Index() {
         <h1>Exceptional<br/><em>spaces.</em></h1>
         <div className="hero-bottom-line">
           <p>Places with presence.<br/>Property with perspective.</p>
-          <Button asChild variant="luxuryLight"><Link to="/properties">Explore the collection <ArrowUpRight size={16}/></Link></Button>
+          <Button asChild variant="onDark"><Link to="/properties">Explore the collection <ArrowUpRight size={16}/></Link></Button>
         </div>
         <HeroSearch properties={properties} />
       </div>
@@ -115,7 +115,7 @@ function Index() {
       <div className="page-gutter perspective-content">
         <p className="eyebrow">ENKOP PERSPECTIVE</p>
         <h2>Look closer.<br/><em>See further.</em></h2>
-        <Button asChild variant="luxuryLight"><Link to="/insights">Explore perspectives <ArrowUpRight size={16}/></Link></Button>
+        <Button asChild variant="onDark"><Link to="/insights">Explore perspectives <ArrowUpRight size={16}/></Link></Button>
       </div>
       <Parallax className="perspective-parallax" strength={0.2}>
         <img src={imagery['residence-2']} alt="Contemporary living room overlooking Nairobi" loading="lazy" width="1200" height="1000"/>

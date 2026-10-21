@@ -16,11 +16,14 @@ const buttonVariants = cva(
         secondary: "bg-secondary text-secondary-foreground shadow-sm hover:bg-secondary/80",
         ghost: "hover:bg-accent hover:text-accent-foreground",
         link: "text-primary underline-offset-4 hover:underline",
-        luxury: "rounded-full bg-primary text-primary-foreground hover:bg-primary/85 border border-gold/60 uppercase text-[11px] tracking-widest px-7 h-13 shadow-none",
-        luxuryLight: "rounded-full bg-background/25 text-primary-foreground backdrop-blur-xl border border-gold/50 hover:bg-background/40 uppercase text-[11px] tracking-widest px-7 h-13 shadow-none",
-        textArrow: "rounded-none bg-transparent text-inherit hover:opacity-65 shadow-none uppercase text-[11px] tracking-widest p-0 h-auto",
+        // ENKOP button system (styled in styles.css, "Button system").
+        primary: "enkop-btn enkop-btn--primary",
+        premium: "enkop-btn enkop-btn--premium",
+        line: "enkop-btn enkop-btn--line",
+        onDark: "enkop-btn enkop-btn--on-dark",
+        textArrow: "enkop-text-action",
         iconPlain: "rounded-none bg-transparent text-inherit hover:opacity-65 shadow-none p-0 h-10 w-10",
-        circleLight: "rounded-full border border-primary-foreground/60 bg-transparent text-primary-foreground hover:bg-primary-foreground hover:text-primary h-18 w-18 shadow-none",
+        iconFrame: "enkop-icon-frame",
       },
       size: {
         default: "h-9 px-4 py-2",
