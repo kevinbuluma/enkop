@@ -5,10 +5,13 @@ const scene = (n: number) => ({
   poster: `/videos/scenes/enkop-scene-${n}.jpg`,
 });
 
-/** The ENKOP landing walkthrough: a seamless loop at 1080p for wide screens and 720p for phones. */
+/**
+ * The ENKOP landing walkthrough as a seamless loop: a sharpened 4K upscale (kept under Cloudflare's
+ * 25 MiB static-file limit) for wide screens and sharpened 1080p for phones.
+ */
 const landing = {
   mp4: '/videos/scenes/enkop-landing.mp4',
-  mobile: '/videos/scenes/enkop-landing-720.mp4',
+  ultra: '/videos/scenes/enkop-landing-4k.mp4',
   poster: '/videos/scenes/enkop-landing.jpg',
 };
 
@@ -27,7 +30,7 @@ type Enhanced = { hd: string; ultra: string; hdWebm: string | null; ultraWebm: s
 
 /** Screen-size variants of built-in footage. The earlier scenes' "4K" files are upscaled, not native captures. */
 export function enhancedHeroMedia(url: string | null): Enhanced | null {
-  if (url === landing.mp4) return { hd: landing.mobile, ultra: landing.mp4, hdWebm: null, ultraWebm: null };
+  if (url === landing.mp4) return { hd: landing.mp4, ultra: landing.ultra, hdWebm: null, ultraWebm: null };
   const match = url?.match(/^\/videos\/scenes\/enkop-scene-([0-2])\.mp4$/);
   if (!match) return null;
   return {

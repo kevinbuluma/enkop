@@ -20,7 +20,7 @@ describe('optimized homepage scene media', () => {
     expect(builtInHeroSlides).toHaveLength(1);
     expect(builtInHeroSlides[0]).toMatchObject({ video_url: '/videos/scenes/enkop-landing.mp4', image_url: '/videos/scenes/enkop-landing.jpg' });
     expect(optimizedHeroMedia('homepage/enkop-landing.mp4')).toEqual({ mp4: '/videos/scenes/enkop-landing.mp4', webm: null });
-    expect(enhancedHeroMedia('/videos/scenes/enkop-landing.mp4')).toEqual({ hd: '/videos/scenes/enkop-landing-720.mp4', ultra: '/videos/scenes/enkop-landing.mp4', hdWebm: null, ultraWebm: null });
+    expect(enhancedHeroMedia('/videos/scenes/enkop-landing.mp4')).toEqual({ hd: '/videos/scenes/enkop-landing.mp4', ultra: '/videos/scenes/enkop-landing-4k.mp4', hdWebm: null, ultraWebm: null });
   });
   it('does not substitute old footage for an admin replacement', () => {
     expect(optimizedHeroMedia('homepage/replacement.mp4')).toBeNull();
