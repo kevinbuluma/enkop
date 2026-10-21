@@ -105,7 +105,8 @@ function wranglerSecretArgs(args, attempts = 4) {
 
 function hyperdrive(url) {
   if (readSecret('HYPERDRIVE_ID', false)) return step(`Hyperdrive config exists (${readSecret('HYPERDRIVE_ID')})`);
-  const out = wranglerSecretArgs(['hyperdrive', 'create', 'enkop-supabase', `--connection-string=${url}`]);
+  // Query caching off: admin edits and the outbox must read their own writes immediately.
+  const out = wranglerSecretArgs(['hyperdrive', 'create', 'enkop-supabase', `--connection-string=${url}`, '--caching-disabled', 'true']);
   const id = /"id":\s*"([0-9a-f]{32})"/.exec(out)?.[1] ?? /\b([0-9a-f]{32})\b/.exec(out)?.[1];
   if (!id) throw new Error('Could not read the Hyperdrive id from wrangler output.');
   writeSecret('HYPERDRIVE_ID', id);
