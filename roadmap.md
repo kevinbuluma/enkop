@@ -33,6 +33,7 @@
 
 - [x] Secure server-to-server bridge so enquiries, signed media, WhatsApp alerts and AI tools work on non-Lovable hosts (Cloudflare)
 - [x] Sharper homepage videos: three scenes regenerated at native 1080p and installed
-- [ ] Bridge activation: owner adds ENKOP_BRIDGE_SECRET in Project Settings → Secrets (both hosts) and republishes
+- [x] Bridge activation: shared key already active on both sites (stored securely in the database here, set on the Worker); republished
+- [ ] WhatsApp lead alerts: need either the WhatsApp connection linked here or Meta WhatsApp keys on the Worker (owner action)
 
 - [x] Interactive homepage tour: push-in camera, walk-through scene changes, look-around, chapter/pause/next controls
