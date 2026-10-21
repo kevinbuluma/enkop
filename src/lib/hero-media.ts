@@ -5,18 +5,29 @@ const scene = (n: number) => ({
   poster: `/videos/scenes/enkop-scene-${n}.jpg`,
 });
 
+/** The ENKOP landing walkthrough: a seamless loop at 1080p for wide screens and 720p for phones. */
+const landing = {
+  mp4: '/videos/scenes/enkop-landing.mp4',
+  mobile: '/videos/scenes/enkop-landing-720.mp4',
+  poster: '/videos/scenes/enkop-landing.jpg',
+};
+
 // Match the media path, not the slide id: replacing a scene must use the new upload.
-const optimized: Record<string, { mp4: string; webm: string }> = {
+const optimized: Record<string, { mp4: string; webm: string | null }> = {
   'homepage/scene-1.mp4': scene(0),
   'homepage/scene-2.mp4': scene(1),
   'homepage/scene-3.mp4': scene(2),
+  'homepage/enkop-landing.mp4': { mp4: landing.mp4, webm: null },
 };
 export function optimizedHeroMedia(path: string | null) {
   return path ? optimized[path] ?? null : null;
 }
 
-/** Enhanced exports are upscaled from existing footage, not native 4K captures. */
-export function enhancedHeroMedia(url: string | null) {
+type Enhanced = { hd: string; ultra: string; hdWebm: string | null; ultraWebm: string | null };
+
+/** Screen-size variants of built-in footage. The earlier scenes' "4K" files are upscaled, not native captures. */
+export function enhancedHeroMedia(url: string | null): Enhanced | null {
+  if (url === landing.mp4) return { hd: landing.mobile, ultra: landing.mp4, hdWebm: null, ultraWebm: null };
   const match = url?.match(/^\/videos\/scenes\/enkop-scene-([0-2])\.mp4$/);
   if (!match) return null;
   return {
@@ -27,9 +38,5 @@ export function enhancedHeroMedia(url: string | null) {
   };
 }
 
-/** The built-in scenes, used when the managed homepage slides can't be loaded. */
-const builtInLabels = ['Arrival at golden hour', 'The living room', 'The pool at dusk'];
-export const builtInHeroSlides = [0, 1, 2].map(n => {
-  const s = scene(n);
-  return { id: `built-in-scene-${n}`, label: builtInLabels[n] ?? '', video_url: s.mp4, webm_url: s.webm, image_url: s.poster };
-});
+/** The built-in scene, used when the managed homepage slides can't be loaded. */
+export const builtInHeroSlides = [{ id: 'built-in-landing', label: 'Inside an ENKOP residence', video_url: landing.mp4, webm_url: null, image_url: landing.poster }];
