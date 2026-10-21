@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 import type { PublicSlide } from '@/lib/slides.functions';
-import { enhancedHeroMedia } from '@/lib/hero-media';
+import { enhancedHeroMedia, PORTRAIT_SCREEN } from '@/lib/hero-media';
 import { Parallax } from '@/components/enkop/Parallax';
 
 const IMAGE_HOLD_MS = 7000;
@@ -18,12 +18,14 @@ export function HeroReel({ slides, poster }: { slides: PublicSlide[]; poster: st
   const [index, setIndex] = useState(0);
   const [leaving, setLeaving] = useState<number | null>(null);
   const [reduced, setReduced] = useState(false);
+  const [portrait, setPortrait] = useState(false);
   const [playing, setPlaying] = useState<string | null>(null);
   const videos = useRef<(HTMLVideoElement | null)[]>([]);
   const started = useRef<number | null>(null);
   const root = useRef<HTMLDivElement>(null);
   const look = useRef<HTMLDivElement>(null);
   const count = slides.length;
+  const firstPortrait = enhancedHeroMedia(slides[0]?.video_url ?? null)?.portraitPoster;
 
   const goTo = (target: number) => {
     if (!count) return;
@@ -39,6 +41,24 @@ export function HeroReel({ slides, poster }: { slides: PublicSlide[]; poster: st
     const mq = window.matchMedia('(prefers-reduced-motion: reduce)');
     setReduced(mq.matches);
     const on = () => setReduced(mq.matches);
+    mq.addEventListener('change', on);
+    return () => mq.removeEventListener('change', on);
+  }, []);
+
+  // A video picks its <source> only when it loads, so rotating the device reloads footage that has a
+  // vertical cut. Page transitions snapshot each video as its poster, so the poster follows too.
+  useEffect(() => {
+    const mq = window.matchMedia(PORTRAIT_SCREEN);
+    setPortrait(mq.matches);
+    const on = () => {
+      setPortrait(mq.matches);
+      videos.current.forEach((v) => {
+        if (!v?.querySelector(`source[media="${PORTRAIT_SCREEN}"]`)) return;
+        const wasPlaying = !v.paused;
+        v.load();
+        if (wasPlaying) v.play().catch(() => {});
+      });
+    };
     mq.addEventListener('change', on);
     return () => mq.removeEventListener('change', on);
   }, []);
@@ -130,14 +150,21 @@ export function HeroReel({ slides, poster }: { slides: PublicSlide[]; poster: st
     <Parallax className="hero-parallax" strength={0.14}>
       <div className="hero-media" aria-hidden="true">
         <div ref={look} className="hero-look">
-          <img className="hero-base" src={slides[0]?.image_url ?? poster} alt="" width="1920" height="1080" fetchPriority="high" />
+          <picture>
+            {firstPortrait && <source srcSet={firstPortrait} media={PORTRAIT_SCREEN} />}
+            <img className="hero-base" src={slides[0]?.image_url ?? poster} alt="" width="1920" height="1080" fetchPriority="high" />
+          </picture>
           {slides.map((s, i) => {
             const enhanced = enhancedHeroMedia(s.video_url);
             const state = i === index ? ' hero-layer--on' : i === leaving ? ' hero-layer--leaving' : '';
             return <div key={s.id} className={`hero-layer${state}`}>
               <div className="hero-camera" style={{ transformOrigin: PUSH_ORIGINS[i % PUSH_ORIGINS.length] }}>
-                <img src={s.image_url ?? poster} alt="" width="1920" height="1080" loading={i === 0 ? 'eager' : 'lazy'} />
-                {s.video_url && !reduced && <video className={playing === s.id ? 'hero-video--playing' : undefined} ref={el => { videos.current[i] = el; }} poster={s.image_url ?? poster} muted playsInline loop={count < 2} preload={i === index || i === (index + 1) % count ? 'auto' : 'none'}>
+                <picture>
+                  {enhanced?.portraitPoster && <source srcSet={enhanced.portraitPoster} media={PORTRAIT_SCREEN} />}
+                  <img src={s.image_url ?? poster} alt="" width="1920" height="1080" loading={i === 0 ? 'eager' : 'lazy'} />
+                </picture>
+                {s.video_url && !reduced && <video className={playing === s.id ? 'hero-video--playing' : undefined} ref={el => { videos.current[i] = el; }} poster={(portrait && enhanced?.portraitPoster) || (s.image_url ?? poster)} muted playsInline loop={count < 2} preload={i === index || i === (index + 1) % count ? 'auto' : 'none'}>
+                  {enhanced?.portrait && <source src={enhanced.portrait} type="video/mp4" media={PORTRAIT_SCREEN} />}
                   {enhanced && <source src={enhanced.ultra} type="video/mp4" media="(min-width: 1024px)" />}
                   {enhanced?.ultraWebm && <source src={enhanced.ultraWebm} type="video/webm" media="(min-width: 1024px)" />}
                   {enhanced && <source src={enhanced.hd} type="video/mp4" />}

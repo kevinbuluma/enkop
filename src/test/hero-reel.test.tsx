@@ -57,6 +57,22 @@ describe('homepage video sequencing', () => {
     act(() => vi.advanceTimersByTime(7000));
     expect(activeScene(container)).toBe(0);
   });
+  it('reloads the landing footage when the device rotates, so it switches between the vertical and wide cuts', () => {
+    const listeners: (() => void)[] = [];
+    const portrait = { matches: false };
+    vi.stubGlobal('matchMedia', (q: string) => q.includes('orientation')
+      ? { get matches() { return portrait.matches; }, addEventListener: (_: string, fn: () => void) => listeners.push(fn), removeEventListener: vi.fn() }
+      : { matches: false, addEventListener: vi.fn(), removeEventListener: vi.fn() });
+    const load = vi.spyOn(HTMLMediaElement.prototype, 'load').mockImplementation(() => {});
+    const landing = { id: 'landing', label: '', video_url: '/videos/scenes/enkop-landing.mp4', image_url: '/landing.jpg' };
+    const { container } = render(<HeroReel slides={[landing]} poster="/poster.jpg" />);
+    const video = container.querySelector('video')!;
+    expect(video.querySelector('source')?.getAttribute('src')).toBe('/videos/scenes/enkop-landing-vertical.mp4');
+    expect(load).not.toHaveBeenCalled();
+    act(() => { portrait.matches = true; listeners.forEach((fn) => fn()); });
+    expect(load).toHaveBeenCalledTimes(1);
+    expect(video.getAttribute('poster')).toBe('/videos/scenes/enkop-landing-vertical.jpg');
+  });
   it('holds the first scene still for reduced-motion visitors', () => {
     vi.stubGlobal('matchMedia', (q: string) => ({ matches: q.includes('reduce'), addEventListener: vi.fn(), removeEventListener: vi.fn() }));
     const { container } = render(<HeroReel slides={slides} poster="/poster.jpg" />);
