@@ -25,7 +25,7 @@ export const getProperties = createServerFn({ method: 'GET' }).handler(async () 
 });
 
 export const sendEnquiry = createServerFn({ method: 'POST' })
-  .inputValidator((data) => enquirySchema.parse(data))
+  .validator((data) => enquirySchema.parse(data))
   .handler(async ({ data }) => {
     if (data.website) return { success: true };
     const { getBackend } = await import('@/server/backend');

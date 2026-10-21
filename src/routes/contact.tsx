@@ -1,11 +1,13 @@
 import { createFileRoute } from '@tanstack/react-router';
 import { Site } from '@/components/enkop/Site';
 import { EnquiryForm } from '@/components/enkop/EnquiryForm';
-import { contact } from '@/lib/enkop';
+import { contact, pageSeo } from '@/lib/enkop';
+
+const seo = pageSeo('/contact');
 
 export const Route = createFileRoute('/contact')({
   validateSearch: (search: Record<string, unknown>): { interest?: string } => (typeof search['interest'] === 'string' ? { interest: search['interest'] } : {}),
-  head: () => ({ meta: [{ title: 'Contact ENKOP Real Estate | Nairobi Property Consultancy' }, { name: 'description', content: 'Speak to ENKOP Real Estate about buying, selling, renting or investing in property in Nairobi and across Kenya. Call +254 707 465 190 or send an enquiry.' }, { property: 'og:title', content: 'Contact ENKOP Real Estate' }, { property: 'og:description', content: 'Property enquiries, sales, rentals, investment opportunities and consultations in Nairobi.' }, { property: 'og:type', content: 'website' }, { name: 'twitter:card', content: 'summary_large_image' }] }),
+  head: () => ({ meta: [{ title: 'Contact ENKOP Real Estate | Nairobi Property Consultancy' }, { name: 'description', content: 'Speak to ENKOP Real Estate about buying, selling, renting or investing in property in Nairobi and across Kenya. Call +254 707 465 190 or send an enquiry.' }, { property: 'og:title', content: 'Contact ENKOP Real Estate' }, { property: 'og:description', content: 'Property enquiries, sales, rentals, investment opportunities and consultations in Nairobi.' }, { property: 'og:type', content: 'website' }, { name: 'twitter:card', content: 'summary_large_image' }, seo.ogUrl], links: [seo.canonical] }),
   component: Contact,
 });
 

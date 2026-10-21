@@ -46,7 +46,7 @@ export const getContentAdmin = createServerFn({ method: 'GET' })
 
 export const saveSeasonSettings = createServerFn({ method: 'POST' })
   .middleware([requireAdmin])
-  .inputValidator(d => seasonSettingsSchema.parse(d))
+  .validator(d => seasonSettingsSchema.parse(d))
   .handler(async ({ data, context }) => {
     await context.master.store.upsert('site_settings', { key: 'season', value: data });
     await context.master.afterWrite();
@@ -64,7 +64,7 @@ const memberInput = z.object({
 });
 export const saveTeamMember = createServerFn({ method: 'POST' })
   .middleware([requireAdmin])
-  .inputValidator(d => memberInput.parse(d))
+  .validator(d => memberInput.parse(d))
   .handler(async ({ data, context }) => {
     const { id, ...row } = data;
     const { store } = context.master;
@@ -88,7 +88,7 @@ const quoteInput = z.object({
 });
 export const saveTestimonial = createServerFn({ method: 'POST' })
   .middleware([requireAdmin])
-  .inputValidator(d => quoteInput.parse(d))
+  .validator(d => quoteInput.parse(d))
   .handler(async ({ data, context }) => {
     const { id, ...row } = data;
     const { store } = context.master;
@@ -104,7 +104,7 @@ export const saveTestimonial = createServerFn({ method: 'POST' })
 
 export const deleteContent = createServerFn({ method: 'POST' })
   .middleware([requireAdmin])
-  .inputValidator(d => z.object({ table: z.enum(['team_members', 'testimonials']), id: z.string().uuid() }).parse(d))
+  .validator(d => z.object({ table: z.enum(['team_members', 'testimonials']), id: z.string().uuid() }).parse(d))
   .handler(async ({ data, context }) => {
     await context.master.store.remove(data.table, data.id);
     await context.master.afterWrite();

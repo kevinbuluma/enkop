@@ -28,7 +28,7 @@ export const getEnquiries = createServerFn({ method: 'GET' })
 
 export const updateEnquiryStatus = createServerFn({ method: 'POST' })
   .middleware([requireAdmin])
-  .inputValidator((input: { id: string; status: 'new' | 'contacted' | 'closed' }) => {
+  .validator((input: { id: string; status: 'new' | 'contacted' | 'closed' }) => {
     if (!input?.id || !['new', 'contacted', 'closed'].includes(input.status)) throw new Error('Invalid enquiry update.');
     return input;
   })

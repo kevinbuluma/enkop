@@ -63,7 +63,7 @@ export const getStudio = createServerFn({ method: 'GET' })
 
 export const startTour = createServerFn({ method: 'POST' })
   .middleware([requireAdmin])
-  .inputValidator((d) => z.object({ propertyId: z.string().uuid(), photoPaths: z.array(z.string().min(1).max(300)).min(1).max(3), direction: z.string().trim().max(500) }).parse(d))
+  .validator((d) => z.object({ propertyId: z.string().uuid(), photoPaths: z.array(z.string().min(1).max(300)).min(1).max(3), direction: z.string().trim().max(500) }).parse(d))
   .handler(async ({ data, context }) => {
     const { master, admin } = context;
     const running = await master.store.first('property_tours', `status IN ('queued', 'in_progress')`);
@@ -113,7 +113,7 @@ export const startTour = createServerFn({ method: 'POST' })
 
 export const pollTour = createServerFn({ method: 'POST' })
   .middleware([requireAdmin])
-  .inputValidator((d) => z.object({ tourId: z.string().uuid() }).parse(d))
+  .validator((d) => z.object({ tourId: z.string().uuid() }).parse(d))
   .handler(async ({ data, context }) => {
     const { master } = context;
     const tour = await master.store.first('property_tours', 'id = ?', [data.tourId]) as any;

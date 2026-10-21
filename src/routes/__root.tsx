@@ -14,8 +14,9 @@ import appCss from "../styles.css?url";
 import { reportLovableError } from "../lib/lovable-error-reporting";
 import { SeasonalPageTransition } from '@/components/enkop/SeasonalPageTransition';
 import { BrandLogo } from '@/components/enkop/BrandLogo';
+import { siteUrl } from '@/lib/enkop';
 
-const SHARE_IMAGE = 'https://enkop-real-estate.lovable.app/brand/enkop-og.jpg';
+const SHARE_IMAGE = siteUrl('/brand/enkop-og.jpg');
 
 function NotFoundComponent() {
   return (

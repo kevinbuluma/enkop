@@ -45,7 +45,7 @@ const slideInput = z.object({
 
 export const saveSlide = createServerFn({ method: 'POST' })
   .middleware([requireAdmin])
-  .inputValidator((d) => slideInput.parse(d))
+  .validator((d) => slideInput.parse(d))
   .handler(async ({ data, context }) => {
     if (!pathOk(data.video_path) || !pathOk(data.image_path)) throw new Error('Invalid media file.');
     if (!data.video_path && !data.image_path) throw new Error('A slide needs a video or an image.');
@@ -67,7 +67,7 @@ export const saveSlide = createServerFn({ method: 'POST' })
 
 export const reorderSlides = createServerFn({ method: 'POST' })
   .middleware([requireAdmin])
-  .inputValidator((d) => z.object({ ids: z.array(z.string().uuid()).max(50) }).parse(d))
+  .validator((d) => z.object({ ids: z.array(z.string().uuid()).max(50) }).parse(d))
   .handler(async ({ data, context }) => {
     const { store } = context.master;
     try {
@@ -82,7 +82,7 @@ export const reorderSlides = createServerFn({ method: 'POST' })
 
 export const deleteSlide = createServerFn({ method: 'POST' })
   .middleware([requireAdmin])
-  .inputValidator((d) => z.object({ id: z.string().uuid() }).parse(d))
+  .validator((d) => z.object({ id: z.string().uuid() }).parse(d))
   .handler(async ({ data, context }) => {
     await context.master.store.remove('homepage_slides', data.id);
     await context.master.afterWrite();

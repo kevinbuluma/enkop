@@ -1,11 +1,13 @@
 import { createFileRoute, Link } from '@tanstack/react-router';
 import { ArrowRight } from 'lucide-react';
 import { Site } from '@/components/enkop/Site';
-import { company, imagery, values } from '@/lib/enkop';
+import { company, imagery, pageSeo, values } from '@/lib/enkop';
 import { getTeam, getTestimonials } from '@/lib/content.functions';
 import { TeamSection, TestimonialsSection } from '@/components/enkop/PeopleSections';
 
-export const Route = createFileRoute('/about')({ head: () => ({ meta: [{ title: 'About ENKOP Real Estate | Nairobi Property Consultancy' }, { name: 'description', content: 'ENKOP Real Estate is a Nairobi-based consultancy helping individuals, families and investors buy, sell, rent and invest in residential property with integrity, transparency and personal service.' }, { property: 'og:title', content: 'About ENKOP Real Estate' }, { property: 'og:description', content: 'Honest advice, personalised guidance and market knowledge for every property decision.' }, { property: 'og:type', content: 'website' }, { name: 'twitter:card', content: 'summary_large_image' }] }), loader: async () => { const [team, quotes] = await Promise.all([getTeam().catch(() => []), getTestimonials().catch(() => [])]); return { team, quotes }; }, component: About });
+const seo = pageSeo('/about');
+
+export const Route = createFileRoute('/about')({ head: () => ({ meta: [{ title: 'About ENKOP Real Estate | Nairobi Property Consultancy' }, { name: 'description', content: 'ENKOP Real Estate is a Nairobi-based consultancy helping individuals, families and investors buy, sell, rent and invest in residential property with integrity, transparency and personal service.' }, { property: 'og:title', content: 'About ENKOP Real Estate' }, { property: 'og:description', content: 'Honest advice, personalised guidance and market knowledge for every property decision.' }, { property: 'og:type', content: 'website' }, { name: 'twitter:card', content: 'summary_large_image' }, seo.ogUrl], links: [seo.canonical] }), loader: async () => { const [team, quotes] = await Promise.all([getTeam().catch(() => []), getTestimonials().catch(() => [])]); return { team, quotes }; }, component: About });
 
 function About() {
   const { team, quotes } = Route.useLoaderData();

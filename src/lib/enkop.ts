@@ -40,6 +40,11 @@ export function formatPrice(property: Property) {
   return `${property.currency} ${new Intl.NumberFormat('en-KE', { notation: 'compact', maximumFractionDigits: 1 }).format(property.price)}${property.listing_type === 'Rent' ? ' / month' : ''}`;
 }
 
+// The master site is the one search engines and share cards should point at; mirror hosts serve the same pages.
+export const SITE_URL = 'https://enkop.kevinbuluma9-7ff.workers.dev';
+export const siteUrl = (path = '/') => new URL(path, SITE_URL).href;
+export const pageSeo = (path: string) => ({ ogUrl: { property: 'og:url', content: siteUrl(path) }, canonical: { rel: 'canonical', href: siteUrl(path) } });
+
 export const contact = {
   phone: '+254 707 465 190',
   whatsappDigits: '254707465190',

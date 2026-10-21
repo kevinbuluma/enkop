@@ -44,7 +44,7 @@ const listingInput = z.object({
 
 export const saveListing = createServerFn({ method: 'POST' })
   .middleware([requireAdmin])
-  .inputValidator((d) => listingInput.parse(d))
+  .validator((d) => listingInput.parse(d))
   .handler(async ({ data, context }) => {
     const { id, ...row } = data;
     if (id && !row.image_paths.every((p) => galleryPath(id, p))) throw new Error('Invalid photo.');
@@ -66,7 +66,7 @@ export const saveListing = createServerFn({ method: 'POST' })
 
 export const deleteListing = createServerFn({ method: 'POST' })
   .middleware([requireAdmin])
-  .inputValidator((d) => z.object({ id: z.string().uuid() }).parse(d))
+  .validator((d) => z.object({ id: z.string().uuid() }).parse(d))
   .handler(async ({ data, context }) => {
     const { store, media } = context.master;
     const listing = await store.first('properties', 'id = ?', [data.id]);

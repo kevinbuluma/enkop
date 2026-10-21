@@ -1,9 +1,11 @@
 import { createFileRoute, Link } from '@tanstack/react-router';
 import { ArrowRight, ArrowUpRight } from 'lucide-react';
 import { Site } from '@/components/enkop/Site';
-import { imagery, services } from '@/lib/enkop';
+import { imagery, pageSeo, services } from '@/lib/enkop';
 
-export const Route = createFileRoute('/services')({ head: () => ({ meta: [{ title: 'Services | ENKOP Real Estate, Nairobi' }, { name: 'description', content: 'Property sales and marketing, off-plan property investment, real estate consultancy, and leasing and rentals in Nairobi and across Kenya.' }, { property: 'og:title', content: 'Services | ENKOP Real Estate' }, { property: 'og:description', content: 'Buy, sell, rent or invest with personalised guidance from ENKOP Real Estate.' }, { property: 'og:type', content: 'website' }, { name: 'twitter:card', content: 'summary_large_image' }] }), component: Services });
+const seo = pageSeo('/services');
+
+export const Route = createFileRoute('/services')({ head: () => ({ meta: [{ title: 'Services | ENKOP Real Estate, Nairobi' }, { name: 'description', content: 'Property sales and marketing, off-plan property investment, real estate consultancy, and leasing and rentals in Nairobi and across Kenya.' }, { property: 'og:title', content: 'Services | ENKOP Real Estate' }, { property: 'og:description', content: 'Buy, sell, rent or invest with personalised guidance from ENKOP Real Estate.' }, { property: 'og:type', content: 'website' }, { name: 'twitter:card', content: 'summary_large_image' }, seo.ogUrl], links: [seo.canonical] }), component: Services });
 
 const process = [
   ['Understand your goals', 'We start with your preferences, budget, timeline and objectives, whether you are buying, selling, renting or investing.'],

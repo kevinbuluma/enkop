@@ -36,6 +36,15 @@ describe('homepage video sequencing', () => {
   const imageSlides = [{ ...slides[0]!, video_url: null }, { ...slides[1]!, video_url: null }];
   const activeScene = (container: HTMLElement) => [...container.querySelectorAll('.hero-layer')].findIndex((l) => l.classList.contains('hero-layer--on'));
 
+  it('keeps a lone slow video buffering and shows it once it plays', () => {
+    const { container } = render(<HeroReel slides={[slides[0]!]} poster="/poster.jpg" />);
+    const video = container.querySelector('video');
+    if (!video) throw new Error('Missing video');
+    act(() => { video.dispatchEvent(new Event('waiting')); vi.advanceTimersByTime(30000); });
+    expect(HTMLMediaElement.prototype.pause).not.toHaveBeenCalled();
+    act(() => video.dispatchEvent(new Event('playing')));
+    expect(video.classList.contains('hero-video--playing')).toBe(true);
+  });
   it('has no on-screen tour controls', () => {
     const { container } = render(<HeroReel slides={imageSlides} poster="/poster.jpg" />);
     expect(container.querySelector('button, nav')).toBeNull();

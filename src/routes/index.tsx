@@ -8,7 +8,7 @@ import { EnquiryForm } from '@/components/enkop/EnquiryForm';
 import { Reveal } from '@/components/enkop/Reveal';
 import { Parallax } from '@/components/enkop/Parallax';
 import { getProperties } from '@/lib/enkop.functions';
-import { company, hero, imagery, reasons, services, type Property } from '@/lib/enkop';
+import { company, hero, imagery, pageSeo, reasons, services, type Property } from '@/lib/enkop';
 import { HeroReel } from '@/components/enkop/HeroReel';
 import { Entrance } from '@/components/enkop/Entrance';
 import { SectionNavigator } from '@/components/enkop/SectionNavigator';
@@ -21,8 +21,10 @@ import { getHomepageSlides } from '@/lib/slides.functions';
 import { builtInHeroSlides } from '@/lib/hero-media';
 import { useCinematicFx } from '@/lib/cinematic';
 
+const seo = pageSeo('/');
+
 export const Route = createFileRoute("/")({
-  head: () => ({ meta: [{ title: 'ENKOP Real Estate | Buy, Sell, Rent & Invest in Nairobi' }, { name: 'description', content: 'ENKOP Real Estate is a Nairobi-based consultancy helping individuals, families and investors buy, sell, rent and invest in residential property across Kenya, with honest advice and personalised guidance.' }, { property: 'og:title', content: 'ENKOP Real Estate | Nairobi Property Consultancy' }, { property: 'og:description', content: 'Homes you can confidently call home, and investments made with clarity.' }, { property: 'og:type', content: 'website' }, { name: 'twitter:card', content: 'summary_large_image' }] }),
+  head: () => ({ meta: [{ title: 'ENKOP Real Estate | Buy, Sell, Rent & Invest in Nairobi' }, { name: 'description', content: 'ENKOP Real Estate is a Nairobi-based consultancy helping individuals, families and investors buy, sell, rent and invest in residential property across Kenya, with honest advice and personalised guidance.' }, { property: 'og:title', content: 'ENKOP Real Estate | Nairobi Property Consultancy' }, { property: 'og:description', content: 'Homes you can confidently call home, and investments made with clarity.' }, { property: 'og:type', content: 'website' }, { name: 'twitter:card', content: 'summary_large_image' }, seo.ogUrl], links: [seo.canonical] }),
   loader: async () => { const [properties, slides, quotes] = await Promise.all([getProperties(), getHomepageSlides().catch(() => []), getTestimonials().catch(() => [])]); return { properties, slides, quotes }; },
   component: Index,
 });

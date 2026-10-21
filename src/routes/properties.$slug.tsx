@@ -8,7 +8,7 @@ import { EnquiryForm } from '@/components/enkop/EnquiryForm';
 import { PropertyCard } from '@/components/enkop/PropertyCard';
 import { SaveButton } from '@/components/enkop/SaveButton';
 import { getProperties } from '@/lib/enkop.functions';
-import { formatPrice, imagery, contact, type Property } from '@/lib/enkop';
+import { formatPrice, imagery, contact, siteUrl, type Property } from '@/lib/enkop';
 import { recordView } from '@/lib/personal';
 
 export const Route = createFileRoute('/properties/$slug')({
@@ -17,8 +17,9 @@ export const Route = createFileRoute('/properties/$slug')({
     const p = (loaderData as Property[] | undefined)?.find(x => x.slug === params.slug);
     const name = p?.title ?? params.slug.replaceAll('-', ' ');
     const desc = p ? `${p.bedrooms}-bed ${p.property_type.toLowerCase()} ${p.listing_type === 'Sale' ? 'for sale' : 'to let'} in ${p.neighborhood}, ${p.city}. ${formatPrice(p)}.` : 'Explore this residence with ENKOP Real Estate in Nairobi.';
-    const img = p?.photo_urls?.[0];
-    const url = `https://enkop.lovable.app/properties/${params.slug}`;
+    const photo = p?.photo_urls?.[0];
+    const img = photo ? siteUrl(photo) : undefined;
+    const url = siteUrl(`/properties/${params.slug}`);
     return {
       meta: [{ title: `${name} | ENKOP Real Estate` }, { name: 'description', content: desc }, { property: 'og:title', content: `${name} | ENKOP` }, { property: 'og:description', content: desc }, { property: 'og:type', content: 'website' }, { property: 'og:url', content: url }, { name: 'twitter:card', content: 'summary_large_image' }, ...(img ? [{ property: 'og:image', content: img }, { name: 'twitter:image', content: img }] : [])],
       links: [{ rel: 'canonical', href: url }],

@@ -1,9 +1,11 @@
 import { createFileRoute, Link } from '@tanstack/react-router';
 import { ArrowRight } from 'lucide-react';
 import { Site } from '@/components/enkop/Site';
-import { imagery } from '@/lib/enkop';
+import { imagery, pageSeo } from '@/lib/enkop';
 
-export const Route = createFileRoute('/insights')({ head: () => ({ meta: [{ title: 'Perspective | Property Insights from ENKOP Real Estate' }, { name: 'description', content: 'Practical guidance from ENKOP Real Estate on buying, selling, renting and investing in property in Nairobi.' }, { property: 'og:title', content: 'ENKOP Perspective' }, { property: 'og:description', content: 'Practical property guidance to help you make informed decisions in Nairobi.' }, { property: 'og:type', content: 'website' }, { name: 'twitter:card', content: 'summary_large_image' }] }), component: Insights });
+const seo = pageSeo('/insights');
+
+export const Route = createFileRoute('/insights')({ head: () => ({ meta: [{ title: 'Perspective | Property Insights from ENKOP Real Estate' }, { name: 'description', content: 'Practical guidance from ENKOP Real Estate on buying, selling, renting and investing in property in Nairobi.' }, { property: 'og:title', content: 'ENKOP Perspective' }, { property: 'og:description', content: 'Practical property guidance to help you make informed decisions in Nairobi.' }, { property: 'og:type', content: 'website' }, { name: 'twitter:card', content: 'summary_large_image' }, seo.ogUrl], links: [seo.canonical] }), component: Insights });
 
 const topics = [
   ['Buying in Nairobi', 'What to consider when choosing a neighbourhood, from commute and schools to future development.'],

@@ -29,7 +29,7 @@ export function EnquiryForm({ property, interest }: { property?: Property; inter
     <div className="form-row"><label>Phone number<input type="tel" name="phone" autoComplete="tel" placeholder="Your number"/></label>{property ? <label>Preferred viewing date<input type="date" name="preferred_date" min={new Date().toISOString().slice(0,10)}/></label> : <label>I'm interested in<select name="interest" defaultValue={defaultInterest}>{enquiryInterests.map((i) => <option key={i}>{i}</option>)}</select></label>}</div>
     <label>Preferred contact method<select name="preferred_contact"><option>Email</option><option>Phone</option></select></label>
     <label>Message<textarea name="message" rows={4} minLength={10} maxLength={3000} required placeholder={property ? `I'd like to know more about ${property.title}...` : 'Your preferred areas, budget, timeline, or the property you would like to sell...'}/></label>
-    <div className="trap-field" aria-hidden="true"><label>Website<input name="website" tabIndex={-1} autoComplete="off"/></label></div>
+    <div className="trap-field" aria-hidden="true" inert><label>Website<input name="website" tabIndex={-1} autoComplete="off"/></label></div>
     {status === 'error' && <p role="alert" className="form-error">{errorText}</p>}
     <Button type="submit" variant="premium" disabled={status === 'sending'}>{status === 'sending' ? 'Sending...' : 'Send enquiry'}<ArrowRight size={17}/></Button>
   </form>;

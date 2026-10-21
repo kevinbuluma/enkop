@@ -88,10 +88,12 @@ export function HeroReel({ slides, poster }: { slides: PublicSlide[]; poster: st
     let timer = 0;
     let stallTimer = 0;
     const next = () => { if (!disposed) { setPlaying(null); goTo(activeIndex + 1); } };
+    // With several scenes a slow video gives way to its image and the tour moves on. A lone scene
+    // keeps buffering instead: the poster shows meanwhile and the video returns once it plays.
     const fallback = () => {
       window.clearTimeout(timer); window.clearTimeout(stallTimer);
-      setPlaying(null); video?.pause();
-      if (count > 1) timer = window.setTimeout(next, IMAGE_HOLD_MS);
+      setPlaying(null);
+      if (count > 1) { video?.pause(); timer = window.setTimeout(next, IMAGE_HOLD_MS); }
     };
     if (fresh) setPlaying(null);
     videos.current.forEach((v, i) => { if (v && i !== activeIndex) v.pause(); });
@@ -105,7 +107,8 @@ export function HeroReel({ slides, poster }: { slides: PublicSlide[]; poster: st
         window.clearTimeout(timer);
         if (count > 1) timer = window.setTimeout(next, MAX_VIDEO_MS);
       };
-      const onWaiting = () => { window.clearTimeout(stallTimer); stallTimer = window.setTimeout(fallback, 4000); };
+      // A short stall on a lone scene keeps its last frame on screen rather than swapping to the poster.
+      const onWaiting = () => { if (count < 2) return; window.clearTimeout(stallTimer); stallTimer = window.setTimeout(fallback, 4000); };
       video.addEventListener('playing', onPlaying);
       video.addEventListener('waiting', onWaiting);
       video.addEventListener('error', fallback);
