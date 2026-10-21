@@ -586,13 +586,30 @@ label.studio-file input { position: absolute; width: 1px; height: 1px; opacity: 
 .hero-search label span { font-size: 9px; font-weight: 600; letter-spacing: .16em; text-transform: uppercase; color: var(--muted-foreground); }
 .hero-search select { border: 0; background: transparent; font-size: 14px; min-height: 28px; padding: 0; color: var(--foreground); }
 .hero-search button { padding: 0 30px; min-height: 64px; }
-.hero-massing { position: absolute; right: 7vw; top: 22%; z-index: 1; width: 120px; height: 120px; perspective: 600px; opacity: .55; pointer-events: none; }
-.massing-cube { position: relative; width: 100%; height: 100%; transform-style: preserve-3d; animation: massing 38s linear infinite; }
-.massing-cube i { position: absolute; inset: 0; border: 1px solid color-mix(in oklab, var(--inverse-foreground) 70%, transparent); }
-.massing-cube i:nth-child(1) { transform: translateZ(60px); } .massing-cube i:nth-child(2) { transform: rotateY(180deg) translateZ(60px); }
-.massing-cube i:nth-child(3) { transform: rotateY(90deg) translateZ(60px); } .massing-cube i:nth-child(4) { transform: rotateY(-90deg) translateZ(60px); }
-.massing-cube i:nth-child(5) { transform: rotateX(90deg) translateZ(60px); } .massing-cube i:nth-child(6) { transform: rotateX(-90deg) translateZ(60px) scale(.6); }
-@keyframes massing { from { transform: rotateX(-18deg) rotateY(0); } to { transform: rotateX(-18deg) rotateY(360deg); } }
+/* Glass ENKOP mark (GlassEmblem): stacked masked layers give depth; faces carry the glass sheen. */
+.glass-emblem.hero-emblem { position: absolute; right: 7vw; top: 19%; z-index: 1; pointer-events: none; }
+.glass-emblem { --w: 104px; --depth: 1.8px; --mark: url('/brand/enkop-mark-light.png'); position: relative; width: var(--w); height: calc(var(--w) * 353 / 222); perspective: 900px; }
+.glass-emblem-spin { position: relative; width: 100%; height: 100%; transform-style: preserve-3d; transform: rotateX(-8deg) rotateY(-24deg); animation: emblem-turn 26s linear infinite; }
+.glass-emblem-layer {
+  position: absolute; inset: 0; transform: translateZ(calc(var(--z) * var(--depth)));
+  -webkit-mask: var(--mark) center / contain no-repeat; mask: var(--mark) center / contain no-repeat;
+  background: linear-gradient(160deg, color-mix(in oklab, white 9%, transparent), color-mix(in oklab, oklch(0.8 0.04 240) 7%, transparent));
+}
+.glass-emblem-layer--front, .glass-emblem-layer--back {
+  background:
+    linear-gradient(115deg, transparent 34%, color-mix(in oklab, white 85%, transparent) 45%, color-mix(in oklab, white 20%, transparent) 50%, transparent 58%) 0 0 / 320% 100% no-repeat,
+    linear-gradient(200deg, color-mix(in oklab, white 55%, transparent) 0%, transparent 22%),
+    linear-gradient(150deg, color-mix(in oklab, white 26%, transparent), color-mix(in oklab, oklch(0.75 0.05 240) 10%, transparent) 50%, color-mix(in oklab, var(--gold-soft) 22%, transparent));
+  backdrop-filter: blur(3px) saturate(170%) brightness(1.08);
+  animation: emblem-sheen 7s ease-in-out infinite;
+}
+.glass-emblem-layer--back { transform: translateZ(calc(var(--z) * var(--depth))) rotateY(180deg); animation-delay: -3.5s; }
+/* A faint tint of the mark's own gold and ivory inside the glass. */
+.glass-emblem-layer--front::after, .glass-emblem-layer--back::after { content: ""; position: absolute; inset: 0; background: var(--mark) center / contain no-repeat; opacity: .2; mix-blend-mode: soft-light; }
+.glass-emblem-shadow { position: absolute; left: 18%; right: 18%; bottom: -26px; height: 14px; border-radius: 50%; background: radial-gradient(closest-side, color-mix(in oklab, var(--midnight) 55%, transparent), transparent); filter: blur(3px); animation: emblem-shadow 26s linear infinite; }
+@keyframes emblem-turn { from { transform: rotateX(-8deg) rotateY(0deg); } to { transform: rotateX(-8deg) rotateY(360deg); } }
+@keyframes emblem-sheen { 0%, 100% { background-position: 120% 0, 0 0; } 50% { background-position: -20% 0, 0 0; } }
+@keyframes emblem-shadow { 0%, 50%, 100% { transform: scaleX(1); opacity: .9; } 25%, 75% { transform: scaleX(.42); opacity: .6; } }
 .why-section { padding-top: 110px; padding-bottom: 110px; border-top: 1px solid var(--border); }
 .why-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 40px; margin-top: 50px; }
 .why-grid span { font-size: 11px; color: var(--muted-foreground); }
@@ -622,10 +639,10 @@ html[data-season="cool-dry"] { --background: oklch(0.958 0.01 92); --surface: ok
   .hero-search { grid-template-columns: repeat(2, 1fr); }
   .hero-search label:nth-child(5) { grid-column: span 2; }
   .hero-search button { grid-column: span 2; justify-content: center; }
-  .hero-massing { display: none; }
+  .hero-emblem { display: none; }
   .why-grid { grid-template-columns: 1fr; }
 }
-@media (prefers-reduced-motion: reduce) { .massing-cube, .card-skeleton div, .card-skeleton span { animation: none; } html, body { transition: none; } }
+@media (prefers-reduced-motion: reduce) { .glass-emblem-spin, .glass-emblem-layer, .glass-emblem-shadow, .card-skeleton div, .card-skeleton span { animation: none; } html, body { transition: none; } }
 
 /* Glass surfaces, royal states and gold detailing */
 :root { --glass: color-mix(in oklab, var(--background) 62%, transparent); --glass-border: color-mix(in oklab, var(--stone) 80%, var(--gold) 20%); --glass-shadow: 0 18px 50px -28px color-mix(in oklab, var(--royal-deep) 32%, transparent); --round: 6px; }

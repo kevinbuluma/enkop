@@ -16,6 +16,7 @@ import { IntentPicker } from '@/components/enkop/IntentPicker';
 import { getTestimonials } from '@/lib/content.functions';
 import { TestimonialsSection } from '@/components/enkop/PeopleSections';
 import { HeroSearch } from '@/components/enkop/HeroSearch';
+import { GlassEmblem } from '@/components/enkop/GlassEmblem';
 import { getHomepageSlides } from '@/lib/slides.functions';
 import { builtInHeroSlides } from '@/lib/hero-media';
 import { useCinematicFx } from '@/lib/cinematic';
@@ -54,8 +55,7 @@ function Index() {
         </div>
         <HeroSearch properties={properties} />
       </div>
-      <div className="hero-massing" aria-hidden="true"><div className="massing-cube"><i/><i/><i/><i/><i/><i/></div>
-      </div>
+      <GlassEmblem className="hero-emblem" />
       <a href="#approach" className="hero-scroll">SCROLL TO EXPLORE <ArrowDown size={17}/></a>
     </section>
 
