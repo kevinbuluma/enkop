@@ -83,11 +83,12 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
     meta: [
       { charSet: "utf-8" },
       { name: "viewport", content: "width=device-width, initial-scale=1" },
-       { title: "ENKOP Real Estate" },
-       { name: "description", content: "Exceptional spaces, thoughtfully represented across Nairobi." },
-       { name: "author", content: "ENKOP" },
-       { property: "og:title", content: "ENKOP Real Estate" },
-       { property: "og:description", content: "Exceptional spaces, thoughtfully represented across Nairobi." },
+       { title: "ENKOP Real Estate | Nairobi Property Consultancy" },
+       { name: "description", content: "Buy, sell, rent and invest in residential property across Kenya with ENKOP Real Estate: honest advice, personalised guidance and market knowledge from a Nairobi-based consultancy." },
+       { name: "author", content: "ENKOP Real Estate" },
+       { property: "og:title", content: "ENKOP Real Estate | Nairobi Property Consultancy" },
+       { property: "og:description", content: "Homes you can confidently call home, and investments made with clarity." },
+       { property: "og:site_name", content: "ENKOP Real Estate" },
       { property: "og:type", content: "website" },
       { property: "og:image", content: SHARE_IMAGE },
       { property: "og:image:width", content: "1200" },
@@ -95,7 +96,7 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
       { property: "og:image:alt", content: "ENKOP Real Estate logo" },
       { name: "twitter:card", content: "summary_large_image" },
       { name: "twitter:image", content: SHARE_IMAGE },
-      { name: "theme-color", content: "#0e2334" },
+      { name: "theme-color", content: "#142b59" },
     ],
     links: [
       {

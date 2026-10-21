@@ -18,7 +18,7 @@ export function Entrance() {
   return <div className={`entrance ${leaving ? 'entrance--out' : ''}`} role="presentation" onClick={skip}>
     <div className="entrance-line" />
     <BrandLogo tone="light" className="entrance-mark" />
-    <p className="entrance-tag">Exceptional spaces</p>
+    <p className="entrance-tag">Places you can call home</p>
     <button type="button" className="entrance-skip" onClick={skip}>Skip intro</button>
   </div>;
 }

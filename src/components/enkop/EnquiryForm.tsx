@@ -2,9 +2,10 @@ import { useState, type FormEvent } from 'react';
 import { ArrowRight } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { sendEnquiry } from '@/lib/enkop.functions';
-import type { Property } from '@/lib/enkop';
+import { enquiryInterests, type Property } from '@/lib/enkop';
 
-export function EnquiryForm({ property }: { property?: Property }) {
+export function EnquiryForm({ property, interest }: { property?: Property; interest?: string | undefined }) {
+  const defaultInterest = enquiryInterests.find((i) => i === interest) ?? enquiryInterests[0];
   const [status, setStatus] = useState<'idle'|'sending'|'sent'|'error'>('idle');
   const [errorText, setErrorText] = useState('');
   async function submit(event: FormEvent<HTMLFormElement>) {
@@ -22,12 +23,12 @@ export function EnquiryForm({ property }: { property?: Property }) {
       setStatus('sent'); form.reset();
     } catch (error) { setErrorText(error instanceof Error ? error.message : 'Please try again.'); setStatus('error'); }
   }
-  if (status === 'sent') return <div className="form-success" role="status"><span className="eyebrow">ENQUIRY RECEIVED</span><h3>Thank you.<br/><em>We'll be in touch.</em></h3><p>An ENKOP representative will respond shortly.</p><Button variant="textArrow" onClick={() => setStatus('idle')}>Send another enquiry <ArrowRight size={16}/></Button></div>;
+  if (status === 'sent') return <div className="form-success" role="status"><span className="eyebrow">ENQUIRY RECEIVED</span><h3>Thank you.<br/><em>We'll be in touch.</em></h3><p>An ENKOP consultant will review your details and respond personally, by your preferred contact method.</p><Button variant="textArrow" onClick={() => setStatus('idle')}>Send another enquiry <ArrowRight size={16}/></Button></div>;
   return <form className="enquiry-form" onSubmit={submit}>
     <div className="form-row"><label>Full name<input name="name" autoComplete="name" placeholder="Your name" required minLength={2} maxLength={100}/></label><label>Email address<input type="email" name="email" autoComplete="email" placeholder="you@example.com" required/></label></div>
-    <div className="form-row"><label>Phone number<input type="tel" name="phone" autoComplete="tel" placeholder="Your number"/></label>{property ? <label>Preferred viewing date<input type="date" name="preferred_date" min={new Date().toISOString().slice(0,10)}/></label> : <label>I'm interested in<select name="interest"><option>Buying</option><option>Selling</option><option>Renting</option><option>Property Management</option><option>Partnership</option><option>General enquiry</option></select></label>}</div>
+    <div className="form-row"><label>Phone number<input type="tel" name="phone" autoComplete="tel" placeholder="Your number"/></label>{property ? <label>Preferred viewing date<input type="date" name="preferred_date" min={new Date().toISOString().slice(0,10)}/></label> : <label>I'm interested in<select name="interest" defaultValue={defaultInterest}>{enquiryInterests.map((i) => <option key={i}>{i}</option>)}</select></label>}</div>
     <label>Preferred contact method<select name="preferred_contact"><option>Email</option><option>Phone</option></select></label>
-    <label>Message<textarea name="message" rows={4} minLength={10} maxLength={3000} required placeholder={property ? `I'd like to know more about ${property.title}...` : 'Tell us what you have in mind...'}/></label>
+    <label>Message<textarea name="message" rows={4} minLength={10} maxLength={3000} required placeholder={property ? `I'd like to know more about ${property.title}...` : 'Your preferred areas, budget, timeline, or the property you would like to sell...'}/></label>
     <div className="trap-field" aria-hidden="true"><label>Website<input name="website" tabIndex={-1} autoComplete="off"/></label></div>
     {status === 'error' && <p role="alert" className="form-error">{errorText}</p>}
     <Button type="submit" variant="premium" disabled={status === 'sending'}>{status === 'sending' ? 'Sending...' : 'Send enquiry'}<ArrowRight size={17}/></Button>

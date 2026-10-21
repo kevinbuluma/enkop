@@ -5,9 +5,9 @@ import { ArrowUpRight } from 'lucide-react';
 const intents = [
   { id: 'buy', label: 'Buy a home', to: '/properties', search: { status: 'Sale' } },
   { id: 'rent', label: 'Rent a home', to: '/properties', search: { status: 'Rent' } },
-  { id: 'invest', label: 'Explore investments', to: '/services', search: {} },
-  { id: 'list', label: 'List my property', to: '/contact', search: {} },
-  { id: 'view', label: 'Arrange a viewing', to: '/contact', search: {} },
+  { id: 'invest', label: 'Invest off-plan', to: '/contact', search: { interest: 'Off-plan investment' } },
+  { id: 'list', label: 'Sell my property', to: '/contact', search: { interest: 'Selling' } },
+  { id: 'consult', label: 'Book a consultation', to: '/contact', search: { interest: 'Consultancy' } },
 ] as const;
 
 /** Lets visitors state their goal; remembered on-device to reorder actions next visit. */

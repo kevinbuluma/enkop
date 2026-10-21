@@ -8,7 +8,7 @@ import { EnquiryForm } from '@/components/enkop/EnquiryForm';
 import { Reveal } from '@/components/enkop/Reveal';
 import { Parallax } from '@/components/enkop/Parallax';
 import { getProperties } from '@/lib/enkop.functions';
-import { hero, imagery, type Property } from '@/lib/enkop';
+import { company, hero, imagery, reasons, services, type Property } from '@/lib/enkop';
 import { HeroReel } from '@/components/enkop/HeroReel';
 import { Entrance } from '@/components/enkop/Entrance';
 import { SectionNavigator } from '@/components/enkop/SectionNavigator';
@@ -21,12 +21,18 @@ import { builtInHeroSlides } from '@/lib/hero-media';
 import { useCinematicFx } from '@/lib/cinematic';
 
 export const Route = createFileRoute("/")({
-  head: () => ({ meta: [{ title: 'ENKOP — Exceptional Spaces in Nairobi' }, { name: 'description', content: 'A considered approach to Nairobi real estate. Discover exceptional residences and a new perspective on property with ENKOP.' }, { property: 'og:title', content: 'ENKOP — Exceptional Spaces in Nairobi' }, { property: 'og:description', content: 'Discover exceptional residences and a new perspective on property with ENKOP.' }, { property: 'og:type', content: 'website' }, { name: 'twitter:card', content: 'summary_large_image' }] }),
+  head: () => ({ meta: [{ title: 'ENKOP Real Estate | Buy, Sell, Rent & Invest in Nairobi' }, { name: 'description', content: 'ENKOP Real Estate is a Nairobi-based consultancy helping individuals, families and investors buy, sell, rent and invest in residential property across Kenya, with honest advice and personalised guidance.' }, { property: 'og:title', content: 'ENKOP Real Estate | Nairobi Property Consultancy' }, { property: 'og:description', content: 'Homes you can confidently call home, and investments made with clarity.' }, { property: 'og:type', content: 'website' }, { name: 'twitter:card', content: 'summary_large_image' }] }),
   loader: async () => { const [properties, slides, quotes] = await Promise.all([getProperties(), getHomepageSlides().catch(() => []), getTestimonials().catch(() => [])]); return { properties, slides, quotes }; },
   component: Index,
 });
 
-const NAV = [{ id: 'top', label: 'Welcome' }, { id: 'approach', label: 'Our approach' }, { id: 'collection', label: 'Collection' }, { id: 'locations', label: 'Locations' }, { id: 'services', label: 'Services' }, { id: 'why', label: 'Why ENKOP' }, { id: 'contact', label: 'Contact' }];
+const NAV = [{ id: 'top', label: 'Welcome' }, { id: 'approach', label: 'Who we are' }, { id: 'collection', label: 'Collection' }, { id: 'locations', label: 'Locations' }, { id: 'services', label: 'Services' }, { id: 'goals', label: 'Buy, sell or invest' }, { id: 'why', label: 'Why ENKOP' }, { id: 'contact', label: 'Contact' }];
+
+const goals = [
+  { id: 'buy', label: 'BUYERS & FAMILIES', title: 'Find a place you can', em: 'confidently call home.', points: ['Options matched to your budget, preferred areas and lifestyle', 'Viewings arranged around your schedule', 'Negotiation support and help coordinating your move'], cta: 'Browse homes', to: '/properties' as const, search: { status: 'Sale' } },
+  { id: 'invest', label: 'INVESTORS', title: 'Invest with', em: 'clarity, not guesswork.', points: ['Off-plan and ready residential opportunities across Nairobi', 'Guidance grounded in local market knowledge', 'Transparent information to support informed decisions'], cta: 'Discuss an investment', to: '/contact' as const, search: { interest: 'Off-plan investment' } },
+  { id: 'sell', label: 'PROPERTY OWNERS', title: 'Sell or let to', em: 'the right people.', points: ['Professional property promotion and marketing', 'Active engagement with prospective buyers and tenants', 'Clear communication and support through to agreement'], cta: 'Sell or let your property', to: '/contact' as const, search: { interest: 'Selling' } },
+];
 
 function Index() {
   useCinematicFx();
@@ -43,7 +49,7 @@ function Index() {
         <p className="eyebrow">ENKOP REAL ESTATE  /  NAIROBI, KENYA</p>
         <h1>Exceptional<br/><em>spaces.</em></h1>
         <div className="hero-bottom-line">
-          <p>Places with presence.<br/>Property with perspective.</p>
+          <p>Places you can confidently call home.<br/>Investments made with clarity.</p>
           <Button asChild variant="onDark"><Link to="/properties">Explore the collection <ArrowUpRight size={16}/></Link></Button>
         </div>
         <HeroSearch properties={properties} />
@@ -55,11 +61,12 @@ function Index() {
 
     <Reveal as="section" id="approach" className="intro-section page-gutter" delay={0}>
       <IntentPicker />
-      <p className="eyebrow"><span>01 /</span> OUR PERSPECTIVE</p>
+      <p className="eyebrow"><span>01 /</span> WHO WE ARE</p>
       <div className="intro-layout">
-        <h2>Real estate,<br/><em>reconsidered.</em></h2>
+        <h2>Real estate,<br/><em>made clearer.</em></h2>
         <div>
-          <p>ENKOP connects people with exceptional spaces through a more considered approach to property.</p>
+          <p>{company.summary}</p>
+          <p>Built on integrity, transparency and service, we guide you from the first conversation to the day you settle in.</p>
           <Link className="inline-arrow" to="/about">Discover ENKOP <ArrowRight size={18}/></Link>
         </div>
       </div>
@@ -74,7 +81,7 @@ function Index() {
           </Reveal>
         ))}
       </div>
-      <div className="collection-note"><span>RESIDENCES / NAIROBI & BEYOND</span><span>{properties.length.toString().padStart(2,'0')} IN THE COLLECTION</span></div>
+      <div className="collection-note"><span>ESTABLISHED & EMERGING NEIGHBOURHOODS</span><span>{properties.length.toString().padStart(2,'0')} IN THE COLLECTION</span></div>
     </Reveal>
 
     <Reveal as="section" className="place-section">
@@ -82,9 +89,9 @@ function Index() {
         <img src={imagery['residence-3']} alt="Calm courtyard framed by contemporary Nairobi architecture" loading="lazy" width="1200" height="1000"/>
       </Parallax>
       <div className="place-copy">
-        <p className="eyebrow"><span>03 /</span> THE ART OF LIVING</p>
+        <p className="eyebrow"><span>03 /</span> OUR PHILOSOPHY</p>
         <h2>More than<br/>an <em>address.</em></h2>
-        <p>For the life you imagine, and the moments you haven't yet.</p>
+        <p>{company.philosophy}</p>
         <Link className="inline-arrow" to="/properties">Find your space <ArrowRight size={18}/></Link>
       </div>
     </Reveal>
@@ -106,8 +113,20 @@ function Index() {
         <h2>Property, with<br/><em>purpose.</em></h2>
       </div>
       <div className="services-preview-right">
-        <p>From finding the right place to making the right move, we bring clarity to every property decision.</p>
-        <div>{['Property sales','Property letting','Property sourcing','Advisory & representation'].map((service, index) => <Link key={service} to="/services"><span>0{index+1}</span>{service}<ArrowUpRight size={18}/></Link>)}</div>
+        <p>Whether you are buying, selling, renting or investing, we provide personalised guidance, relevant options and professional support throughout the process.</p>
+        <div>{services.map((service, index) => <Link key={service.id} to="/services" hash={service.id}><span>0{index+1}</span>{service.title}<ArrowUpRight size={18}/></Link>)}</div>
+      </div>
+    </Reveal>
+
+    <Reveal as="section" id="goals" className="goals-section page-gutter">
+      <p className="eyebrow"><span>06 /</span> YOUR GOAL, OUR FOCUS</p>
+      <div className="goals-grid">
+        {goals.map((g) => <article key={g.id} className="goal-card">
+          <p className="eyebrow">{g.label}</p>
+          <h3>{g.title} <em>{g.em}</em></h3>
+          <ul>{g.points.map((p) => <li key={p}>{p}</li>)}</ul>
+          <Button asChild variant={g.id === 'sell' ? 'premium' : 'line'}><Link to={g.to} search={g.search as never}>{g.cta} <ArrowRight size={16}/></Link></Button>
+        </article>)}
       </div>
     </Reveal>
 
@@ -123,19 +142,21 @@ function Index() {
     </Reveal>
 
     <Reveal as="section" id="why" className="why-section page-gutter">
-      <p className="eyebrow"><span>06 /</span> WHY ENKOP</p>
+      <p className="eyebrow"><span>07 /</span> WHY CHOOSE ENKOP</p>
+      <h2 className="why-heading">Advice you can trust,<br/><em>support you can feel.</em></h2>
       <div className="why-grid">
-        {[['Curated, not crowded','A considered selection of residences, each one personally reviewed.'],['Represented in person','One ENKOP representative from first viewing to final handover.'],['Discreet by default','Private viewings and quiet negotiation, on your terms.']].map(([t,d], i) => <div key={t}><span>0{i+1}</span><h3>{t}</h3><p>{d}</p></div>)}
+        {reasons.map(([t,d], i) => <div key={t}><span>0{i+1}</span><h3>{t}</h3><p>{d}</p></div>)}
       </div>
     </Reveal>
 
-    <TestimonialsSection quotes={quotes} index="07" />
+    <TestimonialsSection quotes={quotes} index="08" />
 
     <Reveal as="section" id="contact" className="home-enquire page-gutter">
       <div className="home-enquire-copy">
-        <p className="eyebrow"><span>07 /</span> BEGIN THE CONVERSATION</p>
-        <h2>Tell us what exceptional<br/><em>looks like to you.</em></h2>
-        <p>Share a few details and an ENKOP representative will reach out personally — by email or phone, whichever you prefer.</p>
+        <p className="eyebrow"><span>08 /</span> BEGIN THE CONVERSATION</p>
+        <h2>Tell us what you're<br/><em>looking for.</em></h2>
+        <p>A home, a sale, a rental or an investment: share a few details and an ENKOP consultant will respond personally, by email or phone, whichever you prefer.</p>
+        <p className="home-enquire-promise">{company.promise}</p>
       </div>
       <EnquiryForm />
     </Reveal>
