@@ -16,7 +16,7 @@ const kinds: Record<string, Kind> = {
 
 type P = { x: number; y: number; z: number; s: number; v: number; d: number; r: number; spin: number; phase: number; c: string };
 
-/** Seasonal particle field with depth layers and pointer "wind". Photos, videos and text blocks are cleared so they are never covered. */
+/** Seasonal particle field with depth layers and pointer "wind". Photos and videos are cleared so they are never covered. */
 export function SeasonParticles() {
   const ref = useRef<HTMLCanvasElement>(null);
   useEffect(() => {
@@ -36,13 +36,10 @@ export function SeasonParticles() {
         r: Math.random() * 6, spin: (Math.random() - 0.5) * 0.04, phase: Math.random() * 6, c: k.colors[Math.floor(Math.random() * k.colors.length)] ?? "255,255,255" };
     };
     const onMove = (e: PointerEvent) => { windTarget = ((e.clientX / innerWidth) - 0.5) * 1.6; };
-    // Photography and text are kept clear of particles so the atmosphere never competes with content.
+    // Photography stays clear of particles; everywhere else they fall continuously.
     const refreshHoles = () => {
-      const media = Array.from(document.querySelectorAll('img, video, iframe')).map(el => el.getBoundingClientRect())
-        .filter(r => r.width > 60 && r.height > 60);
-      const text = Array.from(document.querySelectorAll('main :is(h1, h2, h3, p, li, label, blockquote, input, textarea, select, .property-information)')).map(el => el.getBoundingClientRect())
-        .filter(r => r.width > 0 && r.height > 0).map(r => new DOMRect(r.left - 8, r.top - 6, r.width + 16, r.height + 12));
-      holes = [...media, ...text].filter(r => r.bottom > 0 && r.top < innerHeight);
+      holes = Array.from(document.querySelectorAll('img, video, iframe')).map(el => el.getBoundingClientRect())
+        .filter(r => r.width > 60 && r.height > 60 && r.bottom > 0 && r.top < innerHeight);
     };
     const draw = (p: P, k: Kind) => {
       ctx.globalAlpha = k.alpha * (0.45 + p.z * 0.55);

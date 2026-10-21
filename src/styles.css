@@ -789,9 +789,9 @@ html[data-season="cool-dry"] { --background: oklch(0.958 0.01 92); --surface: ok
 .footer-admin:hover{opacity:1;color:var(--gold)}
 
 /* ===== Seasonal frames & transitions ===== */
-/* Behind all page content (z-index -1 in the root stacking context): particles show over open ivory
- * space and through glass panels, never over text, photography or controls. */
-.season-particles { z-index: -1; }
+/* Above page sections so particles fall continuously across text and surfaces (never blocking input:
+ * the canvas ignores pointer events), below the header (50) and the gallery viewer (100). */
+.season-particles { z-index: 40; }
 .team-card, .testimonial-card, .why-grid > div, .detail-facts, .home-enquire form, .detail-enquire form, .property-information { position: relative; }
 html[data-season] :is(.team-card, .testimonial-card, .why-grid > div, .detail-facts, .home-enquire form, .detail-enquire form, .hero-search, .property-information)::before {
   content: ""; position: absolute; pointer-events: none; z-index: 3; transition: opacity 1.2s ease;
