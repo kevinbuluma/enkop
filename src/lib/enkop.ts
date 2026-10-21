@@ -49,9 +49,8 @@ export const contact = {
   phone: '+254 707 465 190',
   whatsappDigits: '254707465190',
   email: 'enkoprealestateke@gmail.com',
-  social: '@enkoprealestate',
-  instagram: 'https://www.instagram.com/enkoprealestate',
-  tiktok: 'https://www.tiktok.com/@enkoprealestate',
+  instagram: 'https://www.instagram.com/enkop_realestate',
+  tiktok: 'https://www.tiktok.com/@enkoprealestste',
   location: 'Nairobi, Kenya',
 } as const;
 

@@ -25,7 +25,7 @@ function Contact() {
           <span>PHONE</span><strong><a href={`tel:${contact.phone.replaceAll(' ', '')}`}>{contact.phone}</a></strong>
           <span>WHATSAPP</span><strong><a href={`https://wa.me/${contact.whatsappDigits}`} target="_blank" rel="noopener noreferrer">Message us on WhatsApp</a></strong>
           <span>EMAIL</span><strong><a href={`mailto:${contact.email}`}>{contact.email}</a></strong>
-          <span>SOCIAL</span><strong><a href={contact.instagram} target="_blank" rel="noopener noreferrer">Instagram</a> · <a href={contact.tiktok} target="_blank" rel="noopener noreferrer">TikTok</a> {contact.social}</strong>
+          <span>SOCIAL</span><strong><a href={contact.instagram} target="_blank" rel="noopener noreferrer">Instagram</a> · <a href={contact.tiktok} target="_blank" rel="noopener noreferrer">TikTok</a></strong>
         </div>
       </div>
       <EnquiryForm interest={interest} />
