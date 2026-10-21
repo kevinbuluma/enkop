@@ -14,6 +14,24 @@ export type Database = {
   }
   public: {
     Tables: {
+      enkop_bridge_auth: {
+        Row: {
+          id: number
+          secret_sha256: string
+          updated_at: string
+        }
+        Insert: {
+          id: number
+          secret_sha256: string
+          updated_at?: string
+        }
+        Update: {
+          id?: number
+          secret_sha256?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       enquiries: {
         Row: {
           created_at: string
