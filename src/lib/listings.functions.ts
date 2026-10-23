@@ -1,8 +1,10 @@
 import { createServerFn } from '@tanstack/react-start';
 import { z } from 'zod';
 import { requireAdmin } from '@/lib/require-admin';
+import { signablePath } from '@/lib/enquiry-schema';
 
-const galleryPath = (propertyId: string, p: string) => p.startsWith(`${propertyId}/gallery/`);
+const galleryPath = (propertyId: string, p: string) => p.startsWith(`${propertyId}/gallery/`) && signablePath(p);
+const ownPath = (propertyId: string, p: string) => p.startsWith(`${propertyId}/`) && signablePath(p);
 
 async function signPhotos(sign: (paths: string[], expiresIn: number) => Promise<Record<string, string>>, rows: any[]) {
   const paths = [...new Set(rows.flatMap((r) => r.image_paths ?? []))] as string[];
@@ -47,7 +49,8 @@ export const saveListing = createServerFn({ method: 'POST' })
   .validator((d) => listingInput.parse(d))
   .handler(async ({ data, context }) => {
     const { id, ...row } = data;
-    if (id && !row.image_paths.every((p) => galleryPath(id, p))) throw new Error('Invalid photo.');
+    // Photos live under the listing's own id, so a new listing is created without any and gets them on its next save.
+    if (id ? !row.image_paths.every((p) => galleryPath(id, p)) : row.image_paths.length) throw new Error('Invalid photo.');
     const payload = { ...row, is_sample: false, image_key: 'residence-1' };
     const { store } = context.master;
     const clash = await store.first('properties', id ? 'slug = ? AND id <> ?' : 'slug = ?', id ? [row.slug, id] : [row.slug]);
@@ -77,7 +80,8 @@ export const deleteListing = createServerFn({ method: 'POST' })
       console.error(e);
       throw new Error('The listing could not be deleted.');
     }
-    const files = [...((listing?.['image_paths'] as string[] | undefined) ?? []), ...tours.flatMap((t) => [...((t['photo_paths'] as string[]) ?? []), ...(t['video_path'] ? [t['video_path'] as string] : [])])];
+    const files = [...((listing?.['image_paths'] as string[] | undefined) ?? []), ...tours.flatMap((t) => [...((t['photo_paths'] as string[]) ?? []), ...(t['video_path'] ? [t['video_path'] as string] : [])])]
+      .filter((p) => ownPath(data.id, p));
     if (files.length) await media.remove(files).catch((e) => console.error('[enkop] media cleanup failed', e));
     await context.master.afterWrite();
     return { ok: true };

@@ -155,7 +155,7 @@ function Index() {
 
     <Reveal as="section" id="contact" className="home-enquire page-gutter">
       <div className="home-enquire-copy">
-        <p className="eyebrow"><span>08 /</span> BEGIN THE CONVERSATION</p>
+        <p className="eyebrow"><span>{quotes.length ? '09' : '08'} /</span> BEGIN THE CONVERSATION</p>
         <h2>Tell us what you're<br/><em>looking for.</em></h2>
         <p>A home, a sale, a rental or an investment: share a few details and an ENKOP consultant will respond personally, by email or phone, whichever you prefer.</p>
         <p className="home-enquire-promise">{company.promise}</p>

@@ -11,6 +11,7 @@ export function EnquiriesManager() {
   const [busyId, setBusyId] = useState('');
 
   const load = useCallback(() => {
+    setError('');
     getEnquiries().then(setRows).catch((e) => setError(e.message));
   }, []);
   useEffect(() => { load(); }, [load]);
@@ -27,8 +28,7 @@ export function EnquiriesManager() {
     }
   }
 
-  if (error) return <p className="studio-error" role="alert">{error}</p>;
-  if (!rows) return <p className="studio-muted">Loading enquiries…</p>;
+  if (!rows) return error ? <p className="studio-error" role="alert">{error}</p> : <p className="studio-muted">Loading enquiries…</p>;
 
   return (
     <div className="enquiries-panel">
@@ -36,6 +36,7 @@ export function EnquiriesManager() {
         <p className="eyebrow">LEADS / {rows.length} ENQUIR{rows.length === 1 ? 'Y' : 'IES'}</p>
         <Button variant="textArrow" onClick={load}><RefreshCw size={14} /> Refresh</Button>
       </div>
+      {error && <p className="studio-error" role="alert">{error}</p>}
       {rows.length === 0 ? (
         <p className="studio-muted">No enquiries yet. New leads from the homepage and property pages will appear here.</p>
       ) : (

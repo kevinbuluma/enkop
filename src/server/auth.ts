@@ -81,21 +81,21 @@ export async function issueSetupToken(db: D1Database, email: string, id: string 
 }
 
 export async function completeSetup(db: D1Database, token: string, password: string): Promise<Admin | null> {
-  const row = await db.prepare(`SELECT id, email, role FROM admins WHERE setup_token_hash = ? AND setup_expires_at > ?`)
-    .bind(await sha256(token), new Date().toISOString()).first<Admin>();
-  if (!row) return null;
   const { hash, salt, iterations } = await hashPassword(password);
-  await db.batch([
-    db.prepare(`UPDATE admins SET password_hash = ?, password_salt = ?, password_iterations = ?, setup_token_hash = NULL, setup_expires_at = NULL WHERE id = ?`).bind(hash, salt, iterations, row.id),
-    db.prepare('DELETE FROM sessions WHERE admin_id = ?').bind(row.id),
-  ]);
+  // Checking and consuming the token in one statement means a link can only ever be used once.
+  const row = await db.prepare(`UPDATE admins SET password_hash = ?, password_salt = ?, password_iterations = ?, setup_token_hash = NULL, setup_expires_at = NULL
+    WHERE setup_token_hash = ? AND setup_expires_at > ? RETURNING id, email, role`)
+    .bind(hash, salt, iterations, await sha256(token), new Date().toISOString()).first<Admin>();
+  if (!row) return null;
+  await db.prepare('DELETE FROM sessions WHERE admin_id = ?').bind(row.id).run();
   return row;
 }
 
 export function readCookie(header: string | null, name: string) {
   for (const part of (header ?? '').split(';')) {
     const [k, ...v] = part.trim().split('=');
-    if (k === name) return decodeURIComponent(v.join('='));
+    if (k !== name) continue;
+    try { return decodeURIComponent(v.join('=')); } catch { return null; }
   }
   return null;
 }

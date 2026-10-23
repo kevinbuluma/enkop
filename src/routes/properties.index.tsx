@@ -9,7 +9,10 @@ import { getProperties } from '@/lib/enkop.functions';
 import { pageSeo, type Property } from '@/lib/enkop';
 import { useRecent, useSaved, resetPersonal } from '@/lib/personal';
 
-const searchSchema = z.object({ location: z.string().optional(), type: z.string().optional(), status: z.string().optional(), price: z.coerce.number().optional(), bedrooms: z.coerce.number().optional(), q: z.string().optional(), sort: z.string().optional(), saved: z.coerce.boolean().optional() });
+// Shared links can carry anything, and the router parses numeric-looking values as numbers: drop bad values rather than failing the page.
+const text = z.union([z.string(), z.number()]).transform(String).optional().catch(undefined);
+const amount = z.coerce.number().finite().positive().optional().catch(undefined);
+const searchSchema = z.object({ location: text, type: text, status: text, price: amount, bedrooms: amount, q: text, sort: text, saved: z.coerce.boolean().optional().catch(undefined) });
 const seo = pageSeo('/properties');
 
 export const Route = createFileRoute('/properties/')({
@@ -29,10 +32,13 @@ function Collection() {
   const { saved } = useSaved();
   const recent = useRecent();
   const [query, setQuery] = useState(search.q ?? '');
-  const locations = [...new Set(all.map(p => p.neighborhood))].sort();
+  // A linked area with no current listings stays selectable, so the dropdown matches the active filter.
+  const locations = [...new Set([...all.map(p => p.neighborhood), ...(search.location ? [search.location] : [])])].sort();
   const types = [...new Set(all.map(p => p.property_type))].sort();
   const filtered = useMemo(() => {
-    const list = all.filter(p => (!search.saved || saved.includes(p.slug)) && (!search.location || p.neighborhood.toLowerCase() === search.location.toLowerCase()) && (!search.type || p.property_type === search.type) && (!search.status || p.listing_type === search.status) && (!search.price || p.price <= search.price) && (!search.bedrooms || p.bedrooms >= search.bedrooms) && (!search.q || `${p.title} ${p.neighborhood} ${p.description}`.toLowerCase().includes(search.q.toLowerCase())));
+    // Price caps are purchase budgets; monthly rents only appear under them when the visitor asked for rentals.
+    const underBudget = (p: Property) => !search.price || (p.listing_type === 'Rent' ? search.status === 'Rent' : p.price <= search.price);
+    const list = all.filter(p => (!search.saved || saved.includes(p.slug)) && (!search.location || p.neighborhood.toLowerCase() === search.location.toLowerCase()) && (!search.type || p.property_type === search.type) && (!search.status || p.listing_type === search.status) && underBudget(p) && (!search.bedrooms || p.bedrooms >= search.bedrooms) && (!search.q || `${p.title} ${p.neighborhood} ${p.description}`.toLowerCase().includes(search.q.toLowerCase())));
     if (search.sort === 'price-asc') list.sort((a, b) => a.price - b.price);
     if (search.sort === 'price-desc') list.sort((a, b) => b.price - a.price);
     if (search.sort === 'size') list.sort((a, b) => b.area_sqm - a.area_sqm);

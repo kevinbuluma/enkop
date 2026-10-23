@@ -27,6 +27,11 @@ export const Route = createFileRoute('/api/admin/session')({
       if (!auth.sameOrigin(request)) return Response.json({ message: 'Forbidden.' }, { status: 403 });
       const parsed = body.safeParse(await request.json().catch(() => null));
       if (!parsed.success) return Response.json({ message: 'Enter a valid email and password.' }, { status: 400 });
+      const { clientAddress, withinLimit } = await import('@/server/rate-limit');
+      const account = parsed.data.action === 'signin' ? `signin:${parsed.data.email.toLowerCase()}` : 'setup';
+      if (!(await withinLimit('SIGNIN_LIMITER', `ip:${clientAddress(request)}`, account))) {
+        return Response.json({ message: 'Too many attempts. Wait a minute and try again.' }, { status: 429, headers: { ...noStore, 'Retry-After': '60' } });
+      }
       let admin: { id: string; email: string } | null;
       if (parsed.data.action === 'signin') {
         admin = await auth.verifyLogin(env.DB, parsed.data.email, parsed.data.password);

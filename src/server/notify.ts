@@ -43,6 +43,7 @@ export async function notify(env: MasterEnv, alert: Alert): Promise<string[]> {
       method: 'POST',
       headers: { Authorization: `Bearer ${metaToken}`, 'Content-Type': 'application/json' },
       body: JSON.stringify({ messaging_product: 'whatsapp', to: waTo, ...metaMessage(alert.text) }),
+      signal: AbortSignal.timeout(15_000),
     }).catch((e) => e as Error);
     if (res instanceof Response && res.ok) delivered.push('whatsapp');
     else errors.push(`whatsapp: ${res instanceof Response ? `${res.status} ${(await res.text().catch(() => '')).slice(0, 200)}` : res.message}`);

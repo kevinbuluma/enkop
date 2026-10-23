@@ -32,6 +32,14 @@ export function optimizedHeroMedia(path: string | null) {
   return path ? optimized[path] ?? null : null;
 }
 
+// Built-in posters served from public/: cacheable across visits, unlike per-request signed Storage URLs.
+const optimizedPosters: Record<string, string> = {
+  'homepage/enkop-landing.jpg': landing.poster,
+};
+export function optimizedHeroPoster(path: string | null) {
+  return path ? optimizedPosters[path] ?? null : null;
+}
+
 type Enhanced = { hd: string; ultra: string; hdWebm: string | null; ultraWebm: string | null; portrait: string | null; portraitPoster: string | null };
 
 /** Screen-size variants of built-in footage. The earlier scenes' "4K" files are upscaled, not native captures. */

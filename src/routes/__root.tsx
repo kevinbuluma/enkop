@@ -124,6 +124,8 @@ function RootShell({ children }: { children: ReactNode }) {
     <html lang="en">
       <head>
         <HeadContent />
+        {/* Scroll reveals start hidden and are shown by script; without it, show every section. */}
+        <noscript><style>{'.reveal, .reveal > *, .reveal h2 { opacity: 1 !important; transform: none !important; filter: none !important; letter-spacing: normal !important; }'}</style></noscript>
       </head>
       <body>
         {children}

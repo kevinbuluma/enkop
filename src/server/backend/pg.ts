@@ -57,7 +57,8 @@ export class PgDatabase implements D1Database {
     try {
       return await PgDatabase.query<T>(conn, s);
     } finally {
-      await conn.end();
+      // A close failure after a committed write must not report the write as failed.
+      await conn.end().catch(() => {});
     }
   }
 
@@ -73,7 +74,7 @@ export class PgDatabase implements D1Database {
       await conn.query('ROLLBACK', []).catch(() => {});
       throw e;
     } finally {
-      await conn.end();
+      await conn.end().catch(() => {});
     }
   }
 }

@@ -1,0 +1,13 @@
+# Cache rules only. Security headers are added by cloudflare/entry.mjs, never here (see AGENTS.md).
+# Brand files keep their names when replaced, so they revalidate daily and serve from cache meanwhile.
+/brand/*
+  Cache-Control: public, max-age=86400, stale-while-revalidate=2592000
+
+/favicon.ico
+  Cache-Control: public, max-age=86400, stale-while-revalidate=2592000
+
+/favicon-32.png
+  Cache-Control: public, max-age=86400, stale-while-revalidate=2592000
+
+/apple-touch-icon.png
+  Cache-Control: public, max-age=86400, stale-while-revalidate=2592000

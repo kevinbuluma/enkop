@@ -28,7 +28,8 @@ export function HomepageManager() {
 
   async function run(key: string, fn: () => Promise<unknown>) {
     setBusy(key); setError('');
-    try { await fn(); await load(); } catch (e) { setError(e instanceof Error ? e.message : 'Something went wrong.'); }
+    // Reload on failure too, so an optimistic change the server rejected is not left on screen.
+    try { await fn(); await load(); } catch (e) { setError(e instanceof Error ? e.message : 'Something went wrong.'); await load(); }
     finally { setBusy(null); }
   }
   const save = (s: Pick<Slide, 'label' | 'video_path' | 'image_path' | 'active'> & { id: string | null }) =>

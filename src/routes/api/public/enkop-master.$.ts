@@ -26,6 +26,10 @@ async function handle({ request, params }: { request: Request; params: { _splat?
     // Same validation and spam trap as the master's own public form, which needs no credential either.
     const p = enquirySchema.safeParse(await request.json().catch(() => null));
     if (!p.success) return Response.json({ message: 'Invalid enquiry.' }, { status: 400 });
+    const { clientAddress, withinLimit } = await import('@/server/rate-limit');
+    const forwarded = authorized(request, 'x-enkop-bridge-secret', process.env['ENKOP_BRIDGE_SECRET']) ? request.headers.get('x-enkop-client-ip') : null;
+    // A refused forward is kept by the mirror and pulled back on the next drain, so nothing is lost.
+    if (!(await withinLimit('ENQUIRY_LIMITER', `ip:${forwarded || clientAddress(request)}`))) return Response.json({ message: 'Too many enquiries.' }, { status: 429, headers: { 'Retry-After': '60' } });
     if (!p.data.website) {
       const { masterBackend } = await import('@/server/backend/master');
       await masterBackend(env).submitEnquiry(p.data);

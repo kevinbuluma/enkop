@@ -1,6 +1,7 @@
 import { createServerFn } from '@tanstack/react-start';
 import { z } from 'zod';
 import { requireAdmin } from '@/lib/require-admin';
+import { signablePath } from '@/lib/enquiry-schema';
 
 const MODEL = 'google/gemini-omni-1.1-flash';
 
@@ -72,7 +73,7 @@ export const startTour = createServerFn({ method: 'POST' })
     if (!property) throw new Error('Property not found.');
 
     const images = await Promise.all(data.photoPaths.map(async (path) => {
-      if (!path.startsWith(`${property.id}/photos/`)) throw new Error('Invalid photo.');
+      if (!path.startsWith(`${property.id}/photos/`) || !signablePath(path)) throw new Error('Invalid photo.');
       const file = await master.media.bytes(path);
       if (!file) throw new Error('A photo could not be read. Please upload it again.');
       const mime = /^image\/(png|jpeg|webp)$/.test(file.contentType) ? file.contentType : 'image/jpeg';

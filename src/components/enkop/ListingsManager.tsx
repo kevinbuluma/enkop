@@ -1,4 +1,4 @@
-import { useEffect, useState, type FormEvent } from 'react';
+import { useEffect, useMemo, useState, type FormEvent } from 'react';
 import { ArrowRight, ImagePlus, Pencil, Plus, Trash2, X } from 'lucide-react';
 import { uploadMedia } from '@/lib/admin-client';
 import { Button } from '@/components/ui/button';
@@ -44,14 +44,14 @@ export function ListingsManager() {
     catch (e) { setError(e instanceof Error ? e.message : 'Delete failed.'); }
   }
 
-  if (error) return <p className="studio-error">{error}</p>;
-  if (!listings) return <p className="studio-muted">Loading listings…</p>;
+  if (!listings) return error ? <p className="studio-error">{error}</p> : <p className="studio-muted">Loading listings…</p>;
 
   if (draft) return <ListingEditor draft={draft} onDone={(saved) => { setDraft(null); if (saved) load(); }} />;
 
   return <div>
     <div className="studio-head"><p className="eyebrow">LISTINGS · {listings.length.toString().padStart(2, '0')}</p>
       <Button variant="primary" onClick={() => setDraft(emptyDraft)}>New listing <Plus size={16} /></Button></div>
+    {error && <p className="studio-error" role="alert">{error}</p>}
     {!listings.length && <p className="studio-muted">No listings yet. Add the first.</p>}
     <div className="listing-rows">{listings.map((l) => <article key={l.id} className="listing-row">
       {l.photo_urls?.[0] ? <img src={l.photo_urls[0]} alt="" /> : <div className="listing-row-blank" aria-hidden="true" />}
@@ -99,11 +99,13 @@ function ListingEditor({ draft: initial, onDone }: { draft: Draft; onDone: (save
     try {
       let imagePaths = draft.image_paths;
       let id = draft.id;
-      // New listing: save first to get an id, then upload photos under it.
+      // New listing: save a draft first to get an id, then upload photos under it. Keeping the id means a
+      // retry after a failed upload updates this listing instead of creating a duplicate.
       if (!id && files.length) {
         setState('saving');
-        const created = await saveListing({ data: toPayload({ ...draft, image_paths: [] }, null) });
+        const created = await saveListing({ data: toPayload({ ...draft, image_paths: [], status: 'draft' }, null) });
         id = created.id;
+        set({ id });
       }
       if (files.length && id) {
         setState('uploading');
@@ -122,8 +124,8 @@ function ListingEditor({ draft: initial, onDone }: { draft: Draft; onDone: (save
     finally { setState('idle'); }
   }
 
-  const previews = files.map((f) => URL.createObjectURL(f));
-  useEffect(() => () => previews.forEach(URL.revokeObjectURL), [files]); // eslint-disable-line react-hooks/exhaustive-deps
+  const previews = useMemo(() => files.map((f) => URL.createObjectURL(f)), [files]);
+  useEffect(() => () => previews.forEach(URL.revokeObjectURL), [previews]);
 
   return <form className="enquiry-form listing-editor" onSubmit={submit}>
     <div className="studio-head"><p className="eyebrow">{draft.id ? 'EDIT LISTING' : 'NEW LISTING'}</p>

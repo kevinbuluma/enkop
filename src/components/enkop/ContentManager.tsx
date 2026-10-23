@@ -84,11 +84,12 @@ export function TeamManager() {
     } catch (err) { setMsg((err as Error).message); } finally { setBusy(false); }
   };
   return <div className="studio-panel">
-    <div className="studio-head"><h2>Team</h2><Button variant="textArrow" onClick={() => setEdit({ id: null, name: '', role: '', bio: '', photo_path: null, position: data.team.length, active: true })}>New member <Plus size={14} /></Button></div>
+    <div className="studio-head"><h2>Team</h2><Button variant="textArrow" onClick={() => { setEdit({ id: null, name: '', role: '', bio: '', photo_path: null, position: data.team.length, active: true }); setFile(null); setMsg(''); }}>New member <Plus size={14} /></Button></div>
+    {msg && !edit && <p className="studio-error" role="alert">{msg}</p>}
     <div className="listing-rows">{data.team.map((m: Member) => <div key={m.id} className="listing-row">
       {m.photo_url ? <img src={m.photo_url} alt="" /> : <span className="team-initial">{m.name[0]}</span>}
       <div><strong>{m.name}</strong><span className="listing-row-meta">{m.role}{m.active ? '' : ' · Hidden'}{m.bio ? '' : ' · No bio yet'}{m.photo_url ? '' : ' · No portrait yet'}</span></div>
-      <div className="listing-row-actions"><Button variant="textArrow" onClick={() => { setEdit(m); setFile(null); }}>Edit</Button><Button variant="textArrow" onClick={async () => { if (confirm(`Remove ${m.name}?`)) { await del({ data: { table: 'team_members', id: m.id! } }); load(); } }}><Trash2 size={14} /></Button></div>
+      <div className="listing-row-actions"><Button variant="textArrow" onClick={() => { setEdit(m); setFile(null); }}>Edit</Button><Button variant="textArrow" aria-label={`Remove ${m.name}`} onClick={async () => { if (!confirm(`Remove ${m.name}?`)) return; setMsg(''); try { await del({ data: { table: 'team_members', id: m.id! } }); } catch (err) { setMsg((err as Error).message || 'The team member could not be removed.'); } load(); }}><Trash2 size={14} /></Button></div>
     </div>)}</div>
     {edit && <form className="listing-editor" onSubmit={submit}>
       <div className="form-row"><label>Name<input required minLength={2} maxLength={100} value={edit.name} onChange={e => setEdit({ ...edit, name: e.target.value })} /></label><label>Role<input maxLength={100} value={edit.role} onChange={e => setEdit({ ...edit, role: e.target.value })} /></label></div>
@@ -96,7 +97,7 @@ export function TeamManager() {
       <div className="form-row"><label>Order<input type="number" min="0" value={edit.position} onChange={e => setEdit({ ...edit, position: Number(e.target.value) || 0 })} /></label><label className="listing-featured"><input type="checkbox" checked={edit.active} onChange={e => setEdit({ ...edit, active: e.target.checked })} /> Show on the site</label></div>
       <label className="studio-add"><ImagePlus size={20} /><span>{file ? file.name : edit.photo_path ? 'Replace portrait' : 'Upload portrait'}</span><input type="file" accept="image/jpeg,image/png,image/webp" onChange={e => setFile(e.target.files?.[0] ?? null)} /></label>
       {msg && <p className="studio-error" role="alert">{msg}</p>}
-      <div className="form-row"><Button type="submit" variant="primary" disabled={busy}>{busy ? 'Saving…' : 'Save member'} <ArrowRight size={16} /></Button><Button type="button" variant="textArrow" onClick={() => setEdit(null)}>Cancel</Button></div>
+      <div className="form-row"><Button type="submit" variant="primary" disabled={busy}>{busy ? 'Saving…' : 'Save member'} <ArrowRight size={16} /></Button><Button type="button" variant="textArrow" onClick={() => { setEdit(null); setFile(null); }}>Cancel</Button></div>
     </form>}
   </div>;
 }
@@ -109,6 +110,7 @@ export function TestimonialsManager() {
   const del = useServerFn(deleteContent);
   const [edit, setEdit] = useState<Quote | null>(null);
   const [msg, setMsg] = useState('');
+  const [busy, setBusy] = useState(false);
   if (error) return <p className="studio-error" role="alert">{error}</p>;
   if (!data) return <p className="studio-muted">Loading testimonials…</p>;
   return <div className="studio-panel">
@@ -117,14 +119,15 @@ export function TestimonialsManager() {
     {data.testimonials.length === 0 && !edit && <p className="studio-muted">No testimonials yet. The section stays hidden until you approve one.</p>}
     <div className="listing-rows">{data.testimonials.map((q: Quote) => <div key={q.id} className="listing-row">
       <div><strong>“{q.quote.slice(0, 90)}{q.quote.length > 90 ? '…' : ''}”</strong><span className="listing-row-meta">{q.author}{q.context ? ` · ${q.context}` : ''} · {q.approved ? 'Approved' : 'Awaiting approval'}</span></div>
-      <div className="listing-row-actions"><Button variant="textArrow" onClick={() => setEdit(q)}>Edit</Button><Button variant="textArrow" onClick={async () => { if (confirm('Delete this testimonial?')) { await del({ data: { table: 'testimonials', id: q.id! } }); load(); } }}><Trash2 size={14} /></Button></div>
+      <div className="listing-row-actions"><Button variant="textArrow" onClick={() => setEdit(q)}>Edit</Button><Button variant="textArrow" aria-label="Delete this testimonial" onClick={async () => { if (!confirm('Delete this testimonial?')) return; setMsg(''); try { await del({ data: { table: 'testimonials', id: q.id! } }); } catch (err) { setMsg((err as Error).message || 'The testimonial could not be deleted.'); } load(); }}><Trash2 size={14} /></Button></div>
     </div>)}</div>
-    {edit && <form className="listing-editor" onSubmit={async e => { e.preventDefault(); setMsg(''); try { await save({ data: edit }); setEdit(null); load(); } catch (err) { setMsg((err as Error).message); } }}>
+    {msg && !edit && <p className="studio-error" role="alert">{msg}</p>}
+    {edit && <form className="listing-editor" onSubmit={async e => { e.preventDefault(); if (busy) return; setMsg(''); setBusy(true); try { await save({ data: edit }); setEdit(null); load(); } catch (err) { setMsg((err as Error).message); } finally { setBusy(false); } }}>
       <label>Quote<textarea required minLength={5} rows={4} maxLength={1200} value={edit.quote} onChange={e => setEdit({ ...edit, quote: e.target.value })} /></label>
       <div className="form-row"><label>Client name<input required minLength={2} maxLength={100} value={edit.author} onChange={e => setEdit({ ...edit, author: e.target.value })} /></label><label>Context (optional)<input maxLength={120} value={edit.context} onChange={e => setEdit({ ...edit, context: e.target.value })} placeholder="Bought in Karen, 2026" /></label></div>
       <div className="form-row"><label>Order<input type="number" min="0" value={edit.position} onChange={e => setEdit({ ...edit, position: Number(e.target.value) || 0 })} /></label><label className="listing-featured"><input type="checkbox" checked={edit.approved} onChange={e => setEdit({ ...edit, approved: e.target.checked })} /> Approved by the client</label></div>
       {msg && <p className="studio-error" role="alert">{msg}</p>}
-      <div className="form-row"><Button type="submit" variant="primary">Save quote <ArrowRight size={16} /></Button><Button type="button" variant="textArrow" onClick={() => setEdit(null)}>Cancel</Button></div>
+      <div className="form-row"><Button type="submit" variant="primary" disabled={busy}>{busy ? 'Saving…' : 'Save quote'} <ArrowRight size={16} /></Button><Button type="button" variant="textArrow" onClick={() => setEdit(null)}>Cancel</Button></div>
     </form>}
   </div>;
 }

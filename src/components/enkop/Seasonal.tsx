@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { computeSeason, seasonConfig, seasonLabels, toConfig, type SeasonSettings } from '@/lib/season';
 import { getSeasonSettings } from '@/lib/content.functions';
+import { readStored, writeStored } from '@/lib/safe-storage';
 
 let cached: Promise<SeasonSettings | null> | null = null;
 const loadSettings = () => (cached ??= getSeasonSettings().catch(() => null));
@@ -9,10 +10,10 @@ const loadSettings = () => (cached ??= getSeasonSettings().catch(() => null));
 export function SeasonalToggle() {
   const [on, setOn] = useState(true);
   const [settings, setSettings] = useState<SeasonSettings | null | undefined>(undefined);
-  useEffect(() => { setOn(localStorage.getItem('enkop:season') !== 'off'); loadSettings().then(setSettings); }, []);
+  useEffect(() => { setOn(readStored('enkop:season') !== 'off'); loadSettings().then(setSettings); }, []);
   const enabled = settings ? settings.enabled : true;
   const [forced, setForced] = useState<string | null>(null);
-  useEffect(() => { const q = new URLSearchParams(location.search).get('season'); if (q && q in seasonLabels) { sessionStorage.setItem('enkop:season-preview', q); } setForced(sessionStorage.getItem('enkop:season-preview')); }, []);
+  useEffect(() => { const q = new URLSearchParams(location.search).get('season'); if (q && q in seasonLabels) { writeStored('enkop:season-preview', q, 'session'); } setForced(readStored('enkop:season-preview', 'session') ?? (q && q in seasonLabels ? q : null)); }, []);
   const season = forced ?? computeSeason(new Date(), settings ? toConfig(settings) : seasonConfig);
   useEffect(() => {
     if (settings === undefined) return;
@@ -21,7 +22,7 @@ export function SeasonalToggle() {
     else root.removeAttribute('data-season');
   }, [on, enabled, season, settings]);
   if (settings !== undefined && !enabled) return null;
-  return <button type="button" className="season-toggle" aria-pressed={on} onClick={() => { const next = !on; setOn(next); localStorage.setItem('enkop:season', next ? 'on' : 'off'); }}>
+  return <button type="button" className="season-toggle" aria-pressed={on} onClick={() => { const next = !on; setOn(next); writeStored('enkop:season', next ? 'on' : 'off'); }}>
     Seasonal atmosphere: {on ? `${seasonLabels[season] ?? season} · On` : 'Off'}
   </button>;
 }

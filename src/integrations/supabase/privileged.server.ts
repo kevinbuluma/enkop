@@ -21,7 +21,7 @@ function bridgeUrl(route: string, env: Env = process.env) {
 function bridgeFetch(route: string, init: RequestInit = {}) {
   const headers = new Headers(init.headers);
   headers.set('x-enkop-bridge-secret', process.env['ENKOP_BRIDGE_SECRET']!);
-  return fetch(bridgeUrl(route), { ...init, headers });
+  return fetch(bridgeUrl(route), { signal: AbortSignal.timeout(30_000), ...init, headers });
 }
 
 /** Lovable-hosted only: sends a WhatsApp alert through Lovable's managed connection. */
@@ -34,6 +34,7 @@ export async function sendWhatsAppAlert(text: string) {
     method: 'POST',
     headers: { Authorization: `Bearer ${lovableKey}`, 'X-Connection-Api-Key': whatsappKey, 'Content-Type': 'application/json' },
     body: JSON.stringify({ messaging_product: 'whatsapp', to, type: 'text', text: { body: text } }),
+    signal: AbortSignal.timeout(15_000),
   });
   if (!res.ok) throw new Error(`WhatsApp notify failed [${res.status}]: ${await res.text()}`);
 }
@@ -60,7 +61,7 @@ export async function signStoragePaths(paths: string[], expiresIn: number): Prom
   return urls;
 }
 
-/** Stores the enquiry, then notifies ENKOP; a notification failure never fails the insert. */
+/** Stores a fallback enquiry. The master alerts ENKOP when it pulls the row back (pullMirrorEnquiries). */
 export async function insertEnquiry(data: Enquiry): Promise<void> {
   const mode = privilegedMode('db');
   if (mode === 'none') throw new Error('Your enquiry could not be sent. Please try again.');
@@ -76,26 +77,6 @@ export async function insertEnquiry(data: Enquiry): Promise<void> {
     preferred_contact: data.preferred_contact, interest: data.interest,
   });
   if (error) throw new Error('Your enquiry could not be sent. Please try again.');
-  await notifyOwner(data).catch(() => {});
-}
-
-// WhatsApp notification to ENKOP when the WhatsApp connection is linked (WHATSAPP_API_KEY present).
-async function notifyOwner(data: Enquiry) {
-  const lovableKey = process.env['LOVABLE_API_KEY'];
-  const whatsappKey = process.env['WHATSAPP_API_KEY'];
-  const to = (process.env['ENKOP_NOTIFY_WHATSAPP'] || '254707465190').replace(/\D/g, '');
-  if (!lovableKey || !whatsappKey || !to) return;
-  const lines = [
-    'New ENKOP enquiry', `Name: ${data.name}`, `Email: ${data.email}`,
-    data.phone ? `Phone: ${data.phone}` : '', `Interest: ${data.interest}`,
-    `Preferred contact: ${data.preferred_contact}`, `Message: ${data.message.slice(0, 500)}`,
-  ].filter(Boolean).join('\n');
-  const res = await fetch('https://connector-gateway.lovable.dev/whatsapp/messages', {
-    method: 'POST',
-    headers: { Authorization: `Bearer ${lovableKey}`, 'X-Connection-Api-Key': whatsappKey, 'Content-Type': 'application/json' },
-    body: JSON.stringify({ messaging_product: 'whatsapp', to, type: 'text', text: { body: lines } }),
-  });
-  if (!res.ok) console.error(`WhatsApp notify failed [${res.status}]: ${await res.text()}`);
 }
 
 /** Fetch an AI Gateway path such as "/videos" (relative to /v1). Caller checks aiAvailable() first. */

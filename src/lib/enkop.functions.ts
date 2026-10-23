@@ -1,5 +1,5 @@
 import { createServerFn } from '@tanstack/react-start';
-import { enquirySchema } from '@/lib/enquiry-schema';
+import { enquiryProblem, enquirySchema } from '@/lib/enquiry-schema';
 
 export const getProperties = createServerFn({ method: 'GET' }).handler(async () => {
   const { getBackend } = await import('@/server/backend');
@@ -25,9 +25,17 @@ export const getProperties = createServerFn({ method: 'GET' }).handler(async () 
 });
 
 export const sendEnquiry = createServerFn({ method: 'POST' })
-  .validator((data) => enquirySchema.parse(data))
+  .validator((data) => {
+    const parsed = enquirySchema.safeParse(data);
+    if (!parsed.success) throw new Error(enquiryProblem(parsed.error));
+    return parsed.data;
+  })
   .handler(async ({ data }) => {
     if (data.website) return { success: true };
+    const [{ getRequest }, { clientAddress, withinLimit }] = await Promise.all([import('@tanstack/react-start/server'), import('@/server/rate-limit')]);
+    if (!(await withinLimit('ENQUIRY_LIMITER', `ip:${clientAddress(getRequest())}`))) {
+      throw new Error('You have sent several enquiries in a short time. Please wait a minute and try again, or call us directly.');
+    }
     const { getBackend } = await import('@/server/backend');
     try {
       await (await getBackend()).submitEnquiry(data);

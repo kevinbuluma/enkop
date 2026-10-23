@@ -1,7 +1,7 @@
 import { createServerFn } from '@tanstack/react-start';
 import { z } from 'zod';
 import { requireAdmin } from '@/lib/require-admin';
-import { optimizedHeroMedia } from '@/lib/hero-media';
+import { optimizedHeroMedia, optimizedHeroPoster } from '@/lib/hero-media';
 
 const pathOk = (p: string | null) => p === null || /^homepage\/[\w.-]+$/.test(p) || /^[0-9a-f-]{36}\/tours\/[0-9a-f-]{36}\.mp4$/.test(p);
 
@@ -12,9 +12,16 @@ export const getHomepageSlides = createServerFn({ method: 'GET' }).handler(async
   const backend = await getBackend();
   const data = await backend.activeSlides();
   if (!data.length) return [];
-  // Only paths an administrator placed on an active homepage slide are signed.
-  const urls = await backend.signMedia(data.flatMap((s) => [s.video_path, s.image_path]).filter((p): p is string => !!p), 60 * 60 * 24);
-  return data.map((s) => ({ id: s.id, label: s.label, video_url: optimizedHeroMedia(s.video_path)?.mp4 ?? (s.video_path ? urls[s.video_path] ?? null : null), webm_url: optimizedHeroMedia(s.video_path)?.webm ?? null, image_url: s.image_path ? urls[s.image_path] ?? null : null }))
+  // Only paths an administrator placed on an active homepage slide are signed, and only when public/ has no copy.
+  const unsigned = data.flatMap((s) => [optimizedHeroMedia(s.video_path) ? null : s.video_path, optimizedHeroPoster(s.image_path) ? null : s.image_path]).filter((p): p is string => !!p);
+  const urls = unsigned.length ? await backend.signMedia(unsigned, 60 * 60 * 24) : {};
+  return data.map((s) => ({
+    id: s.id,
+    label: s.label,
+    video_url: optimizedHeroMedia(s.video_path)?.mp4 ?? (s.video_path ? urls[s.video_path] ?? null : null),
+    webm_url: optimizedHeroMedia(s.video_path)?.webm ?? null,
+    image_url: optimizedHeroPoster(s.image_path) ?? (s.image_path ? urls[s.image_path] ?? null : null),
+  }))
     .filter((s: PublicSlide) => s.video_url || s.image_url);
 });
 

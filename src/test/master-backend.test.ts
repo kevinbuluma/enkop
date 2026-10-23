@@ -121,6 +121,31 @@ describe('master store and outbox triggers', () => {
     expect(bridge.calls[1]!.body).toEqual({ table: 'testimonials', keys: [{ id: a }] });
   });
 
+  it('lets only one drainer push to the mirror at a time', async () => {
+    const { drainOutbox } = await import('@/server/sync');
+    const env = { DB: db } as never;
+    await store.upsert('testimonials', { quote: 'Lovely home', author: 'Ann' });
+    await writeMeta(db, 'mirror-drainer', `someone-else:${Date.now() + 60_000}`);
+    expect(await drainOutbox(env)).toMatchObject({ sent: 0, pending: 1 });
+    expect(bridge.calls).toEqual([]);
+
+    await writeMeta(db, 'mirror-drainer', `someone-else:${Date.now() - 1}`);
+    expect(await drainOutbox(env)).toMatchObject({ sent: 1, pending: 0 });
+    expect(await readMeta(db, 'mirror-drainer')).toBeNull();
+  });
+
+  it('sets a row aside after repeated failures so later changes still reach the mirror', async () => {
+    const { drainOutbox, outboxStatus } = await import('@/server/sync');
+    const env = { DB: db } as never;
+    const a = await store.upsert('testimonials', { quote: 'Lovely home', author: 'Ann' });
+    await store.remove('testimonials', a);
+    await (await pglite()).exec(`UPDATE outbox SET attempts = 19 WHERE kind = 'upsert'`);
+    bridge.fail.add('mirror/upsert');
+    expect(await drainOutbox(env)).toMatchObject({ sent: 1, failed: 1, pending: 0 });
+    expect(bridge.calls.map((c) => c.route)).toEqual(['mirror/upsert', 'mirror/delete']);
+    expect(await outboxStatus(env)).toMatchObject({ pending: [], setAside: 1 });
+  });
+
   it('keeps small state in the meta table', async () => {
     expect(await readMeta(db, 'cursor')).toBeNull();
     await writeMeta(db, 'cursor', 'a');

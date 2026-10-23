@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { builtInHeroSlides, optimizedHeroMedia, enhancedHeroMedia } from '@/lib/hero-media';
+import { builtInHeroSlides, optimizedHeroMedia, optimizedHeroPoster, enhancedHeroMedia } from '@/lib/hero-media';
 
 describe('optimized homepage scene media', () => {
   it('provides MP4 and WebM for all existing scenes', () => {
@@ -25,6 +25,10 @@ describe('optimized homepage scene media', () => {
   it('does not substitute old footage for an admin replacement', () => {
     expect(optimizedHeroMedia('homepage/replacement.mp4')).toBeNull();
     expect(optimizedHeroMedia(null)).toBeNull();
+    expect(optimizedHeroPoster('homepage/replacement.jpg')).toBeNull();
+  });
+  it('serves the landing poster from public/ so it stays cacheable', () => {
+    expect(optimizedHeroPoster('homepage/enkop-landing.jpg')).toBe('/videos/scenes/enkop-landing.jpg');
   });
   it('provides enhanced variants for each built-in scene only', () => {
     for (const n of [0, 1, 2]) {

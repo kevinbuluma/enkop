@@ -50,7 +50,23 @@ export function SeasonalPageTransition() {
     const capturePaper = () => {
       const source = document.querySelector('.site-shell');
       if (!source) return;
+      // Only on-screen sections are copied (PAPER_STRIPS times); the rest become spacers of equal height.
+      const sections = [...source.querySelectorAll(':scope > main > *, :scope > footer')];
+      const offscreen = sections.map(node => {
+        const r = node.getBoundingClientRect();
+        if (r.bottom >= 0 && r.top <= innerHeight) return null;
+        const cs = getComputedStyle(node);
+        return { height: r.height, margin: `${cs.marginTop} 0 ${cs.marginBottom}` };
+      });
       const snapshot = source.cloneNode(true) as HTMLElement;
+      snapshot.querySelectorAll(':scope > main > *, :scope > footer').forEach((node, i) => {
+        const box = offscreen[i];
+        if (!box) return;
+        const spacer = document.createElement('div');
+        spacer.style.height = `${box.height}px`;
+        spacer.style.margin = box.margin;
+        node.replaceWith(spacer);
+      });
       snapshot.querySelectorAll('script, canvas, iframe, .skip-link, .seasonal-toggle, .mobile-menu, .section-navigator').forEach(node => node.remove());
       snapshot.querySelectorAll('[id]').forEach(node => node.removeAttribute('id'));
       snapshot.querySelectorAll('video').forEach(video => {

@@ -68,13 +68,25 @@ async function bucket(url, key) {
 }
 
 async function cron() {
-  await sql(`create extension if not exists pg_cron; create extension if not exists pg_net;`);
+  // pg_net in `extensions`, not `public` (Supabase security advisor); its functions live in `net` either way.
+  await sql(`create extension if not exists pg_cron; create extension if not exists pg_net with schema extensions;`);
+  await housekeeping();
   const [{ n }] = await sql(`select count(*)::int as n from cron.job where jobname = 'enkop-master-drain'`);
   if (n) return step('cron job enkop-master-drain exists');
   await sql(`select cron.schedule('enkop-master-drain', '*/5 * * * *', $job$
     select net.http_post(url := '${MASTER}/api/public/enkop-master/drain', body := '{}'::jsonb, headers := '{"Content-Type": "application/json"}'::jsonb)
   $job$)`);
   step('cron job enkop-master-drain scheduled (every 5 minutes)');
+}
+
+/** Daily pruning: delivered outbox rows, expired admin sessions and old cron run history otherwise grow forever. */
+async function housekeeping() {
+  await sql(`select cron.schedule('enkop-housekeeping', '17 3 * * *', $job$
+    delete from public.outbox where done_at < now() - interval '30 days' and kind <> 'delete';
+    delete from public.sessions where expires_at < now();
+    delete from cron.job_run_details where end_time < now() - interval '7 days';
+  $job$)`);
+  step('cron job enkop-housekeeping scheduled (daily 03:17 UTC)');
 }
 
 async function poolerUrl(ref) {

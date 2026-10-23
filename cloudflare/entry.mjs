@@ -39,9 +39,10 @@ const fromAdmin = (request) => {
   }
 };
 
+/** A single byte range; 'ignore' for syntax we do not serve (multi-range, malformed), per RFC 9110 a full 200. */
 function parseRange(header, size) {
-  const m = /^bytes=(\d*)-(\d*)$/.exec(header.trim());
-  if (!m || (m[1] === '' && m[2] === '')) return null;
+  const m = /^bytes=\s*(\d*)\s*-\s*(\d*)\s*$/.exec(header.trim());
+  if (!m || (m[1] === '' && m[2] === '')) return 'ignore';
   let start, end;
   if (m[1] === '') {
     start = Math.max(0, size - Number(m[2]));
@@ -50,7 +51,8 @@ function parseRange(header, size) {
     start = Number(m[1]);
     end = m[2] === '' ? size - 1 : Math.min(Number(m[2]), size - 1);
   }
-  return start <= end && start < size ? { start, end } : null;
+  if (start > end && start < size) return 'ignore';
+  return start < size ? { start, end } : null;
 }
 
 function slice(body, start, end) {
@@ -82,7 +84,8 @@ function slice(body, start, end) {
 const VIDEO_CACHE = 'public, max-age=86400, stale-while-revalidate=604800';
 
 async function serveVideo(request, env) {
-  const header = request.headers.get('range');
+  const asked = request.headers.get('range');
+  const header = asked && parseRange(asked, Number.MAX_SAFE_INTEGER) !== 'ignore' ? asked : null;
   const pathname = new URL(request.url).pathname;
   // Use the assets binding's own Range support when it has it: no bytes pass through this Worker.
   let asset = await env.ASSETS.fetch(new Request(request.url, { method: 'GET', headers: header ? { Range: header } : {} }));
@@ -104,9 +107,11 @@ async function serveVideo(request, env) {
   headers.set('Accept-Ranges', 'bytes');
   headers.set('Cache-Control', VIDEO_CACHE);
   headers.delete('Content-Encoding');
-  if (!header) headers.set('Content-Length', String(size));
-  if (!header) return new Response(request.method === 'HEAD' ? null : asset.body, { status: 200, headers });
-  const range = parseRange(header, size);
+  const range = header ? parseRange(header, size) : 'ignore';
+  if (range === 'ignore') {
+    headers.set('Content-Length', String(size));
+    return new Response(request.method === 'HEAD' ? null : asset.body, { status: 200, headers });
+  }
   if (!range) {
     await asset.body.cancel();
     return new Response(null, { status: 416, headers: { 'Content-Range': `bytes */${size}` } });
@@ -156,6 +161,14 @@ async function route(request, env, ctx) {
     const res = await serveVideo(request, env).catch(() => null);
     if (res && res.status < 500 && res.status !== 404) return res;
     return fromLovable(request, env).catch(() => res ?? new Response(null, { status: 502 }));
+  }
+  // Scene posters share /videos/ with the footage (routed here by run_worker_first) and the same naming.
+  if (read && env.ASSETS && url.pathname.startsWith('/videos/')) {
+    const asset = await env.ASSETS.fetch(request);
+    if (!asset.ok) return asset;
+    const res = new Response(asset.body, asset);
+    res.headers.set('Cache-Control', VIDEO_CACHE);
+    return res;
   }
   if (!eligible) return nitro.fetch(request, env, ctx);
 

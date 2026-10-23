@@ -9,5 +9,7 @@ export function bridgeFetch(route: string, init: RequestInit = {}) {
   const headers = new Headers(init.headers);
   headers.set('x-enkop-bridge-secret', secret);
   const base = (envString('ENKOP_BRIDGE_URL') ?? DEFAULT_BRIDGE).replace(/\/$/, '');
-  return fetch(`${base}/api/public/enkop-bridge/${route}`, { ...init, headers });
+  // Media copies can be 50 MB; everything else is small. A hung call must not stall a whole drain.
+  const timeout = route.startsWith('mirror/media/') ? 120_000 : 30_000;
+  return fetch(`${base}/api/public/enkop-bridge/${route}`, { signal: AbortSignal.timeout(timeout), ...init, headers });
 }

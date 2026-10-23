@@ -1,13 +1,14 @@
 import { useEffect, useState } from 'react';
 import { BrandLogo } from './BrandLogo';
+import { readStored, writeStored } from '@/lib/safe-storage';
 
 /** Short cinematic opening for first-time visitors only. Skippable; never shown with reduced motion. */
 export function Entrance() {
   const [show, setShow] = useState(false);
   const [leaving, setLeaving] = useState(false);
   useEffect(() => {
-    if (localStorage.getItem('enkop:intro') || window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
-    localStorage.setItem('enkop:intro', '1');
+    if (readStored('enkop:intro') || window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+    writeStored('enkop:intro', '1');
     setShow(true);
     const t1 = setTimeout(() => setLeaving(true), 2200);
     const t2 = setTimeout(() => setShow(false), 3000);

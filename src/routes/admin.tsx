@@ -1,5 +1,5 @@
 import { createFileRoute } from '@tanstack/react-router';
-import { useCallback, useEffect, useRef, useState, type FormEvent } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState, type FormEvent } from 'react';
 import { ArrowRight, ImagePlus, LogOut, X } from 'lucide-react';
 import { adminSession, adminSetup, adminSignIn, adminSignOut, uploadMedia, type AdminSession } from '@/lib/admin-client';
 import { Button } from '@/components/ui/button';
@@ -96,9 +96,9 @@ function StudioPanel({ onSignOut }: { onSignOut: () => void }) {
   if (loadError) return <div><p className="studio-error">{loadError}</p>{signOut}</div>;
   if (!studio) return <p className="studio-muted">Loading the studio…</p>;
   if (!studio.isAdmin) return <div><p className="studio-muted">This account does not have administrator access.</p>{signOut}</div>;
-  return <><div className="studio-tabs" role="tablist">{([['listings', 'Listings'], ['enquiries', 'Enquiries'], ['tours', 'Property tours'], ['homepage', 'Homepage scenes'], ['team', 'Team'], ['testimonials', 'Testimonials'], ['season', 'Seasonal']] as const).map(([k, l]) => <button key={k} role="tab" aria-selected={tab === k} onClick={() => setTab(k)}>{l}</button>)}</div>
+  return <><div className="studio-head"><div className="studio-tabs" role="tablist">{([['listings', 'Listings'], ['enquiries', 'Enquiries'], ['tours', 'Property tours'], ['homepage', 'Homepage scenes'], ['team', 'Team'], ['testimonials', 'Testimonials'], ['season', 'Seasonal']] as const).map(([k, l]) => <button key={k} role="tab" aria-selected={tab === k} onClick={() => setTab(k)}>{l}</button>)}</div>{signOut}</div>
   {tab === 'team' ? <TeamManager /> : tab === 'testimonials' ? <TestimonialsManager /> : tab === 'season' ? <SeasonManager /> : tab === 'listings' ? <ListingsManager /> : tab === 'enquiries' ? <EnquiriesManager /> : tab === 'homepage' ? <HomepageManager /> : <div className="studio-grid"><CreateTour properties={studio.properties} busy={studio.tours.some(t => t.status === 'queued' || t.status === 'in_progress')} onCreated={load} />
-    <div><div className="studio-head"><p className="eyebrow">RECENT TOURS</p>{signOut}</div><TourList tours={studio.tours} properties={studio.properties} onChange={load} /></div></div>}</>;
+    <div><div className="studio-head"><p className="eyebrow">RECENT TOURS</p></div><TourList tours={studio.tours} properties={studio.properties} onChange={load} /></div></div>}</>;
 }
 
 function CreateTour({ properties, busy, onCreated }: { properties: Studio['properties']; busy: boolean; onCreated: () => void }) {
@@ -107,8 +107,8 @@ function CreateTour({ properties, busy, onCreated }: { properties: Studio['prope
   const [direction, setDirection] = useState('');
   const [state, setState] = useState<'idle' | 'uploading' | 'starting'>('idle');
   const [error, setError] = useState('');
-  const previews = files.map(f => URL.createObjectURL(f));
-  useEffect(() => () => previews.forEach(URL.revokeObjectURL), [files]); // eslint-disable-line react-hooks/exhaustive-deps
+  const previews = useMemo(() => files.map(f => URL.createObjectURL(f)), [files]);
+  useEffect(() => () => previews.forEach(URL.revokeObjectURL), [previews]);
 
   function pick(list: FileList | null) {
     if (!list) return;

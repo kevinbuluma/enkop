@@ -30,6 +30,8 @@ export const Route = createFileRoute('/api/admin/media')({
       const type = (request.headers.get('content-type') ?? '').split(';')[0]!.trim();
       if (!signablePath(path)) return Response.json({ message: 'Invalid file location.' }, { status: 400 });
       if (!TYPES.test(type)) return Response.json({ message: 'Use JPG, PNG, WebP, MP4 or WebM files.' }, { status: 415 });
+      const { MAX_MEDIA_BYTES } = await import('@/server/backend/media');
+      if (Number(request.headers.get('content-length') ?? 0) > MAX_MEDIA_BYTES) return Response.json({ message: 'Files must be under 50 MB.' }, { status: 413 });
       const data = await request.arrayBuffer();
       if (!data.byteLength) return Response.json({ message: 'The file is empty.' }, { status: 400 });
       try {

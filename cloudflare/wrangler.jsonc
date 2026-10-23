@@ -17,6 +17,12 @@
     { "binding": "LEGACY_D1", "database_name": "enkop-db", "database_id": "7f5bf83f-992a-42fd-9e94-e80cd3ba1b79", "migrations_dir": "migrations" }
   ],
   "kv_namespaces": [{ "binding": "MEDIA_KV", "id": "602aa349dbf349d4a7ca93ab54849b31" }],
+  // src/server/rate-limit.ts: admin sign-in/setup per address and per account, public enquiries
+  // (each sends a WhatsApp alert) per address. Per Cloudflare location and approximate.
+  "ratelimits": [
+    { "name": "SIGNIN_LIMITER", "namespace_id": "4101", "simple": { "limit": 5, "period": 60 } },
+    { "name": "ENQUIRY_LIMITER", "namespace_id": "4102", "simple": { "limit": 5, "period": 60 } }
+  ],
   "vars": {
     "ENKOP_BRIDGE_URL": "https://enkop-real-estate.lovable.app",
     "ENKOP_MASTER_URL": "https://enkop.kevinbuluma9-7ff.workers.dev",

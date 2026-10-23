@@ -64,7 +64,8 @@ export function SeasonParticles() {
       const s = root.getAttribute('data-season') ?? '';
       const k = kinds[s];
       ctx.clearRect(0, 0, innerWidth, innerHeight);
-      if (!k || document.hidden) { raf = requestAnimationFrame(tick); return; }
+      // Idle (no season or hidden tab): stop until wake() sees the season or visibility change.
+      if (!k || document.hidden) { raf = 0; return; }
       const intensity = Math.min(1, Math.max(0, Number(root.getAttribute('data-season-intensity') ?? 1)));
       const nextKey = s + intensity;
       if (nextKey !== key) { key = nextKey; parts = Array.from({ length: Math.round(k.count * intensity * (mobile ? 0.45 : 1)) }, () => spawn(k)); }
@@ -79,14 +80,18 @@ export function SeasonParticles() {
       for (const h of holes) ctx.clearRect(h.left, h.top, h.width, h.height);
       raf = requestAnimationFrame(tick);
     };
+    const wake = () => { if (!raf && !reduce.matches && !document.hidden) raf = requestAnimationFrame(tick); };
     const syncMotion = () => {
-      cancelAnimationFrame(raf);
+      cancelAnimationFrame(raf); raf = 0;
       ctx.clearRect(0, 0, innerWidth, innerHeight);
-      if (!reduce.matches) raf = requestAnimationFrame(tick);
+      wake();
     };
+    const seasonChanges = new MutationObserver(wake);
+    seasonChanges.observe(document.documentElement, { attributes: true, attributeFilter: ['data-season', 'data-season-intensity'] });
     resize(); addEventListener('resize', resize); addEventListener('pointermove', onMove, { passive: true });
+    document.addEventListener('visibilitychange', wake);
     reduce.addEventListener('change', syncMotion); syncMotion();
-    return () => { cancelAnimationFrame(raf); reduce.removeEventListener('change', syncMotion); removeEventListener('resize', resize); removeEventListener('pointermove', onMove); };
+    return () => { cancelAnimationFrame(raf); seasonChanges.disconnect(); document.removeEventListener('visibilitychange', wake); reduce.removeEventListener('change', syncMotion); removeEventListener('resize', resize); removeEventListener('pointermove', onMove); };
   }, []);
   return <canvas ref={ref} className="season-particles" aria-hidden="true" />;
 }
