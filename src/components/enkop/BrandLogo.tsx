@@ -13,14 +13,19 @@ function Art({ part, tone, className }: { part: keyof typeof SIZES; tone: Tone; 
   return <img src={`/brand/enkop-${part}-${tone}.png`} alt="" width={w} height={h} className={className} decoding="async" draggable={false} />;
 }
 
-/** Horizontal lockup (building mark + ENKOP) for headers. With tone "auto" the parent's .brand--on-dark class picks the variant. */
+/** ENKOP with "Real Estate" set beneath it in gold, spaced to the name's width. */
+function Words({ tone }: { tone: Tone }) {
+  return <span className={`brand-words brand-words--${tone}`}><Art part="name" tone={tone} className="brand-name" /><span className="brand-tagline" aria-hidden="true">Real Estate</span></span>;
+}
+
+/** Horizontal lockup (building mark + ENKOP / Real Estate) for headers. With tone "auto" the header picks the variant. */
 export function BrandLockup({ tone = 'auto', className = '' }: { tone?: Tone | 'auto'; className?: string }) {
   if (tone !== 'auto') {
-    return <span className={`brand-lockup ${className}`}><Art part="mark" tone={tone} className="brand-mark" /><Art part="name" tone={tone} className="brand-name" /></span>;
+    return <span className={`brand-lockup ${className}`}><Art part="mark" tone={tone} className="brand-mark" /><Words tone={tone} /></span>;
   }
   return <span className={`brand-lockup brand-lockup--auto ${className}`}>
-    <span className="brand-tone brand-tone--dark"><Art part="mark" tone="dark" className="brand-mark" /><Art part="name" tone="dark" className="brand-name" /></span>
-    <span className="brand-tone brand-tone--light"><Art part="mark" tone="light" className="brand-mark" /><Art part="name" tone="light" className="brand-name" /></span>
+    <span className="brand-tone brand-tone--dark"><Art part="mark" tone="dark" className="brand-mark" /><Words tone="dark" /></span>
+    <span className="brand-tone brand-tone--light"><Art part="mark" tone="light" className="brand-mark" /><Words tone="light" /></span>
   </span>;
 }
 

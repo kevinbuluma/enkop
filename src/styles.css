@@ -1074,6 +1074,14 @@ html { scrollbar-color: color-mix(in oklab, var(--royal) 45%, transparent) trans
 .site-header--inverse .brand-lockup--auto .brand-tone--dark { display: none; }
 .site-header--solid .brand-mark { height: 40px; }
 .site-header--solid .brand-name { height: 17px; }
+/* "Real Estate" at 0.45x the name's height; .38em tracking makes it exactly as wide as ENKOP.
+   Gold on dark headers, --gold-ink on light ones (plain gold text fails contrast there). */
+.brand-words { display: inline-flex; flex-direction: column; align-items: flex-start; gap: 5px; }
+.brand-tagline { font: 600 8.5px/1 var(--font-sans); letter-spacing: .38em; margin-right: -.38em; text-transform: uppercase; white-space: nowrap; transition: font-size .4s; }
+.brand-words--light .brand-tagline { color: var(--gold); }
+.brand-words--dark .brand-tagline { color: var(--gold-ink); }
+.site-header--solid .brand-words { gap: 4px; }
+.site-header--solid .brand-tagline { font-size: 7.65px; }
 .footer-mark { display: inline-flex; line-height: 0; margin-right: 18px; }
 .footer-mark .brand-logo { height: 104px; width: auto; }
 .entrance-mark.brand-logo { height: clamp(150px, 30vh, 260px); width: auto; }
@@ -1081,6 +1089,8 @@ html { scrollbar-color: color-mix(in oklab, var(--royal) 45%, transparent) trans
   .brand-lockup, .brand-tone { gap: 9px; }
   .brand-mark, .site-header--solid .brand-mark { height: 36px; }
   .brand-name, .site-header--solid .brand-name { height: 15px; }
+  .brand-words { gap: 4px; }
+  .brand-tagline, .site-header--solid .brand-tagline { font-size: 6.75px; }
   .footer-mark .brand-logo { height: 92px; }
 }
 
