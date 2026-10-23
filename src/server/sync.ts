@@ -163,6 +163,6 @@ export async function outboxStatus(env: MasterEnv) {
     `SELECT kind, count(*) AS pending, max(attempts) AS max_attempts, min(created_at) AS oldest FROM outbox WHERE done_at IS NULL GROUP BY kind`,
   ).all<{ kind: string; pending: number; max_attempts: number; oldest: string }>();
   const last = await env.DB.prepare(`SELECT last_error FROM outbox WHERE done_at IS NULL AND last_error IS NOT NULL ORDER BY id LIMIT 1`).first<{ last_error: string }>();
-  const aside = await env.DB.prepare(`SELECT count(*) AS n FROM outbox WHERE done_at IS NOT NULL AND last_error IS NOT NULL`).first<{ n: number }>();
+  const aside = await env.DB.prepare(`SELECT count(*) AS n FROM outbox WHERE done_at IS NOT NULL AND last_error LIKE 'set aside:%'`).first<{ n: number }>();
   return { pending: results, lastError: last?.last_error ?? null, setAside: aside?.n ?? 0 };
 }
