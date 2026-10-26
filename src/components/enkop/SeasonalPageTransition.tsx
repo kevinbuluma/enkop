@@ -1,7 +1,7 @@
 import { useEffect, useRef } from 'react';
 import { useRouter } from '@tanstack/react-router';
 import { alternatingTransitionMood, transitionMood } from '@/lib/page-transition';
-import leafAtlasUrl from '@/assets/autumn-leaf-cinematic.png';
+import leafAtlasUrl from '@/assets/autumn-leaf-cinematic.webp';
 import { LEAF_ENTRY_MS, LEAF_EXIT_MS, leafArrival, leafExitPosition } from '@/lib/leaf-motion';
 import { PAPER_TURN_MS, paperStripPose, paperStripsFor } from '@/lib/paper-turn';
 
