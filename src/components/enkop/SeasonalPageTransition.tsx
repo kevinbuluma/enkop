@@ -15,6 +15,7 @@ export function SeasonalPageTransition() {
   const paperRef = useRef<HTMLDivElement>(null);
   const curtainRef = useRef<HTMLDivElement>(null);
   const shadowRef = useRef<HTMLDivElement>(null);
+  const outgoingRef = useRef<HTMLDivElement>(null);
 
   // A page whose data is slow shows a looping gold bar (html.is-route-loading) until it arrives.
   useEffect(() => {
@@ -27,8 +28,8 @@ export function SeasonalPageTransition() {
   }, [router]);
 
   useEffect(() => {
-    const el = ref.current, canvas = canvasRef.current, paper = paperRef.current, curtain = curtainRef.current, shadow = shadowRef.current;
-    if (!el || !canvas || !paper || !curtain || !shadow) return;
+    const el = ref.current, canvas = canvasRef.current, paper = paperRef.current, curtain = curtainRef.current, shadow = shadowRef.current, outgoing = outgoingRef.current;
+    if (!el || !canvas || !paper || !curtain || !shadow || !outgoing) return;
     const ctx = canvas.getContext('2d');
     if (!ctx) return;
     const reduce = matchMedia('(prefers-reduced-motion: reduce)');
@@ -61,10 +62,22 @@ export function SeasonalPageTransition() {
     let mood = transitionMood(null);
     let leaves: { x: number; y: number; size: number; angle: number; depth: number }[] = [];
     let strips: { strip: HTMLDivElement; shade: HTMLDivElement; light: HTMLDivElement; back: HTMLDivElement }[] = [];
-    const capturePaper = () => {
+    /** The current frame of a playing video as an image URL; null when unavailable or cross-origin. */
+    const videoFrame = (video: HTMLVideoElement) => {
+      if (video.readyState < 2 || !video.videoWidth) return null;
+      try {
+        const scale = Math.min(1, 1600 / video.videoWidth);
+        const frame = document.createElement('canvas');
+        frame.width = Math.round(video.videoWidth * scale); frame.height = Math.round(video.videoHeight * scale);
+        frame.getContext('2d')?.drawImage(video, 0, 0, frame.width, frame.height);
+        return frame.toDataURL('image/jpeg', .85);
+      } catch { return null; }
+    };
+    /** An inert copy of the outgoing page as it looks right now, positioned for the fixed overlay. */
+    const snapshotPage = () => {
       const source = document.querySelector('.site-shell');
-      if (!source) return;
-      // Only on-screen sections are copied (once per strip); the rest become spacers of equal height.
+      if (!source) return null;
+      // Only on-screen sections are copied; the rest become spacers of equal height.
       const sections = [...source.querySelectorAll(':scope > main > *, :scope > footer')];
       const offscreen = sections.map(node => {
         const r = node.getBoundingClientRect();
@@ -72,7 +85,17 @@ export function SeasonalPageTransition() {
         const cs = getComputedStyle(node);
         return { height: r.height, margin: `${cs.marginTop} 0 ${cs.marginBottom}` };
       });
+      const liveVideos = [...source.querySelectorAll('video')];
       const snapshot = source.cloneNode(true) as HTMLElement;
+      // Videos become their current frame, so the copy matches what the visitor is looking at.
+      snapshot.querySelectorAll('video').forEach((video, i) => {
+        const live = liveVideos[i];
+        const image = document.createElement('img');
+        image.src = (live && !live.paused && videoFrame(live)) || video.poster;
+        image.className = video.className;
+        image.style.animation = 'none'; image.style.opacity = '1';
+        video.replaceWith(image);
+      });
       snapshot.querySelectorAll(':scope > main > *, :scope > footer').forEach((node, i) => {
         const box = offscreen[i];
         if (!box) return;
@@ -83,16 +106,17 @@ export function SeasonalPageTransition() {
       });
       snapshot.querySelectorAll('script, canvas, iframe, .skip-link, .seasonal-toggle, .mobile-menu, .section-navigator').forEach(node => node.remove());
       snapshot.querySelectorAll('[id]').forEach(node => node.removeAttribute('id'));
-      snapshot.querySelectorAll('video').forEach(video => {
-        const image = document.createElement('img');
-        image.src = video.poster; image.className = video.className;
-        video.replaceWith(image);
-      });
-      snapshot.classList.add('paper-page-snapshot');
+      // Not a second .site-shell: page code looks up the live shell (and its footer) by that class.
+      snapshot.classList.replace('site-shell', 'paper-page-snapshot');
       snapshot.style.top = `${-scrollY}px`;
       snapshot.style.width = `${innerWidth}px`;
       const header = snapshot.querySelector<HTMLElement>('.site-header');
       if (header) { header.style.position = 'absolute'; header.style.top = `${scrollY}px`; }
+      return snapshot;
+    };
+    const capturePaper = () => {
+      const snapshot = snapshotPage();
+      if (!snapshot) return;
       const fragment = document.createDocumentFragment();
       const layer = (className: string) => { const d = document.createElement('div'); d.className = className; return d; };
       const count = paperStripsFor(innerWidth);
@@ -117,7 +141,7 @@ export function SeasonalPageTransition() {
       el.dataset['phase'] = 'idle';
       document.documentElement.removeAttribute('data-page-transition');
       ctx.clearRect(0, 0, width, height);
-      paper.replaceChildren(); strips = [];
+      paper.replaceChildren(); strips = []; outgoing.replaceChildren();
       curtain.style.opacity = '0'; shadow.style.opacity = '0';
     };
     const draw = (now: number) => {
@@ -127,7 +151,11 @@ export function SeasonalPageTransition() {
       // Reveal once the next page has resolved, or after MAX_HOLD_MS fully covered: slow data then shows
       // the router's own pending state instead of a frozen curtain.
       const settled = ready || now - start - entryMs > MAX_HOLD_MS;
-      if (settled && !release && entry === 1 && (!textured || now - start >= LEAF_ENTRY_MS + 140)) { release = now; el.dataset['phase'] = 'revealing'; }
+      if (settled && !release && entry === 1 && (!textured || now - start >= LEAF_ENTRY_MS + 140)) {
+        release = now; el.dataset['phase'] = 'revealing';
+        // The leaves are at full cover here: drop the frozen outgoing page so they blow away onto the new one.
+        outgoing.replaceChildren();
+      }
       const exit = release ? Math.min(1, (now - release) / (textured ? LEAF_EXIT_MS : mood === 'flip' ? PAPER_TURN_MS : 760)) : 0;
       // Per-frame values go on the childless layers that use them, never on ancestors of the page copies.
       curtain.style.opacity = String(textured ? Math.pow(entry, 3) * .78 * Math.pow(1 - exit, 2) : mood === 'flip' ? Math.sin(entry * Math.PI / 2) : Math.sin(entry * Math.PI / 2) * (1 - exit));
@@ -221,6 +249,9 @@ export function SeasonalPageTransition() {
       palette = [1, 2, 3, 4].map(n => styles.getPropertyValue(`--wind-color-${n}`).trim());
       width = innerWidth; height = innerHeight;
       if (mood === 'flip') capturePaper();
+      // The router swaps pages at once; under the leaves the visitor keeps seeing the outgoing page
+      // until the leaves cover the screen.
+      if (mood === 'leaves') { const snapshot = snapshotPage(); if (snapshot) outgoing.replaceChildren(snapshot); }
       const spacing = Math.max(72, Math.min(125, width / 10));
       const cols = Math.ceil(width / spacing) + 2, rows = Math.ceil(height / spacing) + 2;
       leaves = Array.from({ length: cols * rows }, (_, i) => {
@@ -243,6 +274,7 @@ export function SeasonalPageTransition() {
   }, [router]);
 
   return <div ref={ref} className="seasonal-page-transition" data-phase="idle" aria-hidden="true">
+    <div ref={outgoingRef} className="outgoing-page" inert />
     <div ref={curtainRef} className="seasonal-page-curtain" /><canvas ref={canvasRef} />
     <div ref={shadowRef} className="paper-cast-shadow" /><div ref={paperRef} className="paper-turn-sheet" inert />
   </div>;
