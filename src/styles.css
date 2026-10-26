@@ -351,6 +351,8 @@ a { text-decoration: none; }
 .detail-content { padding-top: 135px; padding-bottom: 145px; display: grid; grid-template-columns: 1.3fr .7fr; gap: 12vw; }
 .detail-overview h2 { margin: 35px 0; }
 .detail-overview > p:not(.eyebrow) { max-width: 570px; }
+/* Long descriptions keep the line breaks and paragraphs typed in the admin. */
+.detail-description { white-space: pre-line; overflow-wrap: anywhere; }
 .detail-facts > .eyebrow { margin-bottom: 20px; }
 .detail-facts > div { display: flex; justify-content: space-between; gap: 15px; padding: 19px 0; border-bottom: 1px solid var(--border); font-size: 12px; }
 .detail-facts span { color: var(--muted-foreground); }

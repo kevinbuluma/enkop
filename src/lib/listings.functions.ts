@@ -35,7 +35,8 @@ const listingInput = z.object({
   bathrooms: z.number().int().min(0).max(50),
   area_sqm: z.number().int().min(0).max(100_000),
   parking: z.number().int().min(0).max(50),
-  description: z.string().trim().max(4000),
+  // No length limit: the column is unbounded text on the master and the mirror.
+  description: z.string().trim(),
   amenities: z.array(z.string().trim().min(1).max(60)).max(30),
   image_paths: z.array(z.string().max(300)).max(20),
   status: z.enum(['draft', 'published']),

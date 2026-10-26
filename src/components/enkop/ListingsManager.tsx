@@ -152,7 +152,7 @@ function ListingEditor({ draft: initial, onDone }: { draft: Draft; onDone: (save
       <label>Area (m²)<input type="number" min="0" value={draft.area_sqm} onChange={(e) => set({ area_sqm: e.target.value })} /></label>
       <label>Parking<input type="number" min="0" max="50" value={draft.parking} onChange={(e) => set({ parking: e.target.value })} /></label>
     </div>
-    <label>Description<textarea rows={4} maxLength={4000} value={draft.description} onChange={(e) => set({ description: e.target.value })} placeholder="A short, evocative description of the residence." /></label>
+    <label>Description<textarea rows={8} value={draft.description} onChange={(e) => set({ description: e.target.value })} placeholder="Describe the residence. Any length; blank lines start new paragraphs." /></label>
     <label>Amenities (comma separated)<input value={draft.amenities} maxLength={1000} onChange={(e) => set({ amenities: e.target.value })} placeholder="Heated pool, Staff quarters, Garden" /></label>
     <label>Location for map (area or landmark — avoid exact house numbers)<input value={draft.map_query} maxLength={200} onChange={(e) => set({ map_query: e.target.value })} placeholder="Karen, Nairobi" /></label>
     <fieldset className="listing-links"><legend className="studio-label">Explore this property elsewhere · paste real links only</legend>
