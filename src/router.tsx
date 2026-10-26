@@ -10,7 +10,10 @@ export const getRouter = () => {
     context: { queryClient },
     scrollRestoration: true,
     defaultViewTransition: false,
-    defaultPreloadStaleTime: 0,
+    // Start a page's data on hover or touch, so it is usually ready when the transition reveals it.
+    // Loaders call server functions directly (no query cache), so a preload must stay usable for the click.
+    defaultPreload: 'intent',
+    defaultPreloadStaleTime: 30_000,
   });
 
   return router;

@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { PAPER_STRIPS, paperStripPose } from '@/lib/paper-turn';
+import { PAPER_STRIPS, paperStripPose, paperStripsFor } from '@/lib/paper-turn';
 
 describe('flexible page geometry', () => {
   it('starts flat and aligned with the outgoing viewport', () => {
@@ -16,6 +16,14 @@ describe('flexible page geometry', () => {
   it('lifts the free corner more than the spine before the sweep', () => {
     expect(paperStripPose(.15, 19, 1000).y).toBeLessThan(paperStripPose(.15, 0, 1000).y);
     expect(paperStripPose(1, 19, 1000).y).toBeCloseTo(0);
+  });
+  it('uses fewer, still narrow strips on phones and keeps them aligned and fully turned', () => {
+    const strips = paperStripsFor(390);
+    expect(strips).toBeLessThan(PAPER_STRIPS);
+    expect(390 / strips).toBeGreaterThan(25);
+    expect(paperStripPose(0, strips - 1, 390, strips).x).toBeCloseTo(390 - 390 / strips);
+    for (let i = 0; i < strips; i++) expect(paperStripPose(1, i, 390, strips).x).toBeLessThan(-20);
+    expect(paperStripsFor(1440)).toBe(PAPER_STRIPS);
   });
   it('moves faster through the middle than during the initial fingertip lift', () => {
     const early = paperStripPose(.15, 0, 1000).angle - paperStripPose(.05, 0, 1000).angle;
