@@ -99,22 +99,27 @@ export async function drainOutbox(env: MasterEnv, limit = 25) {
   const token = crypto.randomUUID();
   if (await holdDrainer(env, token)) {
     try {
-      const mirror = await claim(env, 'mirror', limit, nowMs);
       const requeue = (rows: OutboxRow[]) => rows.length
         ? env.DB.prepare(`UPDATE outbox SET next_attempt_at = ? WHERE id IN (${rows.map(() => '?').join(',')})`).bind(iso(nowMs), ...rows.map((r) => r.id)).run()
         : null;
-      for (let i = 0; i < mirror.length; i++) {
-        const row = mirror[i]!;
-        if (i > 0 && !(await holdDrainer(env, token))) { await requeue(mirror.slice(i)); break; }
-        try {
-          await deliver(env, row);
-          await markDone(env, row.id);
-          sent++;
-        } catch (e) {
-          failed++;
-          if (await markFailed(env, row, e)) continue;
-          await requeue(mirror.slice(i + 1));
-          break;
+      // Other drains skip while this one holds the lease, so it also takes rows queued meanwhile
+      // (e.g. photo uploads and the final save of a new listing) instead of leaving them for the cron.
+      rounds: for (let round = 0; round < 4; round++) {
+        const mirror = await claim(env, 'mirror', limit, Date.now());
+        if (!mirror.length) break;
+        for (let i = 0; i < mirror.length; i++) {
+          const row = mirror[i]!;
+          if (!(await holdDrainer(env, token))) { await requeue(mirror.slice(i)); break rounds; }
+          try {
+            await deliver(env, row);
+            await markDone(env, row.id);
+            sent++;
+          } catch (e) {
+            failed++;
+            if (await markFailed(env, row, e)) continue;
+            await requeue(mirror.slice(i + 1));
+            break rounds;
+          }
         }
       }
     } finally {

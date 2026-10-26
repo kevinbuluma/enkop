@@ -9,11 +9,12 @@ import { signMediaPaths, verifyMediaSignature } from '@/server/backend/media';
 import { toPositional, type PgDatabase } from '@/server/backend/pg';
 import { completeSetup, createSession, issueSetupToken, sessionAdmin, verifyLogin } from '@/server/auth';
 
-const bridge = vi.hoisted(() => ({ calls: [] as { route: string; body: unknown }[], fail: new Set<string>() }));
+const bridge = vi.hoisted(() => ({ calls: [] as { route: string; body: unknown }[], fail: new Set<string>(), onCall: null as null | (() => Promise<void>) }));
 vi.mock('@/server/bridge-client', () => ({
   bridgeFetch: async (route: string, init: RequestInit = {}) => {
     const body = typeof init.body === 'string' ? JSON.parse(init.body) : init.body;
     bridge.calls.push({ route, body });
+    const hook = bridge.onCall; bridge.onCall = null; await hook?.();
     return bridge.fail.has(route) ? new Response('{"message":"down"}', { status: 503 }) : Response.json({ ok: true });
   },
 }));
@@ -132,6 +133,15 @@ describe('master store and outbox triggers', () => {
     await writeMeta(db, 'mirror-drainer', `someone-else:${Date.now() - 1}`);
     expect(await drainOutbox(env)).toMatchObject({ sent: 1, pending: 0 });
     expect(await readMeta(db, 'mirror-drainer')).toBeNull();
+  });
+
+  it('also delivers changes queued while it is draining, instead of leaving them for the next run', async () => {
+    const { drainOutbox } = await import('@/server/sync');
+    const env = { DB: db } as never;
+    await store.upsert('testimonials', { quote: 'First', author: 'Ann' });
+    bridge.onCall = async () => { await store.upsert('testimonials', { quote: 'Queued meanwhile', author: 'Ben' }); };
+    expect(await drainOutbox(env)).toMatchObject({ sent: 2, pending: 0 });
+    expect(bridge.calls.map((c) => (c.body as { rows: { quote: string }[] }).rows[0]!.quote)).toEqual(['First', 'Queued meanwhile']);
   });
 
   it('sets a row aside after repeated failures so later changes still reach the mirror', async () => {
