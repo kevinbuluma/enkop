@@ -85,7 +85,7 @@ BEGIN
     CREATE EXTENSION IF NOT EXISTS pg_net WITH SCHEMA extensions;
     IF NOT EXISTS (SELECT 1 FROM cron.job WHERE jobname = 'enkop-master-drain') THEN
       PERFORM cron.schedule('enkop-master-drain', '*/5 * * * *', $job$
-        select net.http_post(url := 'https://enkop.kevinbuluma9-7ff.workers.dev/api/public/enkop-master/drain', headers := '{"Content-Type": "application/json"}'::jsonb, body := '{}'::jsonb)
+        select net.http_post(url := 'https://enkoprealestate.com/api/public/enkop-master/drain', headers := '{"Content-Type": "application/json"}'::jsonb, body := '{}'::jsonb)
       $job$);
     END IF;
   END IF;

@@ -8,7 +8,7 @@
 import { existsSync, readFileSync } from 'node:fs';
 import { extname, join } from 'node:path';
 
-const MASTER = (process.env.ENKOP_MASTER_URL || 'https://enkop.kevinbuluma9-7ff.workers.dev').replace(/\/$/, '');
+const MASTER = (process.env.ENKOP_MASTER_URL || 'https://enkoprealestate.com').replace(/\/$/, '');
 const TYPES = { '.jpg': 'image/jpeg', '.jpeg': 'image/jpeg', '.png': 'image/png', '.webp': 'image/webp', '.mp4': 'video/mp4', '.webm': 'video/webm' };
 
 function internalKey() {

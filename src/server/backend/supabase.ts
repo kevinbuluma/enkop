@@ -4,7 +4,7 @@ import type { Backend } from './types';
 // The Lovable Cloud mirror. Reads use the public (RLS-limited) client exactly as before;
 // enquiries go to the master so there is a single writer.
 
-const DEFAULT_MASTER = 'https://enkop.kevinbuluma9-7ff.workers.dev';
+const DEFAULT_MASTER = 'https://enkoprealestate.com';
 
 async function client() {
   const { supabase } = await import('@/integrations/supabase/client');

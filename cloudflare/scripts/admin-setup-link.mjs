@@ -12,7 +12,7 @@ if (!email || !sqlOut || !linkOut) {
   console.error('usage: admin-setup-link.mjs <email> <sql-out> <link-out> [admin-id]');
   process.exit(1);
 }
-const master = (process.env.ENKOP_MASTER_URL || 'https://enkop.kevinbuluma9-7ff.workers.dev').replace(/\/$/, '');
+const master = (process.env.ENKOP_MASTER_URL || 'https://enkoprealestate.com').replace(/\/$/, '');
 const token = randomBytes(32).toString('base64url');
 const hash = createHash('sha256').update(token).digest('base64url');
 const expires = new Date(Date.now() + 48 * 36e5).toISOString();

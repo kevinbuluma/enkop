@@ -41,7 +41,7 @@ export function formatPrice(property: Property) {
 }
 
 // The master site is the one search engines and share cards should point at; mirror hosts serve the same pages.
-export const SITE_URL = 'https://enkop.kevinbuluma9-7ff.workers.dev';
+export const SITE_URL = 'https://enkoprealestate.com';
 export const siteUrl = (path = '/') => new URL(path, SITE_URL).href;
 export const pageSeo = (path: string) => ({ ogUrl: { property: 'og:url', content: siteUrl(path) }, canonical: { rel: 'canonical', href: siteUrl(path) } });
 

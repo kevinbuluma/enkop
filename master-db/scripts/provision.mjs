@@ -10,7 +10,7 @@ import { api, readSecret, sleep, sql, writeSecret } from './lib.mjs';
 
 const NAME = process.env.ENKOP_SUPABASE_PROJECT || 'enkop';
 const REGION = process.env.ENKOP_SUPABASE_REGION || 'eu-west-2';
-const MASTER = 'https://enkop.kevinbuluma9-7ff.workers.dev';
+const MASTER = 'https://enkoprealestate.com';
 const ROOT = fileURLToPath(new URL('../../', import.meta.url));
 const step = (msg) => console.log(`- ${msg}`);
 

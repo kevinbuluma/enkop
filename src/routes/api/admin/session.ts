@@ -1,7 +1,7 @@
 import { createFileRoute } from '@tanstack/react-router';
 import { z } from 'zod';
 
-const MASTER = 'https://enkop.kevinbuluma9-7ff.workers.dev';
+const MASTER = 'https://enkoprealestate.com';
 const noStore = { 'Cache-Control': 'no-store' };
 
 const body = z.discriminatedUnion('action', [

@@ -33,7 +33,7 @@ export async function getBackend(): Promise<Backend> {
 /** Master-only access to the database and media; throws on the mirror. */
 export async function getMaster() {
   const env = await masterEnv();
-  if (!env) throw new Error(`Administration has moved to the ENKOP master site: ${process.env['ENKOP_MASTER_URL'] || 'https://enkop.kevinbuluma9-7ff.workers.dev'}/admin`);
+  if (!env) throw new Error(`Administration has moved to the ENKOP master site: ${process.env['ENKOP_MASTER_URL'] || 'https://enkoprealestate.com'}/admin`);
   const { masterBackend } = await import('./master');
   const { afterResponse } = await import('@/server/runtime');
   return {

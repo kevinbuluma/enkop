@@ -10,6 +10,8 @@ import VIDEO_SIZES from './enkop-video-sizes.mjs';
 const VIDEO = /^\/videos\/[\w./-]+\.(mp4|webm)$/;
 const NO_FALLBACK = /^\/(admin|api\/admin\/|api\/public\/enkop-|media\/|api\/homepage-fallback)/;
 const LOVABLE = 'https://enkop-real-estate.lovable.app';
+/** Public canonical host. www and the workers.dev URL permanently redirect here. */
+const CANONICAL_HOST = 'enkoprealestate.com';
 
 function safeEqual(a, b) {
   if (!a || !b || a.length !== b.length) return false;
@@ -153,6 +155,12 @@ export default {
 async function route(request, env, ctx) {
   const url = new URL(request.url);
   const read = request.method === 'GET' || request.method === 'HEAD';
+  // One public hostname. www always redirects; workers.dev redirects browser GETs (API POSTs stay reachable there as a fallback for cron until they call the apex).
+  if (url.hostname !== CANONICAL_HOST && (url.hostname === `www.${CANONICAL_HOST}` || (url.hostname.endsWith('.workers.dev') && read))) {
+    url.hostname = CANONICAL_HOST;
+    url.protocol = 'https:';
+    return Response.redirect(url.toString(), 301);
+  }
   const serverFn = url.pathname.startsWith('/_serverFn/');
   const eligible = !NO_FALLBACK.test(url.pathname) && (read || (serverFn && request.method === 'POST')) && !(serverFn && fromAdmin(request));
   if (eligible && safeEqual(request.headers.get('x-enkop-test-fallback'), env.ENKOP_INTERNAL_KEY)) return fromLovable(request, env);

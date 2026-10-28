@@ -3,4 +3,4 @@ Allow: /
 Disallow: /admin
 Disallow: /api/
 
-Sitemap: https://enkop.kevinbuluma9-7ff.workers.dev/sitemap.xml
+Sitemap: https://enkoprealestate.com/sitemap.xml
