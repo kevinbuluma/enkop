@@ -9,6 +9,10 @@ describe('seasonal navigation moods', () => {
     expect([0, 1, 2].map(index => alternatingTransitionMood('winter', index))).toEqual(['snow', 'flip', 'snow']);
     expect([0, 1, 2].map(index => alternatingTransitionMood('spring', index))).toEqual(['petals', 'flip', 'petals']);
   });
+  it('keeps the storm clouds on every navigation in rain seasons', () => {
+    expect([0, 1, 2].map(index => alternatingTransitionMood('long-rains', index))).toEqual(['rain', 'rain', 'rain']);
+    expect([0, 1].map(index => alternatingTransitionMood('short-rains', index))).toEqual(['rain', 'rain']);
+  });
   it('sweeps autumn leaves', () => expect(transitionMood('autumn')).toBe('leaves'));
   it('uses winter snow', () => expect(transitionMood('winter')).toBe('snow'));
   it('uses spring petals', () => expect(transitionMood('spring')).toBe('petals'));

@@ -1,11 +1,25 @@
 import { useEffect, useRef } from 'react';
 import { useRouter } from '@tanstack/react-router';
-import { alternatingTransitionMood, transitionMood } from '@/lib/page-transition';
+import { alternatingTransitionMood, transitionMood, type TransitionMood } from '@/lib/page-transition';
 import leafAtlasUrl from '@/assets/autumn-leaf-cinematic.webp';
 import { LEAF_ENTRY_MS, LEAF_EXIT_MS, leafArrival, leafExitPosition } from '@/lib/leaf-motion';
 import { PAPER_TURN_MS, paperStripPose, paperStripsFor } from '@/lib/paper-turn';
+import { easeInOut, isRainSeason, parsePreference, stormProfile, type StormProfile } from '@/lib/storm/atmosphere';
+import { flashAt, planStrikes, stormLight, type Strike } from '@/lib/storm/lightning';
+import { StormClouds } from '@/lib/storm/storm-clouds';
+import { thunder } from '@/lib/storm/rain-audio';
 
 const MAX_HOLD_MS = 1200;
+
+/** The storm profile for the current season, preferences and device. */
+function currentStormProfile(reducedMotion: boolean): StormProfile {
+  const root = document.documentElement;
+  return stormProfile({
+    intensity: Math.min(1, Math.max(0.2, Number(root.getAttribute('data-season-intensity') ?? 1) || 1)),
+    preference: parsePreference(root.getAttribute('data-atmosphere')),
+    reducedMotion, mobile: innerWidth < 760,
+  });
+}
 
 /** Persistent navigation curtain; never delays data loading or intercepts links. */
 export function SeasonalPageTransition() {
@@ -16,6 +30,7 @@ export function SeasonalPageTransition() {
   const curtainRef = useRef<HTMLDivElement>(null);
   const shadowRef = useRef<HTMLDivElement>(null);
   const outgoingRef = useRef<HTMLDivElement>(null);
+  const cloudsRef = useRef<HTMLCanvasElement>(null);
 
   // A page whose data is slow shows a looping gold bar (html.is-route-loading) until it arrives.
   useEffect(() => {
@@ -28,8 +43,8 @@ export function SeasonalPageTransition() {
   }, [router]);
 
   useEffect(() => {
-    const el = ref.current, canvas = canvasRef.current, paper = paperRef.current, curtain = curtainRef.current, shadow = shadowRef.current, outgoing = outgoingRef.current;
-    if (!el || !canvas || !paper || !curtain || !shadow || !outgoing) return;
+    const el = ref.current, canvas = canvasRef.current, paper = paperRef.current, curtain = curtainRef.current, shadow = shadowRef.current, outgoing = outgoingRef.current, cloudCanvas = cloudsRef.current;
+    if (!el || !canvas || !paper || !curtain || !shadow || !outgoing || !cloudCanvas) return;
     const ctx = canvas.getContext('2d');
     if (!ctx) return;
     const reduce = matchMedia('(prefers-reduced-motion: reduce)');
@@ -59,7 +74,21 @@ export function SeasonalPageTransition() {
     let navigationIndex = 0;
     let width = 0, height = 0;
     let palette: string[] = [];
-    let mood = transitionMood(null);
+    let mood: TransitionMood | 'calm' = transitionMood(null);
+    // Storm clouds (rain seasons): created on first need, warmed up as soon as a rain season applies.
+    let clouds: StormClouds | null = null;
+    let storm: { profile: StormProfile; strikes: Strike[]; fired: number; entrance: boolean } | null = null;
+    const ensureClouds = () => (clouds ??= new StormClouds(cloudCanvas));
+    let warmed = false;
+    const warmUp = () => {
+      if (warmed || !isRainSeason(document.documentElement.getAttribute('data-season'))) return;
+      warmed = true;
+      const idle = window.requestIdleCallback ?? ((fn: () => void) => window.setTimeout(fn, 200));
+      idle(() => { const c = ensureClouds(); c.resize(innerWidth, innerHeight, innerWidth < 760); c.clear(); });
+    };
+    const seasonWatch = new MutationObserver(warmUp);
+    seasonWatch.observe(document.documentElement, { attributes: true, attributeFilter: ['data-season'] });
+    warmUp();
     let leaves: { x: number; y: number; size: number; angle: number; depth: number }[] = [];
     let strips: { strip: HTMLDivElement; shade: HTMLDivElement; light: HTMLDivElement; back: HTMLDivElement }[] = [];
     /** The current frame of a playing video as an image URL; null when unavailable or cross-origin. */
@@ -143,10 +172,59 @@ export function SeasonalPageTransition() {
       ctx.clearRect(0, 0, width, height);
       paper.replaceChildren(); strips = []; outgoing.replaceChildren();
       curtain.style.opacity = '0'; shadow.style.opacity = '0';
+      clouds?.clear(); storm = null; stormLight.flash = 0;
     };
+    const beginReveal = (now: number) => {
+      release = now; el.dataset['phase'] = 'revealing';
+      outgoing.replaceChildren();
+      dispatchEvent(new CustomEvent('enkop:storm-reveal'));
+    };
+    /** Clouds sweep in from the edges, hold while the next page loads behind them, then part from the centre. */
+    const drawStorm = (now: number, s: NonNullable<typeof storm>) => {
+      const p = s.profile, t = now - start;
+      let cover: number, phase = 0, done = false;
+      if (s.entrance) {
+        const { arriveMs, holdMs, revealMs } = p.entrance;
+        if (t >= arriveMs + holdMs && !release) beginReveal(now);
+        if (release) { const e = (now - release) / revealMs; phase = 1; cover = 1 - easeInOut(e); done = e >= 1; }
+        else cover = easeInOut(t / arriveMs);
+      } else {
+        const entry = Math.min(1, t / p.coverMs);
+        if (!release && entry === 1 && (ready || t - p.coverMs > MAX_HOLD_MS)) beginReveal(now);
+        if (release) { const e = (now - release) / p.revealMs; phase = 1; cover = 1 - easeInOut(e); done = e >= 1; }
+        else cover = easeInOut(entry);
+      }
+      for (; s.fired < s.strikes.length && t >= s.strikes[s.fired]!.at; s.fired++) thunder(s.strikes[s.fired]!.strength, 700 + Math.random() * 1500);
+      const f = flashAt(t, s.strikes);
+      stormLight.flash = f.level * Math.min(1, cover * 1.4);
+      ensureClouds().render(now, { cover, phase, flash: stormLight.flash, flashX: f.x, flashY: f.y, maxAlpha: s.entrance ? 0.96 : 1 });
+      if (done) { stop(); return; }
+      raf = requestAnimationFrame(draw);
+    };
+    const startStorm = (entrance: boolean) => {
+      const profile = currentStormProfile(false);
+      const c = ensureClouds();
+      c.resize(innerWidth, innerHeight, innerWidth < 760);
+      const e = profile.entrance;
+      const strikes = !profile.lightning ? []
+        : entrance ? planStrikes(e.strikes, e.arriveMs * 0.75, e.arriveMs + e.holdMs)
+        : Math.random() < 0.3 ? planStrikes(1, profile.coverMs * 0.6, profile.coverMs + 300) : [];
+      storm = { profile, strikes, fired: 0, entrance };
+      mood = 'rain';
+      el.dataset['mood'] = 'rain'; el.dataset['phase'] = 'covering';
+      document.documentElement.setAttribute('data-page-transition', 'rain');
+      // Visitors keep seeing the outgoing page until the clouds cover it.
+      if (!entrance) { const snapshot = snapshotPage(); if (snapshot) outgoing.replaceChildren(snapshot); }
+      start = performance.now(); release = 0; ready = entrance;
+      raf = requestAnimationFrame(draw);
+      timeout = window.setTimeout(stop, 6500);
+    };
+    const onEntrance = () => { if (el.dataset['phase'] === 'idle' && !reduce.matches) startStorm(true); };
+    addEventListener('enkop:storm-entrance', onEntrance);
     const draw = (now: number) => {
+      if (storm) { drawStorm(now, storm); return; }
       const textured = mood === 'leaves' && sprites.length === 4;
-      const entryMs = textured ? LEAF_ENTRY_MS : mood === 'flip' ? 160 : 420;
+      const entryMs = textured ? LEAF_ENTRY_MS : mood === 'flip' ? 160 : mood === 'calm' ? 220 : 420;
       const entry = Math.min(1, (now - start) / entryMs);
       // Reveal once the next page has resolved, or after MAX_HOLD_MS fully covered: slow data then shows
       // the router's own pending state instead of a frozen curtain.
@@ -156,9 +234,9 @@ export function SeasonalPageTransition() {
         // The leaves are at full cover here: drop the frozen outgoing page so they blow away onto the new one.
         outgoing.replaceChildren();
       }
-      const exit = release ? Math.min(1, (now - release) / (textured ? LEAF_EXIT_MS : mood === 'flip' ? PAPER_TURN_MS : 760)) : 0;
+      const exit = release ? Math.min(1, (now - release) / (textured ? LEAF_EXIT_MS : mood === 'flip' ? PAPER_TURN_MS : mood === 'calm' ? 320 : 760)) : 0;
       // Per-frame values go on the childless layers that use them, never on ancestors of the page copies.
-      curtain.style.opacity = String(textured ? Math.pow(entry, 3) * .78 * Math.pow(1 - exit, 2) : mood === 'flip' ? Math.sin(entry * Math.PI / 2) : Math.sin(entry * Math.PI / 2) * (1 - exit));
+      curtain.style.opacity = String(textured ? Math.pow(entry, 3) * .78 * Math.pow(1 - exit, 2) : mood === 'flip' ? Math.sin(entry * Math.PI / 2) : mood === 'calm' ? entry * (1 - exit) * .55 : Math.sin(entry * Math.PI / 2) * (1 - exit));
       ctx.clearRect(0, 0, width, height);
       if (mood === 'flip') {
         const count = strips.length;
@@ -201,10 +279,10 @@ export function SeasonalPageTransition() {
           ctx.drawImage(sprite, -p.size / 2, -p.size / 2, p.size, p.size);
           ctx.restore();
         }
-      } else if (mood !== 'flip' && mood !== 'leaves') {
+      } else if (mood === 'snow' || mood === 'petals') {
         const sweep = 1 - Math.pow(1 - entry, 3);
         for (const [i, p] of particles.entries()) {
-          const size = (mood === 'snow' ? 16 : mood === 'rain' ? 35 : 90) * p.size * Math.min(1.4, width / 900 + .45);
+          const size = (mood === 'snow' ? 16 : 90) * p.size * Math.min(1.4, width / 900 + .45);
           const x = p.x * (width + 240) - 120 - (1 - sweep) * (width + 300) + exit * exit * (width + 400);
           const y = p.y * (height + 140) - 70 + Math.sin(now / 500 + i) * 25 - exit * 110 * p.depth;
           ctx.save(); ctx.translate(x, y); ctx.rotate(p.angle + (now - start) / 700 * (p.depth + .2));
@@ -220,8 +298,6 @@ export function SeasonalPageTransition() {
               ctx.moveTo(0, size * .65); ctx.lineTo(-size * .25, size * .4); ctx.rotate(Math.PI / 3);
             }
             ctx.strokeStyle = ctx.fillStyle; ctx.stroke();
-          } else if (mood === 'rain') {
-            ctx.rotate(-.6); ctx.fillRect(0, 0, 1.5, size * 2);
           } else {
             ctx.scale(1, .65 + Math.abs(Math.sin(now / 600 + i)) * .35);
             ctx.beginPath(); ctx.moveTo(-size, 0);
@@ -236,10 +312,17 @@ export function SeasonalPageTransition() {
       raf = requestAnimationFrame(draw);
     };
     const before = router.subscribe('onBeforeNavigate', event => {
-      if (reduce.matches || event.fromLocation?.pathname === event.toLocation.pathname || event.toLocation.pathname.startsWith('/admin') || event.fromLocation?.pathname.startsWith('/admin')) return;
+      if (event.fromLocation?.pathname === event.toLocation.pathname || event.toLocation.pathname.startsWith('/admin') || event.fromLocation?.pathname.startsWith('/admin')) return;
+      const season = document.documentElement.getAttribute('data-season');
+      // Reduced motion: no transition, except a brief, still opacity veil in rain seasons.
+      if (reduce.matches && !isRainSeason(season)) return;
       stop();
-      mood = alternatingTransitionMood(document.documentElement.getAttribute('data-season'), navigationIndex);
-      navigationIndex += 1;
+      if (reduce.matches) mood = 'calm';
+      else {
+        mood = alternatingTransitionMood(season, navigationIndex);
+        navigationIndex += 1;
+        if (mood === 'rain') { startStorm(false); return; }
+      }
       // Never substitute illustrated leaves while the photographic atlas loads.
       // Navigation remains immediate on slow connections or an asset failure.
       if (mood === 'leaves' && sprites.length !== 4) return;
@@ -270,11 +353,12 @@ export function SeasonalPageTransition() {
     });
     const resolved = router.subscribe('onResolved', () => { ready = true; });
     reduce.addEventListener('change', stop);
-    return () => { before(); resolved(); stop(); atlas.onload = null; reduce.removeEventListener('change', stop); };
+    return () => { before(); resolved(); stop(); atlas.onload = null; reduce.removeEventListener('change', stop); seasonWatch.disconnect(); removeEventListener('enkop:storm-entrance', onEntrance); };
   }, [router]);
 
   return <div ref={ref} className="seasonal-page-transition" data-phase="idle" aria-hidden="true">
     <div ref={outgoingRef} className="outgoing-page" inert />
+    <canvas ref={cloudsRef} className="storm-clouds" />
     <div ref={curtainRef} className="seasonal-page-curtain" /><canvas ref={canvasRef} />
     <div ref={shadowRef} className="paper-cast-shadow" /><div ref={paperRef} className="paper-turn-sheet" inert />
   </div>;

@@ -13,6 +13,7 @@ import { useEffect, type ReactNode } from "react";
 import appCss from "../styles.css?url";
 import { reportLovableError } from "../lib/lovable-error-reporting";
 import { SeasonalPageTransition } from '@/components/enkop/SeasonalPageTransition';
+import { SeasonalAtmosphereController } from '@/components/enkop/storm/SeasonalAtmosphereController';
 import { BrandLogo } from '@/components/enkop/BrandLogo';
 import { siteUrl } from '@/lib/enkop';
 
@@ -141,6 +142,7 @@ function RootComponent() {
   return (
     <QueryClientProvider client={queryClient}>
       <SeasonalPageTransition />
+      <SeasonalAtmosphereController />
       {/* Required: nested routes render here. Removing <Outlet /> breaks all child routes. */}
       <Outlet />
     </QueryClientProvider>

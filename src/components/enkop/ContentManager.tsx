@@ -50,7 +50,8 @@ export function SeasonManager() {
       </div>)}
       {s.customRanges.length < 12 && <Button type="button" variant="textArrow" onClick={() => set({ customRanges: [...s.customRanges, { from: 1, to: 2, season: 'dry-warm' }] })}><Plus size={14} /> Add range</Button>}
     </fieldset>}
-    <p className="studio-muted">Preview a season on the homepage (only for you, just this visit): {['winter', 'spring', 'summer', 'autumn', 'long-rains'].map(k => <a key={k} href={`/?season=${k}`} target="_blank" rel="noopener noreferrer" style={{ marginRight: 12, textDecoration: 'underline' }}>{seasonLabels[k]}</a>)}</p>
+    <p className="studio-muted">Preview a season on the homepage (only for you, just this visit): {['winter', 'spring', 'summer', 'autumn', 'long-rains', 'short-rains', 'dry-warm', 'cool-dry'].map(k => <a key={k} href={`/?season=${k}`} target="_blank" rel="noopener noreferrer" style={{ marginRight: 12, textDecoration: 'underline' }}>{seasonLabels[k]}</a>)}<a href="/?season=auto" target="_blank" rel="noopener noreferrer" style={{ textDecoration: 'underline' }}>End preview</a></p>
+    <p className="studio-muted">Rain seasons bring the storm atmosphere: clouds over page changes, rainfall and rain on glass. Intensity below 1 makes it gentler; visitors can choose Gentle or Off from the footer, and reduced-motion visitors get a still version.</p>
     {msg && <p className="studio-muted" role="status">{msg}</p>}
     <Button type="submit" variant="primary">Save seasonal settings <ArrowRight size={16} /></Button>
   </form>;

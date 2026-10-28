@@ -3,9 +3,8 @@ import { useEffect, useRef } from 'react';
 type Shape = 'drop' | 'mote' | 'snow' | 'petal' | 'leaf';
 type Kind = { colors: string[]; count: number; speed: number; drift: number; size: [number, number]; shape: Shape; alpha: number };
 
+// Rain seasons are rendered by the storm atmosphere (src/components/enkop/storm), not by particles.
 const kinds: Record<string, Kind> = {
-  'long-rains': { colors: ['96,118,168', '132,150,190'], count: 60, speed: 6, drift: 0.4, size: [10, 18], shape: 'drop', alpha: 0.3 },
-  'short-rains': { colors: ['110,130,176', '146,162,198'], count: 45, speed: 5, drift: 0.5, size: [8, 14], shape: 'drop', alpha: 0.28 },
   'dry-warm': { colors: ['214,180,120', '236,206,150'], count: 34, speed: -0.15, drift: 0.25, size: [1.2, 3], shape: 'mote', alpha: 0.6 },
   'cool-dry': { colors: ['180,195,210'], count: 28, speed: 0.15, drift: 0.2, size: [1, 2.4], shape: 'mote', alpha: 0.5 },
   winter: { colors: ['255,255,255', '226,232,244', '206,214,230'], count: 140, speed: 0.9, drift: 0.6, size: [1.2, 4.2], shape: 'snow', alpha: 0.9 },
@@ -66,7 +65,7 @@ export function SeasonParticles() {
       ctx.clearRect(0, 0, innerWidth, innerHeight);
       // Idle (no season or hidden tab): stop until wake() sees the season or visibility change.
       if (!k || document.hidden) { raf = 0; return; }
-      const intensity = Math.min(1, Math.max(0, Number(root.getAttribute('data-season-intensity') ?? 1)));
+      const intensity = Math.min(1, Math.max(0, Number(root.getAttribute('data-season-intensity') ?? 1))) * (root.getAttribute('data-atmosphere') === 'gentle' ? 0.45 : 1);
       const nextKey = s + intensity;
       if (nextKey !== key) { key = nextKey; parts = Array.from({ length: Math.round(k.count * intensity * (mobile ? 0.45 : 1)) }, () => spawn(k)); }
       if (now - lastHoles > 300) { refreshHoles(); lastHoles = now; }
@@ -87,7 +86,7 @@ export function SeasonParticles() {
       wake();
     };
     const seasonChanges = new MutationObserver(wake);
-    seasonChanges.observe(document.documentElement, { attributes: true, attributeFilter: ['data-season', 'data-season-intensity'] });
+    seasonChanges.observe(document.documentElement, { attributes: true, attributeFilter: ['data-season', 'data-season-intensity', 'data-atmosphere'] });
     resize(); addEventListener('resize', resize); addEventListener('pointermove', onMove, { passive: true });
     document.addEventListener('visibilitychange', wake);
     reduce.addEventListener('change', syncMotion); syncMotion();
