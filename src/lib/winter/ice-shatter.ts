@@ -42,10 +42,13 @@ export function crackPattern(opts: { width: number; height: number; rays: number
   const rays = Math.max(4, opts.rays), rings = Math.max(1, opts.rings);
   const impact = opts.impact ?? { x: w * (0.4 + random() * 0.2), y: h * (0.38 + random() * 0.2) };
   // Far enough that the outer ring lies beyond every screen corner.
-  const R = Math.hypot(Math.max(impact.x, w - impact.x), Math.max(impact.y, h - impact.y)) * 1.12;
+  const corner = Math.hypot(Math.max(impact.x, w - impact.x), Math.max(impact.y, h - impact.y));
+  const R = corner * 1.12;
+  // The outer ring is joined by straight chords, so it sits far enough out that they never cut the screen.
+  const far = corner * 2.4;
   const angles = Array.from({ length: rays }, (_, i) => (i / rays) * Math.PI * 2 + (random() - 0.5) * (Math.PI / rays) * 0.9 + 0.3);
   // vertex[k][i]: ring k (0 = impact) on ray i. Inner rings are closer together, like real impact cracks.
-  const radius = (k: number) => (k === rings ? R : R * Math.pow(k / rings, 1.35) * 0.78);
+  const radius = (k: number) => (k === rings ? far : R * Math.pow(k / rings, 1.35) * 0.78);
   const vertex: Pt[][] = [];
   for (let k = 0; k <= rings; k++) {
     vertex.push(angles.map(a => {
@@ -70,11 +73,9 @@ export function crackPattern(opts: { width: number; height: number; rays: number
   const maxD = Math.hypot(w, h);
   const addShard = (points: Pt[]) => {
     const c = centroid(points);
-    // Skip cells entirely off-screen.
-    if (!points.some(p => p.x > -2 && p.x < w + 2 && p.y > -2 && p.y < h + 2) && !(c.x > 0 && c.x < w && c.y > 0 && c.y < h)) {
-      const xs = points.map(p => p.x), ys = points.map(p => p.y);
-      if (Math.max(...xs) < 0 || Math.min(...xs) > w || Math.max(...ys) < 0 || Math.min(...ys) > h) return;
-    }
+    // Cells whose bounds miss the screen carry nothing visible.
+    const xs = points.map(p => p.x), ys = points.map(p => p.y);
+    if (Math.max(...xs) < 0 || Math.min(...xs) > w || Math.max(...ys) < 0 || Math.min(...ys) > h) return;
     const dx = c.x - impact.x, dy = c.y - impact.y, d = Math.hypot(dx, dy) || 1;
     const distance = clamp(d / maxD);
     const speed = 260 + random() * 360 + (1 - distance) * 220;
