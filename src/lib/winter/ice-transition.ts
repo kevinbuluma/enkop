@@ -119,16 +119,16 @@ export class IceTransition {
   private drawCracks(progress: number) {
     const { ctx } = this;
     ctx.lineCap = 'round'; ctx.lineJoin = 'round';
-    for (const pass of [0, 1, 2]) {
+    const styles: [string, number, number][] = [['rgba(255,255,255,0.35)', 4, 0], ['rgba(40,66,108,0.5)', 1, 0.85], ['rgba(255,255,255,0.95)', 1.2, 0]];
+    for (const [color, width, offset] of styles) {
+      ctx.save(); ctx.translate(offset, offset);
       ctx.beginPath();
       for (const c of this.pattern.cracks) {
         const q = clamp((progress - c.start) / Math.max(0.01, c.end - c.start));
         if (q > 0) traceTo(ctx, c.points, q);
       }
-      if (pass === 0) { ctx.strokeStyle = 'rgba(255,255,255,0.35)'; ctx.lineWidth = 4; }
-      else if (pass === 1) { ctx.strokeStyle = 'rgba(40,66,108,0.5)'; ctx.lineWidth = 1; ctx.translate(0.8, 0.9); }
-      else { ctx.strokeStyle = 'rgba(255,255,255,0.95)'; ctx.lineWidth = 1.2; ctx.translate(-0.8, -0.9); }
-      ctx.stroke();
+      ctx.strokeStyle = color; ctx.lineWidth = width; ctx.stroke();
+      ctx.restore();
     }
     // The ice briefly catches the light as the fractures run.
     const x = -0.4 * this.w + progress * 1.8 * this.w;
