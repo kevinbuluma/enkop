@@ -786,7 +786,8 @@ html[data-season] :is(.team-card, .testimonial-card, .why-grid > div, .detail-fa
   content: ""; position: absolute; pointer-events: none; z-index: 3; transition: opacity 1.2s ease;
 }
 /* Winter: soft snow settled along the top edge of frames */
-html[data-season="winter"] :is(.team-card, .testimonial-card, .why-grid > div, .detail-facts, .home-enquire form, .detail-enquire form, .hero-search, .property-information)::before {
+/* (Only without the winter environment, which brings its own settled snow below.) */
+html[data-season="winter"]:not([data-winter]) :is(.team-card, .testimonial-card, .why-grid > div, .detail-facts, .home-enquire form, .detail-enquire form, .hero-search, .property-information)::before {
   left: 6px; right: 6px; top: -7px; height: 14px; border-radius: 14px 14px 6px 6px;
   background:
     radial-gradient(12px 8px at 12% 70%, oklch(0.995 0.003 240) 98%, transparent),
@@ -798,7 +799,7 @@ html[data-season="winter"] :is(.team-card, .testimonial-card, .why-grid > div, .
   background-repeat: no-repeat; background-position: 0 0, 0 0, 0 0, 0 0, 0 100%;
   filter: drop-shadow(0 2px 3px oklch(0.45 0.06 262 / .22));
 }
-html[data-season="winter"] .site-header--solid { box-shadow: inset 0 -2px 0 oklch(0.98 0.005 240 / .8); }
+html[data-season="winter"]:not([data-winter]) .site-header--solid { box-shadow: inset 0 -2px 0 oklch(0.98 0.005 240 / .8); }
 /* Spring: a blossom resting on the frame corner */
 html[data-season="spring"] :is(.team-card, .testimonial-card, .why-grid > div, .home-enquire form, .detail-enquire form, .hero-search)::before {
   top: -10px; right: 18px; width: 22px; height: 22px;
@@ -1209,3 +1210,124 @@ html { scrollbar-color: color-mix(in oklab, var(--royal) 45%, transparent) trans
   .process-grid { grid-template-columns: 1fr; }
   .footer-social a { display: inline-flex; align-items: center; min-height: 44px; }
 }
+
+/* ===== Winter environment (src/components/enkop/winter, src/lib/winter) =====
+ * Continuous layers: storm sky behind the page (z -1), snowmen (30), snowfall (31), screen-edge frost (32),
+ * all below the header (50) and gallery viewer (100). Surfaces carry frost, settled snow and icicles from
+ * textures painted in the browser (--winter-* custom properties); levels come from the admin settings. */
+:root {
+  --snow-highlight: oklch(0.995 0.003 250);
+  --snow-body: oklch(0.965 0.008 255);
+  --snow-shade: oklch(0.86 0.025 258);
+  --snow-deep: oklch(0.7 0.045 262);
+  --snow-contact: oklch(0.32 0.05 262 / .32);
+  --snow-cast: oklch(0.4 0.06 262 / .3);
+  --coal: oklch(0.2 0.01 268);
+  --carrot: oklch(0.7 0.16 52);
+  --carrot-tip: oklch(0.55 0.15 42);
+  --twig: oklch(0.38 0.05 55);
+  --ice-glint: oklch(1 0 0 / .6);
+  --winter-haze: oklch(0.97 0.01 245 / .4);
+}
+@property --frost-reach { syntax: '<length>'; inherits: false; initial-value: 0px; }
+html[data-winter-frost="1"] { --frost-max: 70px; --frost-alpha: .5; }
+html[data-winter-frost="2"] { --frost-max: 110px; --frost-alpha: .75; }
+html[data-winter-frost="3"] { --frost-max: 160px; --frost-alpha: .95; }
+html[data-winter-snow="1"] { --cap-h: 12px; }
+html[data-winter-snow="2"] { --cap-h: 20px; }
+html[data-winter-snow="3"] { --cap-h: 28px; }
+
+/* Storm sky: layered overcast drifting slowly, ground mist and shifting cold light. */
+.winter-sky { position: fixed; inset: 0; z-index: -1; pointer-events: none; overflow: hidden; opacity: 0; transition: opacity 2s ease; }
+.winter-sky.is-on { opacity: 1; }
+.winter-cloud { position: absolute; left: -30%; width: 160%; will-change: transform; }
+.winter-cloud--far { top: -18%; height: 60%; background: radial-gradient(40% 55% at 30% 50%, oklch(0.62 0.03 255 / .16), transparent 70%), radial-gradient(35% 50% at 72% 40%, oklch(0.55 0.04 258 / .14), transparent 70%); animation: winter-drift 140s linear infinite alternate; }
+.winter-cloud--mid { top: -10%; height: 45%; background: radial-gradient(30% 50% at 20% 50%, oklch(0.7 0.025 255 / .14), transparent 70%), radial-gradient(28% 45% at 60% 60%, oklch(0.6 0.035 260 / .12), transparent 72%); animation: winter-drift 90s linear infinite alternate-reverse; }
+.winter-cloud--near { bottom: -20%; height: 50%; background: radial-gradient(40% 50% at 40% 60%, var(--winter-haze), transparent 70%), radial-gradient(30% 40% at 85% 70%, var(--winter-haze), transparent 70%); animation: winter-drift 70s linear infinite alternate; }
+.winter-light { position: absolute; inset: 0; background: linear-gradient(180deg, oklch(0.42 0.06 262 / .1), transparent 45%), radial-gradient(60% 40% at 70% 0%, oklch(0.98 0.01 250 / .35), transparent 70%); animation: winter-light 23s ease-in-out infinite alternate; }
+@keyframes winter-drift { from { transform: translate3d(-6%, 0, 0); } to { transform: translate3d(6%, 2%, 0); } }
+@keyframes winter-light { from { opacity: .6; } to { opacity: 1; } }
+
+.winter-snowfall, .winter-frost-edge, .winter-frost-haze { position: fixed; inset: 0; width: 100%; height: 100%; pointer-events: none; opacity: 0; transition: opacity 1.6s ease; }
+.winter-snowfall { z-index: 31; }
+.winter-frost-haze, .winter-frost-edge { z-index: 32; }
+.winter-snowfall.is-on, .winter-frost-edge.is-on { opacity: 1; }
+/* Frozen haze gathering in the corners of the screen glass. */
+.winter-frost-haze { background: radial-gradient(30vmin 24vmin at 0 0, var(--winter-haze), transparent 70%), radial-gradient(30vmin 24vmin at 100% 0, var(--winter-haze), transparent 70%), radial-gradient(24vmin 20vmin at 0 100%, var(--winter-haze), transparent 70%), radial-gradient(24vmin 20vmin at 100% 100%, var(--winter-haze), transparent 70%); transition-duration: 12s; }
+html[data-winter-frost="1"] .winter-frost-haze.is-on { opacity: .45; }
+html[data-winter-frost="2"] .winter-frost-haze.is-on { opacity: .75; }
+html[data-winter-frost="3"] .winter-frost-haze.is-on { opacity: 1; }
+/* Cold light over the hero film. */
+html[data-winter] .hero-shade::after { opacity: .55; }
+
+/* Settled snow along the top edge of selected cards, panels, dividers and the footer. */
+html[data-winter] :is(.property-card, .footer, .why-section, .interior-hero-bottom, .tour-frame) { position: relative; }
+html[data-winter]:not([data-winter-snow="0"]) :is(.property-card-wrap:not(:nth-child(4n)) .property-card, .team-card, .testimonial-card, .why-grid > div, .detail-facts, .home-enquire form, .detail-enquire form, .footer, .why-section, .interior-hero-bottom)::before {
+  content: ""; position: absolute; pointer-events: none; z-index: 3; border-radius: 0;
+  left: -4px; right: -4px; height: calc(var(--cap-h, 20px) * var(--cap-k, 1)); top: calc(var(--cap-h, 20px) * var(--cap-k, 1) * -.6);
+  background: var(--cap-texture, var(--winter-snow-cap-a, none)) 0 100% / auto 100% repeat-x;
+  mask-image: linear-gradient(90deg, transparent, #000 14px, #000 calc(100% - 14px), transparent);
+  filter: drop-shadow(0 2px 2px var(--snow-cast));
+  animation: snow-settle 2.4s cubic-bezier(.2,.7,.2,1) both;
+}
+.property-card-wrap:nth-child(4n+1) .property-card { --cap-k: 1.15; --cap-texture: var(--winter-snow-cap-c); }
+.property-card-wrap:nth-child(4n+2) .property-card { --cap-k: .6; --cap-texture: var(--winter-snow-cap-b); }
+.property-card-wrap:nth-child(4n+3) .property-card { --cap-k: .9; }
+.why-grid > div:nth-child(2), .team-card:nth-child(even), .testimonial-card:nth-child(even) { --cap-k: .6; --cap-texture: var(--winter-snow-cap-b); }
+html[data-winter] .footer { --cap-k: 1.3; --cap-texture: var(--winter-snow-cap-c); }
+html[data-winter] :is(.why-section, .interior-hero-bottom) { --cap-k: .5; --cap-texture: var(--winter-snow-cap-b); }
+@keyframes snow-settle { from { opacity: 0; transform: translateY(-4px) scaleY(.6); transform-origin: bottom; } to { opacity: 1; transform: none; } }
+
+/* Icicles on selected card edges and the footer (medium and heavy snow only). */
+html[data-winter]:is([data-winter-snow="2"], [data-winter-snow="3"]) :is(.property-card-wrap:nth-child(4n+1) .property-card, .footer)::after {
+  content: ""; position: absolute; pointer-events: none; z-index: 3; top: 1px; right: 24px; width: 96px; height: 16px;
+  background: var(--winter-icicles, none) 0 0 / auto 100% repeat-x;
+  mask-image: linear-gradient(90deg, transparent, #000 20%, #000 80%, transparent);
+}
+html[data-winter]:is([data-winter-snow="2"], [data-winter-snow="3"]) .footer::after { right: auto; left: 7%; width: 240px; height: 26px; }
+
+/* Frost forming from the corners of glass panels and image frames. */
+html[data-winter]:not([data-winter-frost="0"]) :is(.team-card, .testimonial-card, .why-grid > div, .detail-facts, .home-enquire form, .detail-enquire form, .hero-search, .property-card-wrap:nth-child(odd) .property-visual, .detail-main-image, .tour-frame)::after {
+  content: ""; position: absolute; inset: 0; pointer-events: none; z-index: -1; border-radius: inherit;
+  background: var(--winter-frost-tile, none) 0 0 / 260px 260px;
+  mask-image: radial-gradient(circle at 0 0, #000 0, transparent var(--frost-reach)), radial-gradient(circle at 100% 100%, #000 0, transparent calc(var(--frost-reach) * .75));
+  opacity: var(--frost-alpha, .7);
+  animation: frost-spread 9s cubic-bezier(.2,.6,.2,1) .3s both;
+}
+/* Photographs stay dominant: only a light rim of frost at the frame corners, over the image. */
+html[data-winter] :is(.property-visual, .detail-main-image, .tour-frame) { --frost-max: 56px; }
+html[data-winter] :is(.property-visual, .detail-main-image, .tour-frame)::after { z-index: 1; opacity: calc(var(--frost-alpha, .7) * .75); }
+html[data-winter] :is(.home-enquire form, .detail-enquire form) { --frost-max: 80px; }
+html[data-winter]:not([data-winter-frost="0"]) .site-header--solid::before {
+  content: ""; position: absolute; inset: 0; z-index: -1; pointer-events: none;
+  background: var(--winter-frost-tile, none) 0 0 / 220px 220px;
+  mask-image: linear-gradient(90deg, #000, transparent 16%, transparent 84%, #000);
+  opacity: calc(var(--frost-alpha, .7) * .7);
+}
+@keyframes frost-spread { from { --frost-reach: 0px; } to { --frost-reach: var(--frost-max, 110px); } }
+
+/* Miniature snowmen */
+.snowman-layer { position: absolute; top: 0; left: 0; width: 0; height: 0; z-index: 30; pointer-events: none; }
+.mini-snowman { position: absolute; pointer-events: none; animation: snowman-in 1.2s cubic-bezier(.2,.7,.2,1) both; }
+.mini-snowman--3 { rotate: 3deg; }
+.mini-snowman-figure { display: block; width: 100%; height: 100%; overflow: visible; pointer-events: visiblePainted; transform-origin: 50% 96%; animation: snowman-idle 7s ease-in-out infinite; }
+.mini-snowman:nth-child(2n) .mini-snowman-figure { animation-duration: 8.6s; animation-delay: -3s; }
+.mini-snowman-figure:hover { animation: snowman-hop .8s cubic-bezier(.3,.7,.3,1); }
+.mini-snowman-scarf-tail { transform-box: fill-box; transform-origin: 30% 0; animation: scarf-flutter 3.4s ease-in-out infinite; }
+.mini-snowman-figure:hover .mini-snowman-scarf-tail { animation-duration: .7s; }
+@keyframes snowman-in { from { opacity: 0; transform: translateY(6px) scale(.92); } to { opacity: 1; transform: none; } }
+@keyframes snowman-idle { 0%, 100% { transform: rotate(-1.2deg); } 50% { transform: rotate(1.2deg) scaleY(.99); } }
+@keyframes snowman-hop { 0% { transform: none; } 30% { transform: translateY(-7px) rotate(-4deg); } 55% { transform: scale(1.04, .95); } 75% { transform: rotate(2deg); } 100% { transform: none; } }
+@keyframes scarf-flutter { 0%, 100% { transform: rotate(0deg); } 50% { transform: rotate(-9deg); } }
+html[data-winter="calm"] :is(.mini-snowman, .mini-snowman-figure, .mini-snowman-scarf-tail) { animation: none; }
+html[data-winter="calm"] *::before, html[data-winter="calm"] *::after { animation-duration: .01ms; animation-delay: 0s; }
+
+/* Winter page transitions: blizzard (canvas) and freeze & shatter (canvas ice, then 3D shards). */
+.seasonal-page-transition:is([data-mood="snowstorm"], [data-mood="ice"]) .seasonal-page-curtain { display: none; }
+.outgoing-page.is-frozen { filter: saturate(.72) brightness(1.04) blur(.8px); transition: filter .6s ease; }
+.ice-shards { position: absolute; inset: 0; perspective: 1400px; transform-style: preserve-3d; pointer-events: none; }
+.ice-shards:empty, .ice-shards:not([data-phase="shatter"]) { visibility: hidden; }
+.ice-shard { position: absolute; inset: 0; will-change: transform, opacity; backface-visibility: visible; }
+.ice-shard-page { position: absolute; inset: 0; overflow: hidden; background: var(--background); filter: saturate(.72) brightness(1.04); }
+.ice-shard-ice { position: absolute; }
+.ice-shard-glint { position: absolute; inset: 0; opacity: 0; background: linear-gradient(125deg, transparent 30%, var(--ice-glint) 48%, transparent 62%); }
