@@ -61,7 +61,8 @@ export function SeasonParticles() {
       t++;
       const root = document.documentElement;
       const s = root.getAttribute('data-season') ?? '';
-      const k = kinds[s];
+      // The winter environment (src/components/enkop/winter) draws its own snow when it is on.
+      const k = s === 'winter' && root.hasAttribute('data-winter') ? undefined : kinds[s];
       ctx.clearRect(0, 0, innerWidth, innerHeight);
       // Idle (no season or hidden tab): stop until wake() sees the season or visibility change.
       if (!k || document.hidden) { raf = 0; return; }
@@ -86,7 +87,7 @@ export function SeasonParticles() {
       wake();
     };
     const seasonChanges = new MutationObserver(wake);
-    seasonChanges.observe(document.documentElement, { attributes: true, attributeFilter: ['data-season', 'data-season-intensity', 'data-atmosphere'] });
+    seasonChanges.observe(document.documentElement, { attributes: true, attributeFilter: ['data-season', 'data-season-intensity', 'data-atmosphere', 'data-winter'] });
     resize(); addEventListener('resize', resize); addEventListener('pointermove', onMove, { passive: true });
     document.addEventListener('visibilitychange', wake);
     reduce.addEventListener('change', syncMotion); syncMotion();
