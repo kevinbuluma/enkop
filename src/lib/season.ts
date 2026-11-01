@@ -1,4 +1,5 @@
 import { z } from 'zod';
+import { winterSettingsSchema } from './winter/settings';
 /** Central, deterministic seasonal atmosphere configuration. Visual mood only — never a weather claim. */
 export type SeasonProfile = 'tropical' | 'temperate-four-season' | 'custom';
 export type SeasonConfig = {
@@ -55,6 +56,8 @@ export const seasonSettingsSchema = z.object({
   location: z.string().max(80),
   intensity: z.number().min(0).max(1),
   customRanges: z.array(z.object({ from: z.number().int().min(1).max(12), to: z.number().int().min(1).max(12), season: z.enum(['dry-warm', 'long-rains', 'cool-dry', 'short-rains', 'winter', 'spring', 'summer', 'autumn']) })).max(12),
+  /** Winter environment controls; older saved settings have none and use the defaults. */
+  winter: winterSettingsSchema.optional(),
 });
 export type SeasonSettings = z.infer<typeof seasonSettingsSchema>;
 

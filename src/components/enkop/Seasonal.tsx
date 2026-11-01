@@ -5,7 +5,9 @@ import { readStored, writeStored } from '@/lib/safe-storage';
 import { nextPreference, parsePreference, type AtmospherePreference } from '@/lib/storm/atmosphere';
 
 let cached: Promise<SeasonSettings | null> | null = null;
-const loadSettings = () => (cached ??= getSeasonSettings().catch(() => null));
+/** Seasonal settings, fetched once per page load and shared by the atmosphere components. */
+export const loadSeasonSettings = () => (cached ??= getSeasonSettings().catch(() => null));
+const loadSettings = loadSeasonSettings;
 
 const PREVIEW_KEY = 'enkop:season-preview';
 const preferenceLabel: Record<AtmospherePreference, string> = { on: 'On', gentle: 'Gentle', off: 'Off' };

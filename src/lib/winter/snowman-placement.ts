@@ -1,10 +1,10 @@
 import { hashString, seeded } from './rng';
 
 /**
- * Where miniature snowmen may stand. Each spot names the element they stand on and a perch; the browser
- * layer also rejects any spot that would overlap text, prices, controls or imagery.
+ * Where miniature snowmen may stand: on the top edge of the named element, at its left or right end. The
+ * browser layer also rejects any spot that would overlap text, prices, controls or imagery.
  */
-export type SnowmanPerch = 'top-left' | 'top-right' | 'bottom-right' | 'bottom-left';
+export type SnowmanPerch = 'top-left' | 'top-right';
 export type SnowmanSpot = { selector: string; kind: string; chance: number; perches: SnowmanPerch[] };
 
 export const SNOWMAN_SPOTS: SnowmanSpot[] = [
@@ -13,8 +13,8 @@ export const SNOWMAN_SPOTS: SnowmanSpot[] = [
   { selector: '.interior-hero-bottom', kind: 'divider', chance: 0.6, perches: ['top-right', 'top-left'] },
   { selector: '.why-section', kind: 'divider', chance: 0.6, perches: ['top-left', 'top-right'] },
   { selector: '.why-grid > div, .team-card, .testimonial-card, .detail-facts', kind: 'panel', chance: 0.3, perches: ['top-right', 'top-left'] },
-  { selector: '.detail-gallery', kind: 'gallery', chance: 0.7, perches: ['bottom-right', 'bottom-left'] },
-  { selector: '.home-hero', kind: 'hero', chance: 0.55, perches: ['bottom-left'] },
+  { selector: '.detail-gallery', kind: 'gallery', chance: 0.7, perches: ['top-right', 'top-left'] },
+  { selector: '.hero-search', kind: 'hero', chance: 0.55, perches: ['top-right'] },
 ];
 
 export type SnowmanCandidate = { key: string; kind: string; perches: SnowmanPerch[]; chance: number };
@@ -35,7 +35,7 @@ export function chooseSnowmen(candidates: SnowmanCandidate[], seed: string, page
   return out.sort((a, b) => a.score - b.score);
 }
 
-/** Keeps the first `max` choices that do not collide and are not too close to one another. */
+/** Keeps the first `max` placements that are not too close to one another. */
 export function spreadSnowmen<T extends { x: number; y: number }>(placed: T[], max: number, minGap = 220): T[] {
   const kept: T[] = [];
   for (const p of placed) {

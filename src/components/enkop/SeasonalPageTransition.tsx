@@ -8,6 +8,9 @@ import { easeInOut, isRainSeason, parsePreference, stormProfile, type StormProfi
 import { flashAt, planStrikes, stormLight, type Strike } from '@/lib/storm/lightning';
 import { StormClouds } from '@/lib/storm/storm-clouds';
 import { thunder } from '@/lib/storm/rain-audio';
+import { pickWinterTransition, resolveWinterSettings, winterProfile, type WinterTransition } from '@/lib/winter/settings';
+import { SnowstormTransition } from '@/lib/winter/snowstorm-transition';
+import { IceTransition } from '@/lib/winter/ice-transition';
 
 const MAX_HOLD_MS = 1200;
 
@@ -31,6 +34,7 @@ export function SeasonalPageTransition() {
   const shadowRef = useRef<HTMLDivElement>(null);
   const outgoingRef = useRef<HTMLDivElement>(null);
   const cloudsRef = useRef<HTMLCanvasElement>(null);
+  const iceRef = useRef<HTMLDivElement>(null);
 
   // A page whose data is slow shows a looping gold bar (html.is-route-loading) until it arrives.
   useEffect(() => {
@@ -43,8 +47,8 @@ export function SeasonalPageTransition() {
   }, [router]);
 
   useEffect(() => {
-    const el = ref.current, canvas = canvasRef.current, paper = paperRef.current, curtain = curtainRef.current, shadow = shadowRef.current, outgoing = outgoingRef.current, cloudCanvas = cloudsRef.current;
-    if (!el || !canvas || !paper || !curtain || !shadow || !outgoing || !cloudCanvas) return;
+    const el = ref.current, canvas = canvasRef.current, paper = paperRef.current, curtain = curtainRef.current, shadow = shadowRef.current, outgoing = outgoingRef.current, cloudCanvas = cloudsRef.current, iceHost = iceRef.current;
+    if (!el || !canvas || !paper || !curtain || !shadow || !outgoing || !cloudCanvas || !iceHost) return;
     const ctx = canvas.getContext('2d');
     if (!ctx) return;
     const reduce = matchMedia('(prefers-reduced-motion: reduce)');
@@ -72,9 +76,12 @@ export function SeasonalPageTransition() {
     atlas.src = leafAtlasUrl;
     let raf = 0, start = 0, release = 0, ready = false, timeout = 0;
     let navigationIndex = 0;
+    let winterIndex = 0;
+    // Winter transitions (snowstorm, freeze & shatter) while the winter environment is on.
+    let winterFx: SnowstormTransition | IceTransition | null = null;
     let width = 0, height = 0;
     let palette: string[] = [];
-    let mood: TransitionMood | 'calm' = transitionMood(null);
+    let mood: TransitionMood | 'calm' | WinterTransition = transitionMood(null);
     // Storm clouds (rain seasons): created on first need, warmed up as soon as a rain season applies.
     let clouds: StormClouds | null = null;
     let storm: { profile: StormProfile; strikes: Strike[]; fired: number; entrance: boolean } | null = null;
@@ -173,6 +180,8 @@ export function SeasonalPageTransition() {
       paper.replaceChildren(); strips = []; outgoing.replaceChildren();
       curtain.style.opacity = '0'; shadow.style.opacity = '0';
       clouds?.clear(); storm = null; stormLight.flash = 0;
+      if (winterFx instanceof IceTransition) winterFx.dispose();
+      winterFx = null;
     };
     const beginReveal = (now: number) => {
       release = now; el.dataset['phase'] = 'revealing';
@@ -221,8 +230,36 @@ export function SeasonalPageTransition() {
     };
     const onEntrance = () => { if (el.dataset['phase'] === 'idle' && !reduce.matches) startStorm(true); };
     addEventListener('enkop:storm-entrance', onEntrance);
+    const startWinter = (kind: WinterTransition) => {
+      const root = document.documentElement;
+      const settings = resolveWinterSettings({ transitionIntensity: Number(root.getAttribute('data-winter-transition-intensity') ?? 1) });
+      const profile = winterProfile({ settings, intensity: 1, gentle: false, reducedMotion: false, width: innerWidth });
+      mood = kind;
+      el.dataset['mood'] = kind; el.dataset['phase'] = 'covering';
+      root.setAttribute('data-page-transition', kind);
+      width = innerWidth; height = innerHeight;
+      const dpr = Math.min(devicePixelRatio || 1, width < 760 ? 1.5 : 2, 3840 / width);
+      canvas.width = width * dpr; canvas.height = height * dpr;
+      ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+      // The outgoing page stays in view, frozen, until the snow or ice has covered it.
+      const snapshot = snapshotPage();
+      if (snapshot) outgoing.replaceChildren(snapshot);
+      winterFx = kind === 'snowstorm'
+        ? new SnowstormTransition(ctx, width, height, profile.snowstorm, MAX_HOLD_MS)
+        : new IceTransition(ctx, canvas, iceHost, outgoing, width, height, dpr, profile.ice, MAX_HOLD_MS);
+      start = performance.now(); release = 0; ready = false;
+      raf = requestAnimationFrame(draw);
+      timeout = window.setTimeout(stop, 7000);
+    };
+    const drawWinter = (now: number, fx: SnowstormTransition | IceTransition) => {
+      const step = fx.frame(now, ready);
+      if (step.dropOutgoing) { el.dataset['phase'] = 'revealing'; outgoing.replaceChildren(); }
+      if (step.done) { stop(); return; }
+      raf = requestAnimationFrame(draw);
+    };
     const draw = (now: number) => {
       if (storm) { drawStorm(now, storm); return; }
+      if (winterFx) { drawWinter(now, winterFx); return; }
       const textured = mood === 'leaves' && sprites.length === 4;
       const entryMs = textured ? LEAF_ENTRY_MS : mood === 'flip' ? 160 : mood === 'calm' ? 220 : 420;
       const entry = Math.min(1, (now - start) / entryMs);
@@ -316,6 +353,15 @@ export function SeasonalPageTransition() {
       const season = document.documentElement.getAttribute('data-season');
       // Reduced motion: no transition, except a brief, still opacity veil in rain seasons.
       if (reduce.matches && !isRainSeason(season)) return;
+      const winter = document.documentElement.getAttribute('data-winter');
+      if (season === 'winter' && winter) {
+        // Calm winter (admin setting) has no page transition, like reduced motion.
+        if (winter === 'calm') return;
+        stop();
+        const mode = document.documentElement.getAttribute('data-winter-transition');
+        startWinter(pickWinterTransition(mode === 'alternate' || mode === 'snowstorm' || mode === 'ice' ? mode : 'random', winterIndex++));
+        return;
+      }
       stop();
       if (reduce.matches) mood = 'calm';
       else {
@@ -358,6 +404,7 @@ export function SeasonalPageTransition() {
 
   return <div ref={ref} className="seasonal-page-transition" data-phase="idle" aria-hidden="true">
     <div ref={outgoingRef} className="outgoing-page" inert />
+    <div ref={iceRef} className="ice-shards" inert />
     <canvas ref={cloudsRef} className="storm-clouds" />
     <div ref={curtainRef} className="seasonal-page-curtain" /><canvas ref={canvasRef} />
     <div ref={shadowRef} className="paper-cast-shadow" /><div ref={paperRef} className="paper-turn-sheet" inert />
