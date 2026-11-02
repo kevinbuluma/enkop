@@ -88,7 +88,7 @@ export function cornerReach(width: number, height: number, max: number) {
     const fx = Math.min(x, width - x) / (width / 2), fy = Math.min(y, height - y) / (height / 2);
     const corner = 1 - Math.min(1, Math.max(fx, fy));
     const edge = Math.max(1 - fx, 1 - fy);
-    return max * (0.12 + 0.88 * Math.pow(Math.max(corner, edge * 0.25), 1.6));
+    return max * (0.05 + 0.95 * Math.pow(Math.max(corner, edge * 0.25), 1.6));
   };
 }
 
