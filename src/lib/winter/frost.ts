@@ -50,7 +50,8 @@ export function frostDendrites(opts: FrostOptions): FrostSegment[] {
   const grow = (x: number, y: number, angle: number, length: number, level: 0 | 1 | 2, travelled: number, delay: number) => {
     let cx = x, cy = y, a = angle, along = 0, bend = (random() - 0.5) * 0.05;
     const stepLen = level === 0 ? 5 + random() * 3 : level === 1 ? 3 + random() * 2 : 2;
-    while (along < length && budget > 0) {
+    // Stems always grow to full length; the per-seed budget only limits barbs and spikes.
+    while (along < length && (level === 0 || budget > 0)) {
       bend += (random() - 0.5) * 0.03;
       a += bend + (random() - 0.5) * (level === 0 ? 0.14 : 0.08);
       const nx = cx + Math.cos(a) * stepLen, ny = cy + Math.sin(a) * stepLen;
