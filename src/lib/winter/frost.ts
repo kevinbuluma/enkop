@@ -54,7 +54,10 @@ export function frostDendrites(opts: FrostOptions): FrostSegment[] {
     while (along < length && (level === 0 || budget > 0)) {
       bend += (random() - 0.5) * 0.03;
       a += bend + (random() - 0.5) * (level === 0 ? 0.14 : 0.08);
+      // Stems bend but keep their heading, so they creep inward instead of curling away.
+      if (level === 0) { a += (angle - a) * 0.08; bend *= 0.9; }
       const nx = cx + Math.cos(a) * stepLen, ny = cy + Math.sin(a) * stepLen;
+      if (nx < -4 || ny < -4 || nx > opts.width + 4 || ny > opts.height + 4) break;
       const fade = 1 - along / length;
       out.push({
         x1: cx, y1: cy, x2: nx, y2: ny, level,
