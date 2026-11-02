@@ -25,7 +25,7 @@ export function FrostFormation({ profile, visible }: { profile: WinterProfile; v
       const w = innerWidth, h = innerHeight;
       canvas.width = w * dpr; canvas.height = h * dpr; ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
       const max = Math.min(w, h) * (profile.device === 'mobile' ? 0.13 : 0.18) * (0.45 + profile.frost * 0.75);
-      segments = frostDendrites({ width: w, height: h, spacing: profile.device === 'mobile' ? 44 : 32, reach: cornerReach(w, h, max), random: seeded(5), maxSegments: profile.device === 'mobile' ? 2600 : 5200, depth: 2 });
+      segments = frostDendrites({ width: w, height: h, spacing: profile.device === 'mobile' ? 50 : 38, reach: cornerReach(w, h, max), random: seeded(5), maxSegments: profile.device === 'mobile' ? 5000 : 12000, depth: 2 });
       drawn = 0;
       if (grown) { strokeFrost(ctx, segments, strength); drawn = segments.length; }
     };

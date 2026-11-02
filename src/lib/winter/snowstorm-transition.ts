@@ -15,8 +15,8 @@ let field: { key: string; canvas: HTMLCanvasElement } | null = null;
 /** Paints the reusable sprites ahead of the first winter navigation. */
 export function prepareSnowstorm() {
   clumpSprites ??= snowClumps(5, 256);
-  powderWhite ??= flakeSprite(8, '255,255,255', 0.9);
-  powderGrey ??= flakeSprite(8, '150,166,194', 0.9);
+  powderWhite ??= flakeSprite(8, '255,255,255', 0.98);
+  powderGrey ??= flakeSprite(8, '186,198,220', 0.98);
 }
 
 export class SnowstormTransition {
@@ -35,8 +35,8 @@ export class SnowstormTransition {
     const key = `${w}x${h}`;
     if (field?.key !== key) field = { key, canvas: snowField(w, h) };
     this.powder = Array.from({ length: timing.powder }, () => ({
-      x: random() * w, y: random() * h, speed: 900 + random() * 1300, len: 18 + random() * 70, size: 1.5 + random() * 4,
-      alpha: 0.35 + random() * 0.55, grey: random() < 0.45, phase: random() * Math.PI * 2,
+      x: random() * w, y: random() * h, speed: 900 + random() * 1300, len: 40 + random() * 120, size: 3 + random() * 7,
+      alpha: 0.18 + random() * 0.4, grey: false, phase: random() * Math.PI * 2,
     }));
   }
 
@@ -54,6 +54,14 @@ export class SnowstormTransition {
     this.wind += (targetWind - this.wind) * Math.min(1, dt * (this.release ? 5 : 8));
 
     ctx.clearRect(0, 0, w, h);
+    // Blizzard whiteout: a wall of wind-blown haze sweeping in from upwind, thinning as the snow clears.
+    const veil = this.release ? 0.55 * (1 - reveal) : 0.6 * Math.min(1, cover * 1.3);
+    if (veil > 0.01) {
+      const edge = this.release ? w * (1 - reveal * 1.4) : w * (cover * 1.6 - 0.3);
+      const g = this.release ? ctx.createLinearGradient(edge + w * 0.5, 0, edge - w * 0.2, 0) : ctx.createLinearGradient(edge - w * 0.5, 0, edge + w * 0.2, 0);
+      g.addColorStop(0, `rgba(240,245,252,${veil.toFixed(3)})`); g.addColorStop(1, 'rgba(240,245,252,0)');
+      ctx.fillStyle = g; ctx.fillRect(0, 0, w, h);
+    }
     const packed = packedSnow(cover, reveal);
     if (packed > 0 && field) { ctx.globalAlpha = packed; ctx.drawImage(field.canvas, 0, 0, w, h); }
     const sprites = clumpSprites!;

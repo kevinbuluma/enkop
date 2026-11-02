@@ -5,7 +5,7 @@ import { clamp } from './rng';
  * screen edges with hexagonal (60°) side branches, so drawing segments whose birth has passed makes the
  * frost visibly spread from the edges towards the centre.
  */
-export type FrostSegment = { x1: number; y1: number; x2: number; y2: number; width: number; alpha: number; birth: number };
+export type FrostSegment = { x1: number; y1: number; x2: number; y2: number; width: number; alpha: number; birth: number; level: 0 | 1 | 2 };
 
 type Seed = { x: number; y: number; angle: number; length: number };
 
@@ -41,32 +41,48 @@ export function frostDendrites(opts: FrostOptions): FrostSegment[] {
   const { random, maxSegments = 9000, depth = 2 } = opts;
   const seeds = edgeSeeds(opts);
   const longest = Math.max(1, ...seeds.map(s => s.length));
+  // Every seed gets a share of the budget, so long stems never starve the rest of the edge.
+  const total = seeds.reduce((a, s) => a + s.length, 0) || 1;
   const out: FrostSegment[] = [];
-  // Birth is distance travelled from the edge over the longest branch: one front for the whole screen.
-  const grow = (x: number, y: number, angle: number, length: number, level: number, travelled: number, delay: number) => {
-    let step = 0, cx = x, cy = y, a = angle;
-    const stepLen = level === 0 ? 11 + random() * 6 : 6 + random() * 4;
-    while (step * stepLen < length && out.length < maxSegments) {
-      a += (random() - 0.5) * (level === 0 ? 0.22 : 0.12);
+  let budget = 0;
+  // Feathery fern frost: a gently bending stem with short barbs at about 60°, barbs with tiny spikes.
+  // Birth is distance travelled from the edge over the longest stem: one front for the whole screen.
+  const grow = (x: number, y: number, angle: number, length: number, level: 0 | 1 | 2, travelled: number, delay: number) => {
+    let cx = x, cy = y, a = angle, along = 0, bend = (random() - 0.5) * 0.05;
+    const stepLen = level === 0 ? 5 + random() * 3 : level === 1 ? 3 + random() * 2 : 2;
+    // Stems always grow to full length; the per-seed budget only limits barbs and spikes.
+    while (along < length && (level === 0 || budget > 0)) {
+      bend += (random() - 0.5) * 0.03;
+      a += bend + (random() - 0.5) * (level === 0 ? 0.14 : 0.08);
+      // Stems bend but keep their heading, so they creep inward instead of curling away.
+      if (level === 0) { a += (angle - a) * 0.08; bend *= 0.9; }
       const nx = cx + Math.cos(a) * stepLen, ny = cy + Math.sin(a) * stepLen;
-      const along = travelled + step * stepLen;
-      const fade = 1 - (step * stepLen) / length;
+      if (nx < -4 || ny < -4 || nx > opts.width + 4 || ny > opts.height + 4) break;
+      const fade = 1 - along / length;
       out.push({
-        x1: cx, y1: cy, x2: nx, y2: ny,
-        width: (level === 0 ? 0.7 + 1.1 * fade : level === 1 ? 0.45 + 0.5 * fade : 0.4),
-        alpha: (level === 0 ? 0.42 : level === 1 ? 0.32 : 0.24) * (0.55 + 0.45 * fade),
-        birth: clamp(delay + (along / longest) * (1 - delay)),
+        x1: cx, y1: cy, x2: nx, y2: ny, level,
+        width: level === 0 ? 0.55 + 0.75 * fade : level === 1 ? 0.45 : 0.35,
+        alpha: (level === 0 ? 0.5 : level === 1 ? 0.36 : 0.26) * (0.5 + 0.5 * fade),
+        birth: clamp(delay + ((travelled + along) / longest) * (1 - delay)),
       });
-      if (level < depth && step > 0 && random() < (level === 0 ? 0.62 : 0.45)) {
-        const side = random() < 0.5 ? 1 : -1;
-        const branchLen = (length - step * stepLen) * (level === 0 ? 0.32 + random() * 0.22 : 0.4 + random() * 0.3);
-        grow(nx, ny, a + side * (Math.PI / 3 + (random() - 0.5) * 0.2), branchLen, level + 1, along, delay);
-        if (random() < 0.4) grow(nx, ny, a - side * (Math.PI / 3 + (random() - 0.5) * 0.2), branchLen * 0.7, level + 1, along, delay);
+      budget--;
+      along += stepLen;
+      if (level < depth) {
+        for (const side of [1, -1]) {
+          if (random() > (level === 0 ? 0.72 : 0.3)) continue;
+          const barb = level === 0 ? (5 + random() * 13) * (0.35 + 0.65 * fade) : 2 + random() * 3;
+          grow(nx, ny, a + side * (Math.PI / 3 + (random() - 0.5) * 0.24), barb, (level + 1) as 1 | 2, travelled + along, delay);
+        }
+        // Now and then a stem forks.
+        if (level === 0 && random() < 0.035) grow(nx, ny, a + (random() < 0.5 ? 1 : -1) * (Math.PI / 6 + random() * 0.2), (length - along) * 0.7, 0, travelled + along, delay);
       }
-      cx = nx; cy = ny; step++;
+      cx = nx; cy = ny;
     }
   };
-  for (const s of seeds) grow(s.x, s.y, s.angle, s.length, 0, 0, random() * 0.06);
+  for (const s of seeds) {
+    budget = Math.max(12, Math.floor((maxSegments * s.length) / total));
+    grow(s.x, s.y, s.angle, s.length, 0, 0, random() * 0.06);
+  }
   return out.sort((a, b) => a.birth - b.birth);
 }
 
@@ -76,7 +92,7 @@ export function cornerReach(width: number, height: number, max: number) {
     const fx = Math.min(x, width - x) / (width / 2), fy = Math.min(y, height - y) / (height / 2);
     const corner = 1 - Math.min(1, Math.max(fx, fy));
     const edge = Math.max(1 - fx, 1 - fy);
-    return max * (0.12 + 0.88 * Math.pow(Math.max(corner, edge * 0.25), 1.6));
+    return max * (0.05 + 0.95 * Math.pow(Math.max(corner, edge * 0.25), 1.6));
   };
 }
 

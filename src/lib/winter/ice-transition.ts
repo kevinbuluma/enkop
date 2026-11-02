@@ -76,7 +76,7 @@ export class IceTransition {
   ) {
     const random = seeded(Math.floor(Math.random() * 1e9));
     const mobile = w < 760;
-    this.segments = frostDendrites({ width: w, height: h, spacing: mobile ? 58 : 44, reach: centreReach(w, h), random, maxSegments: mobile ? 3800 : 8500, depth: 2 });
+    this.segments = frostDendrites({ width: w, height: h, spacing: mobile ? 58 : 44, reach: centreReach(w, h), random, maxSegments: mobile ? 6000 : 14000, depth: 2 });
     this.acc = layer(w * dpr, h * dpr);
     this.acc.getContext('2d')!.setTransform(dpr, 0, 0, dpr, 0, 0);
     this.scratch = layer(w * dpr, h * dpr);
