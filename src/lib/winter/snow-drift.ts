@@ -38,7 +38,9 @@ export function clumpPose(c: Clump, cover: number, reveal: number, width: number
     const e = easeIn(l);
     return { x: c.x - e * (width * 0.95 + c.size), y: c.y - l * l * height * 0.22 * (c.depth + 1) / 3, scale: 1 - 0.5 * l, alpha: 1 - Math.pow(l, 1.6), turn: c.spin * l };
   }
-  const a = clamp((cover - (c.arrive - APPROACH)) / APPROACH);
+  // Clumps landing very early approach over a shorter window, so nothing is on screen at the first frame.
+  const approach = Math.min(APPROACH, c.arrive);
+  const a = clamp((cover - (c.arrive - approach)) / approach);
   if (a <= 0) return { x: c.x, y: c.y, scale: 0, alpha: 0, turn: 0 };
   const e = easeOut(a);
   return { x: c.x - (1 - e) * (width * 0.6 + c.size), y: c.y - (1 - e) * height * 0.06, scale: 0.55 + 0.45 * e, alpha: Math.min(1, a * 3), turn: c.spin * (1 - e) };

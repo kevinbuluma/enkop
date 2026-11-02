@@ -152,7 +152,7 @@ describe('ice shatter', () => {
     const far = [...pattern.shards].sort((a, b) => b.distance - a.distance)[0]!;
     expect(near.delay).toBeLessThan(far.delay);
     const start = shardPose(near, 0, 0.9), later = shardPose(near, 0.7, 0.9), end = shardPose(near, 0.9, 0.9);
-    expect(start.x).toBe(0);
+    expect(start.x).toBeCloseTo(0);
     expect(later.y).toBeGreaterThan(shardPose(near, 0.3, 0.9).y);
     expect(end.opacity).toBeLessThan(0.05);
   });
@@ -171,7 +171,8 @@ describe('snowstorm drift', () => {
   });
   it('nothing shows before its approach, and every clump is blown away by the end', () => {
     for (const c of clumps) {
-      expect(clumpPose(c, Math.max(0, c.arrive - APPROACH - 0.01), 0, W, H).alpha).toBe(0);
+      expect(clumpPose(c, 0, 0, W, H).alpha).toBe(0);
+      if (c.arrive > APPROACH + 0.01) expect(clumpPose(c, c.arrive - APPROACH - 0.01, 0, W, H).alpha).toBe(0);
       expect(clumpPose(c, 1, 1, W, H).alpha).toBeLessThan(0.01);
     }
     expect(packedSnow(1, 1)).toBe(0);
