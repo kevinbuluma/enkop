@@ -29,19 +29,23 @@ function sparkles(ctx: CanvasRenderingContext2D, w: number, h: number, random: (
   ctx.restore();
 }
 
-/** Strokes frost segments with a faint dark relief line under a bright crystalline line. */
-export function strokeFrost(ctx: CanvasRenderingContext2D, segments: { x1: number; y1: number; x2: number; y2: number; width: number; alpha: number }[], strength = 1, from = 0, to = segments.length) {
+/** Strokes frost segments, batched by branch level: a soft frozen halo, faint relief, then bright crystal. */
+export function strokeFrost(ctx: CanvasRenderingContext2D, segments: { x1: number; y1: number; x2: number; y2: number; width: number; alpha: number; level: 0 | 1 | 2 }[], strength = 1, from = 0, to = segments.length) {
+  if (to <= from) return;
   ctx.lineCap = 'round';
-  for (let i = from; i < to; i++) {
-    const s = segments[i]!;
-    ctx.globalAlpha = Math.min(1, s.alpha * strength * 0.55);
-    ctx.strokeStyle = 'rgb(70,96,140)';
-    ctx.lineWidth = s.width + 0.6;
-    ctx.beginPath(); ctx.moveTo(s.x1 + 0.7, s.y1 + 0.9); ctx.lineTo(s.x2 + 0.7, s.y2 + 0.9); ctx.stroke();
-    ctx.globalAlpha = Math.min(1, s.alpha * strength * 1.6);
-    ctx.strokeStyle = 'rgb(240,246,255)';
-    ctx.lineWidth = s.width;
-    ctx.beginPath(); ctx.moveTo(s.x1, s.y1); ctx.lineTo(s.x2, s.y2); ctx.stroke();
+  const passes: [string, number, number, number][] = [['rgb(236,244,255)', 2.2, 0.16, 0], ['rgb(64,90,134)', 0.3, 0.14, 0.7], ['rgb(246,250,255)', 0, 1.25, 0]];
+  for (const level of [0, 1, 2] as const) {
+    let width = 0, alpha = 0, n = 0;
+    for (let i = from; i < to; i++) { const s = segments[i]!; if (s.level !== level) continue; width += s.width; alpha += s.alpha; n++; }
+    if (!n) continue;
+    width /= n; alpha /= n;
+    for (const [color, extra, k, offset] of passes) {
+      ctx.beginPath();
+      for (let i = from; i < to; i++) { const s = segments[i]!; if (s.level !== level) continue; ctx.moveTo(s.x1 + offset, s.y1 + offset); ctx.lineTo(s.x2 + offset, s.y2 + offset); }
+      ctx.globalAlpha = Math.min(1, alpha * k * strength);
+      ctx.strokeStyle = color; ctx.lineWidth = width + extra;
+      ctx.stroke();
+    }
   }
   ctx.globalAlpha = 1;
 }
@@ -60,7 +64,7 @@ export function frostTile(size = 384, seed = 7) {
     }
   }
   // Branching crystals, drawn wrapped so the tile repeats seamlessly.
-  const segments = frostDendrites({ width: size, height: size, spacing: 64, reach: () => size * (0.28 + random() * 0.3), random, maxSegments: 2400, depth: 2 });
+  const segments = frostDendrites({ width: size, height: size, spacing: 56, reach: () => size * (0.22 + random() * 0.26), random, maxSegments: 5000, depth: 2 });
   for (const [ox, oy] of [[0, 0], [size, 0], [-size, 0], [0, size], [0, -size]]) {
     ctx.save(); ctx.translate(ox! * 0.5, oy! * 0.5);
     strokeFrost(ctx, segments, 0.85);
@@ -134,29 +138,39 @@ export function icicles(width = 360, height = 46, seed = 11) {
   return c;
 }
 
-/** Irregular clumps of packed snow with soft powder edges, shading and a cast shadow (blizzard transition). */
+/** Irregular drifts of snow with soft powder edges, gentle shading and a cast shadow (blizzard transition). */
 export function snowClumps(count = 5, size = 256, seed = 21) {
   const random = seeded(seed);
+  const gauss = () => (random() + random() + random() - 1.5) / 1.5;
   return Array.from({ length: count }, () => {
     const c = canvas(size, size), ctx = c.getContext('2d')!;
     const shape = canvas(size, size), s = shape.getContext('2d')!;
     const cx = size / 2, cy = size / 2;
+    // Many small lumps, densest in the middle, so the outline is lumpy rather than round.
     s.fillStyle = '#fff';
-    for (let i = 0; i < 9 + Math.floor(random() * 6); i++) {
-      const a = random() * Math.PI * 2, d = random() * size * 0.17, r = size * (0.12 + random() * 0.15);
-      s.beginPath(); s.arc(cx + Math.cos(a) * d, cy + Math.sin(a) * d * 0.8, r, 0, Math.PI * 2); s.fill();
+    for (let i = 0; i < 70; i++) {
+      const x = cx + gauss() * size * 0.26, y = cy + gauss() * size * 0.2;
+      const r = size * (0.03 + random() * 0.09) * (1 - Math.min(0.7, Math.hypot(x - cx, y - cy) / (size * 0.45)));
+      s.beginPath(); s.ellipse(x, y, r * (1 + random() * 0.6), r, random() * Math.PI, 0, Math.PI * 2); s.fill();
     }
-    // Shading lit from the upper left.
     s.globalCompositeOperation = 'source-atop';
-    const light = s.createRadialGradient(cx - size * 0.12, cy - size * 0.16, size * 0.02, cx, cy, size * 0.38);
-    light.addColorStop(0, 'rgb(255,255,255)'); light.addColorStop(0.55, 'rgb(242,246,252)'); light.addColorStop(0.85, 'rgb(205,216,234)'); light.addColorStop(1, 'rgb(170,186,212)');
+    // Broad, flat light from the upper left; cool shade toward the lower right and in the crevices.
+    const light = s.createLinearGradient(size * 0.15, size * 0.1, size * 0.85, size * 0.9);
+    light.addColorStop(0, 'rgb(255,255,255)'); light.addColorStop(0.55, 'rgb(244,248,253)'); light.addColorStop(1, 'rgb(208,219,236)');
     s.fillStyle = light; s.fillRect(0, 0, size, size);
-    grain(s, size, size, random, 900, 'rgba(110,130,170,0.18)', 'rgba(255,255,255,0.8)');
-    sparkles(s, size, size, random, 10);
-    // Cast shadow then the clump, with a fine powder halo.
-    ctx.shadowColor = 'rgba(38,58,98,0.34)'; ctx.shadowBlur = size * 0.07; ctx.shadowOffsetX = size * 0.02; ctx.shadowOffsetY = size * 0.05;
+    for (let i = 0; i < 14; i++) {
+      const x = cx + gauss() * size * 0.25, y = cy + gauss() * size * 0.2, r = size * (0.04 + random() * 0.07);
+      const g = s.createRadialGradient(x, y, 0, x, y, r);
+      g.addColorStop(0, 'rgba(160,178,210,0.32)'); g.addColorStop(1, 'rgba(160,178,210,0)');
+      s.fillStyle = g; s.fillRect(x - r, y - r, r * 2, r * 2);
+    }
+    grain(s, size, size, random, 1400, 'rgba(110,130,170,0.16)', 'rgba(255,255,255,0.85)');
+    sparkles(s, size, size, random, 12);
+    ctx.shadowColor = 'rgba(38,58,98,0.26)'; ctx.shadowBlur = size * 0.06; ctx.shadowOffsetX = size * 0.015; ctx.shadowOffsetY = size * 0.04;
     ctx.drawImage(shape, 0, 0);
-    ctx.shadowColor = 'rgba(255,255,255,0.65)'; ctx.shadowBlur = size * 0.03; ctx.shadowOffsetX = 0; ctx.shadowOffsetY = 0;
+    // Fine powder halo softening the edge.
+    ctx.shadowColor = 'rgba(255,255,255,0.9)'; ctx.shadowBlur = size * 0.035; ctx.shadowOffsetX = 0; ctx.shadowOffsetY = 0;
+    ctx.globalAlpha = 0.85;
     ctx.drawImage(shape, 0, 0);
     return c;
   });

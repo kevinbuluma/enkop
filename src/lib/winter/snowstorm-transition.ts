@@ -15,8 +15,8 @@ let field: { key: string; canvas: HTMLCanvasElement } | null = null;
 /** Paints the reusable sprites ahead of the first winter navigation. */
 export function prepareSnowstorm() {
   clumpSprites ??= snowClumps(5, 256);
-  powderWhite ??= flakeSprite(8, '255,255,255', 0.9);
-  powderGrey ??= flakeSprite(8, '150,166,194', 0.9);
+  powderWhite ??= flakeSprite(8, '255,255,255', 0.98);
+  powderGrey ??= flakeSprite(8, '186,198,220', 0.98);
 }
 
 export class SnowstormTransition {
@@ -35,8 +35,8 @@ export class SnowstormTransition {
     const key = `${w}x${h}`;
     if (field?.key !== key) field = { key, canvas: snowField(w, h) };
     this.powder = Array.from({ length: timing.powder }, () => ({
-      x: random() * w, y: random() * h, speed: 900 + random() * 1300, len: 18 + random() * 70, size: 1.5 + random() * 4,
-      alpha: 0.35 + random() * 0.55, grey: random() < 0.45, phase: random() * Math.PI * 2,
+      x: random() * w, y: random() * h, speed: 900 + random() * 1300, len: 40 + random() * 120, size: 3 + random() * 7,
+      alpha: 0.18 + random() * 0.4, grey: random() < 0.3, phase: random() * Math.PI * 2,
     }));
   }
 

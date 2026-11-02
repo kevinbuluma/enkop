@@ -25,8 +25,8 @@ export function driftLayout(opts: { width: number; height: number; random: () =>
   for (let r = 0; r < rows; r++) for (let c = 0; c < cols; c++) {
     const x = (c + (r % 2) * 0.5) * spacing + (random() - 0.5) * spacing * 0.5;
     const y = r * spacing + (random() - 0.5) * spacing * 0.5;
-    place(x, y, spacing * (2 + random() * 0.7), 0);
-    if (random() < 0.55) place(x + (random() - 0.5) * spacing, y + (random() - 0.5) * spacing, spacing * (1.1 + random() * 0.5), random() < 0.5 ? 1 : 2);
+    place(x, y, spacing * (2.4 + random() * 0.8), 0);
+    if (random() < 0.55) place(x + (random() - 0.5) * spacing, y + (random() - 0.5) * spacing, spacing * (1.5 + random() * 0.6), random() < 0.5 ? 1 : 2);
   }
   return clumps.sort((a, b) => a.depth - b.depth);
 }

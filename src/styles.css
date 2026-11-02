@@ -1275,7 +1275,7 @@ html[data-winter]:not([data-winter-snow="0"]) :is(.property-card-wrap:not(:nth-c
 .property-card-wrap:nth-child(4n+3) .property-card { --cap-k: .9; }
 .why-grid > div:nth-child(2), .team-card:nth-child(even), .testimonial-card:nth-child(even) { --cap-k: .6; --cap-texture: var(--winter-snow-cap-b); }
 html[data-winter] .footer { --cap-k: 1.3; --cap-texture: var(--winter-snow-cap-c); }
-html[data-winter] :is(.why-section, .interior-hero-bottom) { --cap-k: .5; --cap-texture: var(--winter-snow-cap-b); }
+html[data-winter] :is(.why-section, .interior-hero-bottom) { --cap-k: .8; --cap-texture: var(--winter-snow-cap-b); }
 @keyframes snow-settle { from { opacity: 0; transform: translateY(-4px) scaleY(.6); transform-origin: bottom; } to { opacity: 1; transform: none; } }
 
 /* Icicles on selected card edges and the footer (medium and heavy snow only). */
