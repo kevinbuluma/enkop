@@ -167,12 +167,14 @@ export function snowClumps(count = 5, size = 256, seed = 21) {
     s.filter = 'none';
     grain(s, size, size, random, 1400, 'rgba(110,130,170,0.16)', 'rgba(255,255,255,0.85)');
     sparkles(s, size, size, random, 12);
-    ctx.shadowColor = 'rgba(38,58,98,0.26)'; ctx.shadowBlur = size * 0.06; ctx.shadowOffsetX = size * 0.015; ctx.shadowOffsetY = size * 0.04;
+    // Soft cast shadow, then the body with blurred powder edges (no hard outline anywhere).
+    ctx.filter = `blur(${Math.round(size * 0.012)}px)`;
+    ctx.shadowColor = 'rgba(38,58,98,0.16)'; ctx.shadowBlur = size * 0.09; ctx.shadowOffsetX = size * 0.01; ctx.shadowOffsetY = size * 0.035;
     ctx.drawImage(shape, 0, 0);
-    // Fine powder halo softening the edge.
-    ctx.shadowColor = 'rgba(255,255,255,0.9)'; ctx.shadowBlur = size * 0.035; ctx.shadowOffsetX = 0; ctx.shadowOffsetY = 0;
-    ctx.globalAlpha = 0.85;
+    ctx.shadowColor = 'rgba(255,255,255,0.95)'; ctx.shadowBlur = size * 0.05; ctx.shadowOffsetX = 0; ctx.shadowOffsetY = 0;
+    ctx.globalAlpha = 0.7;
     ctx.drawImage(shape, 0, 0);
+    ctx.filter = 'none';
     return c;
   });
 }
