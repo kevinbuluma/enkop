@@ -153,17 +153,18 @@ export function snowClumps(count = 5, size = 256, seed = 21) {
       const r = size * (0.03 + random() * 0.09) * (1 - Math.min(0.7, Math.hypot(x - cx, y - cy) / (size * 0.45)));
       s.beginPath(); s.ellipse(x, y, r * (1 + random() * 0.6), r, random() * Math.PI, 0, Math.PI * 2); s.fill();
     }
+    // Volume: a cool base, then the same lumps lit from the upper left, leaving shade on the lower-right rims.
+    const lit = canvas(size, size), l = lit.getContext('2d')!;
+    l.drawImage(shape, -size * 0.022, -size * 0.04);
     s.globalCompositeOperation = 'source-atop';
-    // Broad, flat light from the upper left; cool shade toward the lower right and in the crevices.
-    const light = s.createLinearGradient(size * 0.15, size * 0.1, size * 0.85, size * 0.9);
-    light.addColorStop(0, 'rgb(255,255,255)'); light.addColorStop(0.55, 'rgb(244,248,253)'); light.addColorStop(1, 'rgb(208,219,236)');
-    s.fillStyle = light; s.fillRect(0, 0, size, size);
-    for (let i = 0; i < 14; i++) {
-      const x = cx + gauss() * size * 0.25, y = cy + gauss() * size * 0.2, r = size * (0.04 + random() * 0.07);
-      const g = s.createRadialGradient(x, y, 0, x, y, r);
-      g.addColorStop(0, 'rgba(160,178,210,0.32)'); g.addColorStop(1, 'rgba(160,178,210,0)');
-      s.fillStyle = g; s.fillRect(x - r, y - r, r * 2, r * 2);
-    }
+    s.fillStyle = 'rgb(206,218,236)'; s.fillRect(0, 0, size, size);
+    s.filter = `blur(${Math.round(size * 0.02)}px)`;
+    l.globalCompositeOperation = 'source-in';
+    const light = l.createLinearGradient(0, 0, size, size);
+    light.addColorStop(0, 'rgb(255,255,255)'); light.addColorStop(1, 'rgb(240,245,252)');
+    l.fillStyle = light; l.fillRect(0, 0, size, size);
+    s.drawImage(lit, 0, 0);
+    s.filter = 'none';
     grain(s, size, size, random, 1400, 'rgba(110,130,170,0.16)', 'rgba(255,255,255,0.85)');
     sparkles(s, size, size, random, 12);
     ctx.shadowColor = 'rgba(38,58,98,0.26)'; ctx.shadowBlur = size * 0.06; ctx.shadowOffsetX = size * 0.015; ctx.shadowOffsetY = size * 0.04;
