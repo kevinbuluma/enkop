@@ -5,9 +5,10 @@ import { uploadMedia } from '@/lib/admin-client';
 import { Button } from '@/components/ui/button';
 import { deleteContent, getContentAdmin, saveSeasonSettings, saveTeamMember, saveTestimonial } from '@/lib/content.functions';
 import { computeSeason, seasonLabels, toConfig, type SeasonSettings } from '@/lib/season';
+import { defaultWinterSettings, resolveWinterSettings, winterTransitionLabels, winterTransitionModes, type WinterSettings } from '@/lib/winter/settings';
 
 type Admin = Awaited<ReturnType<typeof getContentAdmin>>;
-const defaults: SeasonSettings = { enabled: true, seasonalProfile: 'tropical', hemisphere: 'south', timeZone: 'Africa/Nairobi', location: 'Nairobi, Kenya', intensity: 1, customRanges: [] };
+const defaults: SeasonSettings = { enabled: true, seasonalProfile: 'tropical', hemisphere: 'south', timeZone: 'Africa/Nairobi', location: 'Nairobi, Kenya', intensity: 1, customRanges: [], winter: defaultWinterSettings };
 const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
 
 function useAdmin() {
@@ -24,11 +25,14 @@ export function SeasonManager() {
   const save = useServerFn(saveSeasonSettings);
   const [s, setS] = useState<SeasonSettings>(defaults);
   const [msg, setMsg] = useState('');
-  useEffect(() => { if (data?.season) setS(data.season); }, [data]);
+  useEffect(() => { if (data?.season) setS({ ...data.season, winter: resolveWinterSettings(data.season.winter) }); }, [data]);
   if (error) return <p className="studio-error" role="alert">{error}</p>;
   if (!data) return <p className="studio-muted">Loading seasonal settings…</p>;
   const set = (p: Partial<SeasonSettings>) => { setS({ ...s, ...p }); setMsg(''); };
   const preview = computeSeason(new Date(), toConfig(s));
+  const winter = s.winter ?? defaultWinterSettings;
+  const setWinter = (p: Partial<WinterSettings>) => set({ winter: { ...winter, ...p } });
+  const pct = (v: number) => `${Math.round(v * 100)}%`;
   return <form className="studio-panel listing-editor" onSubmit={async e => { e.preventDefault(); try { await save({ data: s }); setMsg('Saved — visitors see the change on their next page load.'); load(); } catch (err) { setMsg((err as Error).message); } }}>
     <div className="studio-head"><h2>Seasonal atmosphere</h2><p className="studio-muted">Today shows: <strong>{seasonLabels[preview] ?? preview}</strong></p></div>
     <label className="listing-featured"><input type="checkbox" checked={s.enabled} onChange={e => set({ enabled: e.target.checked })} /> Show seasonal atmosphere on the site</label>
@@ -51,6 +55,26 @@ export function SeasonManager() {
       {s.customRanges.length < 12 && <Button type="button" variant="textArrow" onClick={() => set({ customRanges: [...s.customRanges, { from: 1, to: 2, season: 'dry-warm' }] })}><Plus size={14} /> Add range</Button>}
     </fieldset>}
     <p className="studio-muted">Preview a season on the homepage (only for you, just this visit): {['winter', 'spring', 'summer', 'autumn', 'long-rains', 'short-rains', 'dry-warm', 'cool-dry'].map(k => <a key={k} href={`/?season=${k}`} target="_blank" rel="noopener noreferrer" style={{ marginRight: 12, textDecoration: 'underline' }}>{seasonLabels[k]}</a>)}<a href="/?season=auto" target="_blank" rel="noopener noreferrer" style={{ textDecoration: 'underline' }}>End preview</a></p>
+    <fieldset className="listing-links winter-settings">
+      <legend className="studio-label">Winter environment</legend>
+      <p className="studio-muted">Snowfall, frost on the glass, settled snow and icicles, miniature snowmen and the winter page changes. Shown whenever the season is Winter (or a visitor previews it).</p>
+      <label className="listing-featured"><input type="checkbox" checked={winter.enabled} onChange={e => setWinter({ enabled: e.target.checked })} /> Show the winter environment in winter</label>
+      <div className="form-row">
+        <label>Snowfall · {pct(winter.snowfall)}<input type="range" min="0" max="1" step="0.05" value={winter.snowfall} onChange={e => setWinter({ snowfall: Number(e.target.value) })} /></label>
+        <label>Wind · {pct(winter.wind)}<input type="range" min="0" max="1" step="0.05" value={winter.wind} onChange={e => setWinter({ wind: Number(e.target.value) })} /></label>
+      </div>
+      <div className="form-row">
+        <label>Frost · {pct(winter.frost)}<input type="range" min="0" max="1" step="0.05" value={winter.frost} onChange={e => setWinter({ frost: Number(e.target.value) })} /></label>
+        <label>Settled snow · {pct(winter.accumulation)}<input type="range" min="0" max="1" step="0.05" value={winter.accumulation} onChange={e => setWinter({ accumulation: Number(e.target.value) })} /></label>
+      </div>
+      <div className="form-row">
+        <label>Page transition<select value={winter.transition} onChange={e => setWinter({ transition: e.target.value as WinterSettings['transition'] })}>{winterTransitionModes.map(m => <option key={m} value={m}>{winterTransitionLabels[m]}</option>)}</select></label>
+        <label>Transition intensity · {pct(winter.transitionIntensity)}<input type="range" min="0.3" max="1" step="0.05" value={winter.transitionIntensity} onChange={e => setWinter({ transitionIntensity: Number(e.target.value) })} /></label>
+      </div>
+      <label className="listing-featured"><input type="checkbox" checked={winter.snowmen} onChange={e => setWinter({ snowmen: e.target.checked })} /> Miniature snowmen</label>
+      <label className="listing-featured"><input type="checkbox" checked={winter.calm} onChange={e => setWinter({ calm: e.target.checked })} /> Calm mode for everyone (still snow, no winter page transitions)</label>
+      <p className="studio-muted">Visitors who ask their device for reduced motion always get the calm version, and the footer switch lets anyone choose Gentle or Off. <a href="/?season=winter" target="_blank" rel="noopener noreferrer" style={{ textDecoration: 'underline' }}>Preview the winter atmosphere</a> (save first to preview your changes).</p>
+    </fieldset>
     <p className="studio-muted">Rain seasons bring the storm atmosphere: clouds over page changes, rainfall and rain on glass. Intensity below 1 makes it gentler; visitors can choose Gentle or Off from the footer, and reduced-motion visitors get a still version.</p>
     {msg && <p className="studio-muted" role="status">{msg}</p>}
     <Button type="submit" variant="primary">Save seasonal settings <ArrowRight size={16} /></Button>
