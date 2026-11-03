@@ -39,12 +39,12 @@
 - [x] Interactive homepage tour: push-in camera, walk-through scene changes, look-around, chapter/pause/next controls
 
 ## Cinematic winter environment (brief: ENKOP Ultra-Realistic Cinematic Winter)
-- [ ] Winter snowfall system: depth layers, organic wind and gusts, cursor reaction, calm/storm cycles
-- [ ] Frost: screen-edge crystal growth and frosted surfaces (header, cards, image frames, panels, footer)
-- [ ] Snow accumulation and icicles on selected cards, panels, dividers and footer
-- [ ] Miniature snowmen in session-stable safe spots with idle and hover motion
-- [ ] Winter storm sky and cold lighting
-- [ ] Snowstorm transition (blizzard buries the page, wind reverses and clears it)
-- [ ] Freeze-and-shatter transition (edges to centre, cracks, 3D ice shards)
-- [ ] Admin winter controls (snowfall, wind, frost, accumulation, snowmen, transition choice and intensity, calm mode, preview)
-- [ ] Tests and browser QA on desktop, tablet, phone, back/forward and rapid navigation
+- [x] Winter snowfall system: depth layers, organic wind and gusts, cursor reaction, calm/storm cycles
+- [x] Frost: screen-edge crystal growth and frosted surfaces (header, cards, image frames, panels, footer)
+- [x] Snow accumulation and icicles on selected cards, panels, dividers and footer
+- [x] Miniature snowmen in session-stable safe spots with idle and hover motion
+- [x] Winter storm sky and cold lighting
+- [x] Snowstorm transition (blizzard buries the page, wind reverses and clears it)
+- [x] Freeze-and-shatter transition (edges to centre, cracks, 3D ice shards)
+- [x] Admin winter controls (snowfall, wind, frost, accumulation, snowmen, transition choice and intensity, calm mode, preview)
+- [x] Tests and browser QA on desktop, tablet, phone, back/forward and rapid navigation
