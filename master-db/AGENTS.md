@@ -1,0 +1,4 @@
+# Master database rules
+
+- Schema changes must be made in both places: a Lovable migration in supabase/migrations and a matching master migration in master-db/migrations (applied with `node master-db/scripts/sql.mjs <file>`), plus the column list in src/server/backend/tables.ts. Content tables must stay column-for-column identical; src/test/mirror-migrations.test.ts rebuilds the mirror from supabase/migrations and fails if anything was created outside them. Lovable migrations must be idempotent so they are no-ops on the live mirror.
+- Provisioning lives in master-db/scripts (`provision.mjs`, `sql.mjs`), driven by a Supabase access token in %LOCALAPPDATA%\enkop-sync; secrets stay in that folder and are never printed or committed. Backend tests use PGlite (src/test/pg-db.ts) with the real master migration under `@vitest-environment node`.
